@@ -1,0 +1,61 @@
+schema: spec-driven
+
+context: |
+  Plataforma de treinamento gamificada para os clientes da Naty, que e uma
+  plataforma de gerenciamento de conversas dentro do WhatsApp. Os integrantes da
+  empresa que contratou a Naty percorrem uma trilha de atividades, cada uma com um
+  video e um quiz, no estilo Duolingo. Ha pontuacao, sequencia de dias, conquistas
+  e ranking entre os integrantes da mesma empresa. A Naty acompanha quem esta
+  avancando e quem parou.
+
+  O backend expoe REST para um app Flutter, e le usuarios da Naty API V3 para saber
+  quem sao os integrantes de cada empresa. O sistema nunca cadastra usuario proprio:
+  a fonte da verdade de quem existe e o Naty App. Todo o conteudo de treinamento e
+  todo o progresso sao do nosso banco, porque a Naty API nao tem nada disso.
+
+  O sistema atende varias empresas. Cada empresa e um cliente da Naty com seu
+  proprio token da Naty API. Usuario, progresso e ranking sao sempre filtrados por
+  empresa. Conteudo de treinamento e global: todas as empresas fazem a mesma trilha.
+
+  Stack: Java 21, Spring Boot 4.1.1, Maven, Spring RestClient, PostgreSQL,
+  Spring Data JPA, Flyway, MapStruct, Bean Validation, Resilience4j,
+  springdoc-openapi, Spotless, JUnit 5, Mockito, Testcontainers PostgreSQL,
+  Docker Compose.
+
+  Pacote raiz: com.projetointegrador.natysync
+
+  Convencoes obrigatorias:
+  - Clean Code em todas as camadas.
+  - Arquitetura em camadas simples. Nada de hexagonal, DDD tatico completo ou CQRS.
+  - Pacote por funcionalidade, nao por camada tecnica global.
+  - Dominio em portugues sem sufixo desnecessario: Usuario, nao UsuarioEntity.
+  - Sufixos: Repository, Service, Controller, Response, Request, Filtro, Exception.
+  - Pacotes em minusculo, singular, sem underline.
+  - Endpoints REST em portugues: /api/v1/usuarios, /api/v1/sincronizacoes/usuarios.
+  - Todo pacote nasce com seu proprio CLAUDE.md. Pacote sem CLAUDE.md e incompleto.
+  - Ler o CLAUDE.md do pacote antes de alterar qualquer arquivo dentro dele.
+  - Sem uso de em dash em nenhum texto gerado.
+  - Dependencias entram no pom.xml apenas na etapa que realmente as usa.
+  - Payload cru vindo da Naty API e guardado em coluna jsonb. Schema do banco e
+    do Flyway, nunca do ddl-auto do Hibernate.
+
+  Regra de comentarios no codigo:
+  - Proibido comentario explicativo. Se um trecho precisa de comentario para ser
+    entendido, o nome da classe, do metodo ou da variavel esta errado. Corrigir o
+    nome, nao adicionar comentario. Vale para Javadoc de rotina, comentario de
+    secao, comentario que repete o que a linha ja diz e codigo morto comentado.
+  - Unica excecao: comentario que serve de ancora para o Claude Code entender um
+    trecho que o codigo sozinho nao revela, por exemplo o motivo de uma ordem de
+    execucao nao obvia ou uma limitacao de biblioteca. Uma linha, curtissimo.
+  - Proibido marcador temporal ou de autoria. Nada de "mudado em ago/26",
+    TODO com nome, FIXME com ano, @since, @author, "alterado por" ou changelog
+    inline. Esse historico e do git.
+  - Pendencia vira tarefa no tasks.md do OpenSpec ou linha na secao Estado atual
+    do CLAUDE.md do pacote, nunca comentario no codigo.
+
+  Propostas, tarefas e specs escritas em portugues.
+
+rules:
+  proposal:
+    - Escrever em portugues.
+    - Nao expandir escopo alem do que foi aprovado para a etapa atual.

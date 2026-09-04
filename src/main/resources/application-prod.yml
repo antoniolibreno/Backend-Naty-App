@@ -1,0 +1,16 @@
+spring:
+  flyway:
+    locations: classpath:db/migration
+
+logging:
+  level:
+    com.projetointegrador.natysync: INFO
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  swagger-ui:
+    enabled: false

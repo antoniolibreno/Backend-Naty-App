@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-natysync}
+      POSTGRES_USER: ${DATABASE_USERNAME:-natysync}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-natysync}
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-natysync} -d ${DATABASE_NAME:-natysync}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${DATABASE_NAME:-natysync}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-natysync}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-natysync}
+      NATY_API_URL: ${NATY_API_URL:-https://api.naty.app/v3}
+      NATY_API_TOKEN: ${NATY_API_TOKEN:-}
+      SINCRONIZACAO_HABILITADA: ${SINCRONIZACAO_HABILITADA:-false}
+      APP_CORS_ORIGENS: ${APP_CORS_ORIGENS:-http://localhost:*}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+volumes:
+  postgres_data:

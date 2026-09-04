@@ -1,0 +1,13 @@
+target/
+.git/
+.gitignore
+.gitattributes
+.idea/
+.claude/
+openspec/
+.env
+*.log
+**/CLAUDE.md
+README.md
+Dockerfile
+docker-compose.yml
