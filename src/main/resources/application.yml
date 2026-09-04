@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: naty-sync-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/natysync}
+    username: ${DATABASE_USERNAME:natysync}
+    password: ${DATABASE_PASSWORD:natysync}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
+naty:
+  api:
+    url: ${NATY_API_URL:https://api.naty.app/v3}
+    token: ${NATY_API_TOKEN:}
+    timeout: ${NATY_API_TIMEOUT:10s}
+
+sincronizacao:
+  habilitada: ${SINCRONIZACAO_HABILITADA:false}
+  cron: ${SINCRONIZACAO_CRON:0 0 3 * * *}
+
+app:
+  cors:
+    origens: ${APP_CORS_ORIGENS:http://localhost:*}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,flyway
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
