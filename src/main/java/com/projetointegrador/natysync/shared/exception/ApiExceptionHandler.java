@@ -40,4 +40,30 @@ public class ApiExceptionHandler {
                         requisicao.getRequestURI(),
                         campos));
     }
+
+    @ExceptionHandler(IntegranteNaoInformadoException.class)
+    public ResponseEntity<ErroResposta> tratarIntegranteNaoInformado(
+            IntegranteNaoInformadoException excecao, HttpServletRequest requisicao) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErroResposta(
+                        OffsetDateTime.now(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        "INTEGRANTE_NAO_INFORMADO",
+                        excecao.getMessage(),
+                        requisicao.getRequestURI(),
+                        List.of()));
+    }
+
+    @ExceptionHandler(AtividadeBloqueadaException.class)
+    public ResponseEntity<ErroResposta> tratarAtividadeBloqueada(
+            AtividadeBloqueadaException excecao, HttpServletRequest requisicao) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErroResposta(
+                        OffsetDateTime.now(),
+                        HttpStatus.CONFLICT.value(),
+                        "ATIVIDADE_BLOQUEADA",
+                        excecao.getMessage(),
+                        requisicao.getRequestURI(),
+                        List.of()));
+    }
 }

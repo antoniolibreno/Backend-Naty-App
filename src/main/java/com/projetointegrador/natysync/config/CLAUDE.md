@@ -3,7 +3,7 @@
 ## Responsabilidade
 
 Beans de infraestrutura que atravessam mais de um pacote: cliente HTTP, agendamento,
-documentacao OpenAPI e CORS. Nao contem regra de negocio nem endpoint.
+documentação OpenAPI e CORS. Não contém regra de negocio nem endpoint.
 
 ## Contratos
 
@@ -11,39 +11,44 @@ documentacao OpenAPI e CORS. Nao contem regra de negocio nem endpoint.
   Naty API, com timeout e interceptor de token.
 - `SchedulerConfig`: vai habilitar `@EnableScheduling` e definir o pool de threads do
   `SincronizacaoScheduler`.
-- `OpenApiConfig`: vai customizar titulo, versao e servidores do documento OpenAPI.
-- `CorsConfig`: unica classe real do pacote nesta etapa. Le `app.cors.origens` e
+- `OpenApiConfig`: vai customizar título, versão e servidores do documento OpenAPI.
+- `CorsConfig`: única classe real do pacote nesta etapa. Lê `app.cors.origens` e
   libera `/api/**` para essas origens.
 
-## Decisoes
+## Decisões
 
-`SecurityConfig` foi deliberadamente omitido. A fase atual nao tem autenticacao de
-usuario final e o Spring Security nao esta nas dependencias do `pom.xml`. Criar uma
-`@Configuration` vazia com esse nome convidaria alguem a preenche-la fora de escopo.
-Quando autenticacao entrar, ela vira proposta OpenSpec propria, com a dependencia
+`SecurityConfig` foi deliberadamente omitido. A fase atual não tem autenticação de
+usuário final e o Spring Security não está nas dependências do `pom.xml`. Criar uma
+`@Configuration` vazia com esse nome convidaria alguém a preenchê-la fora de escopo.
+Quando autenticação entrar, ela vira proposta OpenSpec própria, com a dependência
 entrando no mesmo diff.
 
 `CorsConfig` implementa `WebMvcConfigurer` em vez de expor um `CorsFilter`. Sem Spring
-Security no classpath, o caminho do `WebMvcConfigurer` e o mais direto e nao precisa
-ser reescrito quando Security entrar, so complementado.
+Security no classpath, o caminho do `WebMvcConfigurer` é o mais direto e não precisa
+ser reescrito quando Security entrar, só complementado.
 
-CORS so afeta Flutter Web. App mobile nao passa por preflight, entao um erro aqui nao
-aparece em teste no celular e so estoura no navegador.
+CORS só afeta Flutter Web. App mobile não passa por preflight, então um erro aqui não
+aparece em teste no celular e só estoura no navegador.
 
 ## Armadilhas
 
-`app.cors.origens` e lido como `List<String>` via `@Value`. Valor vazio no
-`application.yml` quebra a subida do contexto, entao mantenha sempre pelo menos uma
+`app.cors.origens` é lido como `List<String>` via `@Value`. Valor vazio no
+`application.yml` quebra a subida do contexto, então mantenha sempre pelo menos uma
 origem no default.
 
-`allowedOriginPatterns` e usado no lugar de `allowedOrigins` porque o segundo proibe
+`allowedOriginPatterns` é usado no lugar de `allowedOrigins` porque o segundo proíbe
 curinga junto com credenciais. Trocar de volta quebra `http://localhost:*` em dev.
 
 ## Estado atual
 
-Stub: `RestClientConfig`, `SchedulerConfig`, `OpenApiConfig`. Sao `@Configuration`
-vazias que compilam. `RestClientConfig` e preenchido pela etapa da integracao com a
-Naty API, `SchedulerConfig` pela etapa da sincronizacao, `OpenApiConfig` pela etapa
+Stub: `RestClientConfig`, `SchedulerConfig`, `OpenApiConfig`. São `@Configuration`
+vazias que compilam. `RestClientConfig` é preenchido pela etapa da integração com a
+Naty API, `SchedulerConfig` pela etapa da sincronização, `OpenApiConfig` pela etapa
 que fechar o contrato REST.
 
-Real: `CorsConfig`.
+Real: `CorsConfig` e `WebMvcResolverConfig`.
+
+`WebMvcResolverConfig` registra `usuario/IntegranteArgumentResolver` como resolvedor de
+argumento de controller. Ele existe aqui, e não no pacote `usuario`, porque registrar
+resolvedor é configuração de infraestrutura web. O resolvedor em si mora em `usuario`,
+que é quem sabe resolver integrante.

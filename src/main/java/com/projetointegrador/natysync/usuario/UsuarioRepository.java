@@ -10,4 +10,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
 
     @Query("select u from Usuario u join fetch u.empresa where lower(u.email) = :email")
     Optional<Usuario> buscarPorEmailNormalizado(@Param("email") String email);
+
+    @Query("select u from Usuario u join fetch u.empresa where u.id = :id")
+    Optional<Usuario> buscarComEmpresaPorId(@Param("id") UUID id);
 }

@@ -67,7 +67,8 @@ class SessaoApiTest extends IntegracaoTest {
 
     @Test
     void resolveIntegrantePorEmail() {
-        ResponseEntity<JsonNode> resposta = criarSessao(Map.of("email", "integrante@teste.com.br"), JsonNode.class);
+        ResponseEntity<JsonNode> resposta =
+                criarSessao(Map.of("email", "integrante@teste.com.br", "senha", "qualquer"), JsonNode.class);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody().get("usuarioId").asText()).isEqualTo(usuarioId.toString());
@@ -77,7 +78,8 @@ class SessaoApiTest extends IntegracaoTest {
 
     @Test
     void resolveComMaiusculasEEspacos() {
-        ResponseEntity<JsonNode> resposta = criarSessao(Map.of("email", "  Integrante@Teste.COM.BR  "), JsonNode.class);
+        ResponseEntity<JsonNode> resposta =
+                criarSessao(Map.of("email", "  Integrante@Teste.COM.BR  ", "senha", "qualquer"), JsonNode.class);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody().get("usuarioId").asText()).isEqualTo(usuarioId.toString());
@@ -85,7 +87,8 @@ class SessaoApiTest extends IntegracaoTest {
 
     @Test
     void naoEmiteCredencial() {
-        ResponseEntity<String> resposta = criarSessao(Map.of("email", "integrante@teste.com.br"), String.class);
+        ResponseEntity<String> resposta =
+                criarSessao(Map.of("email", "integrante@teste.com.br", "senha", "qualquer"), String.class);
 
         assertThat(resposta.getBody()).doesNotContain("token");
         assertThat(resposta.getHeaders().get("Set-Cookie")).isNull();
@@ -93,7 +96,8 @@ class SessaoApiTest extends IntegracaoTest {
 
     @Test
     void emailInexistenteDevolveNaoEncontrado() {
-        ResponseEntity<JsonNode> resposta = criarSessao(Map.of("email", "ninguem@teste.com.br"), JsonNode.class);
+        ResponseEntity<JsonNode> resposta =
+                criarSessao(Map.of("email", "ninguem@teste.com.br", "senha", "qualquer"), JsonNode.class);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("RECURSO_NAO_ENCONTRADO");
@@ -101,7 +105,8 @@ class SessaoApiTest extends IntegracaoTest {
 
     @Test
     void emailInvalidoDevolveErroDeValidacao() {
-        ResponseEntity<JsonNode> resposta = criarSessao(Map.of("email", "nao-e-email"), JsonNode.class);
+        ResponseEntity<JsonNode> resposta =
+                criarSessao(Map.of("email", "nao-e-email", "senha", "qualquer"), JsonNode.class);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("FALHA_DE_VALIDACAO");
@@ -112,5 +117,43 @@ class SessaoApiTest extends IntegracaoTest {
         ResponseEntity<JsonNode> resposta = criarSessao(Map.of(), JsonNode.class);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void senhaAusenteDevolveErroDeValidacao() {
+        ResponseEntity<JsonNode> resposta = criarSessao(Map.of("email", "integrante@teste.com.br"), JsonNode.class);
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("FALHA_DE_VALIDACAO");
+    }
+
+    @Test
+    void senhaVaziaDevolveErroDeValidacao() {
+        ResponseEntity<JsonNode> resposta =
+                criarSessao(Map.of("email", "integrante@teste.com.br", "senha", "  "), JsonNode.class);
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void qualquerSenhaResolveOMesmoIntegrante() {
+        ResponseEntity<JsonNode> primeira =
+                criarSessao(Map.of("email", "integrante@teste.com.br", "senha", "abc"), JsonNode.class);
+        ResponseEntity<JsonNode> segunda =
+                criarSessao(Map.of("email", "integrante@teste.com.br", "senha", "totalmente-outra"), JsonNode.class);
+
+        assertThat(primeira.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(segunda.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(primeira.getBody().get("usuarioId").asText())
+                .isEqualTo(segunda.getBody().get("usuarioId").asText());
+    }
+
+    @Test
+    void senhaNaoRetornaNaResposta() {
+        ResponseEntity<String> resposta =
+                criarSessao(Map.of("email", "integrante@teste.com.br", "senha", "segredo-do-teste"), String.class);
+
+        assertThat(resposta.getBody()).doesNotContain("segredo-do-teste");
+        assertThat(resposta.getBody()).doesNotContain("senha");
     }
 }

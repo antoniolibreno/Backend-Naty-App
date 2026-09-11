@@ -26,6 +26,8 @@ public class SessaoController {
             summary = "Resolve o integrante a partir do e-mail",
             description = "PROVISORIO E SEM AUTENTICACAO. Nao emite token, credencial nem cookie de sessao."
                     + " Qualquer e-mail existente na base e aceito sem verificar a identidade de quem chama."
+                    + " A senha e exigida no corpo apenas para fixar o contrato do app: ela nao e verificada,"
+                    + " nao e guardada e nao e registrada em log. Qualquer senha nao vazia e aceita."
                     + " Substituido por autenticacao real em etapa futura.")
     public SessaoResponse resolver(@Valid @RequestBody SessaoRequest requisicao) {
         return usuarioService.resolverPorEmail(requisicao.email());

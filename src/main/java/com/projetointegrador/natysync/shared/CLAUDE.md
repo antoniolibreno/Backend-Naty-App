@@ -2,43 +2,49 @@
 
 ## Responsabilidade
 
-Codigo usado por mais de um pacote de funcionalidade: tratamento global de erro e
-utilitarios sem dono claro. E o menor pacote do projeto de proposito.
+Código usado por mais de um pacote de funcionalidade: tratamento global de erro e
+utilitários sem dono claro. É o menor pacote do projeto de propósito.
 
 ## Contratos
 
-- `exception/ApiExceptionHandler`: `@RestControllerAdvice` que traduz excecao em
-  resposta HTTP, ponto unico de formatacao de erro da API.
+- `exception/ApiExceptionHandler`: `@RestControllerAdvice` que traduz exceção em
+  resposta HTTP, ponto único de formatação de erro da API.
 - `exception/ErroResposta`: corpo de erro devolvido ao app Flutter.
-- `exception/RecursoNaoEncontradoException`: 404 de dominio, jogada por qualquer
-  servico.
-- `util/DataUtil`: conversao de data e hora vinda da Naty API.
+- `exception/RecursoNaoEncontradoException`: 404 de domínio, jogada por qualquer
+  serviço.
+- `util/DataUtil`: conversão de data e hora vinda da Naty API.
 
-## Decisoes
+## Decisões
 
-`ErroResposta` e o unico formato de erro da API. O app Flutter faz parse de um shape
-so, em vez de um por endpoint.
+`ErroResposta` é o único formato de erro da API. O app Flutter faz parse de um shape
+só, em vez de um por endpoint.
 
-Excecao de integracao com a Naty mora em `natyapi/exception`, nao aqui. `shared` fica
-com o que e transversal de verdade.
+Exceção de integração com a Naty mora em `natyapi/exception`, não aqui. `shared` fica
+com o que é transversal de verdade.
 
 ## Armadilhas
 
-`shared` e ima de codigo sem dono. Antes de colocar algo aqui, verifique se o codigo
-nao pertence ao pacote da funcionalidade que o usa. Classe usada por um pacote so nao
-e shared.
+`shared` é imã de código sem dono. Antes de colocar algo aqui, verifique se o código
+não pertence ao pacote da funcionalidade que o usa. Classe usada por um pacote só não
+é shared.
 
-`ApiExceptionHandler` captura por tipo de excecao. Um handler generico de `Exception`
-adicionado sem cuidado engole erro de programacao e devolve 500 mascarado.
+`ApiExceptionHandler` captura por tipo de exceção. Um handler genérico de `Exception`
+adicionado sem cuidado engole erro de programação e devolve 500 mascarado.
 
 ## Estado atual
 
-Real: `ApiExceptionHandler`, `ErroResposta` e `RecursoNaoEncontradoException`. O
-handler traduz recurso nao encontrado em 404 e falha de validacao em 400, sempre no
-formato de `ErroResposta`, com o campo `codigo` estavel para o app Flutter ramificar.
+Real: `ApiExceptionHandler`, `ErroResposta`, `RecursoNaoEncontradoException`,
+`IntegranteNaoInformadoException` e `AtividadeBloqueadaException`. O handler traduz
+recurso não encontrado em 404, falha de validação em 400, integrante não informado em
+400 com código `INTEGRANTE_NAO_INFORMADO` e atividade bloqueada em 409 com código
+`ATIVIDADE_BLOQUEADA`, sempre no formato de `ErroResposta`, com o campo `codigo` estável
+para o app Flutter ramificar.
+
+`AtividadeBloqueadaException` é 409 e não 400 de propósito: a requisição está bem
+formada, o que a recusa é o estado da trilha para aquele integrante.
 
 Stub: `DataUtil`.
 
-Cada excecao nova precisa do seu `@ExceptionHandler` explicito. Nao existe handler
-generico de `Exception` de proposito: ele mascararia erro de programacao como 500
-formatado e esconderia bug em producao.
+Cada exceção nova precisa do seu `@ExceptionHandler` explícito. Não existe handler
+genérico de `Exception` de propósito: ele mascararia erro de programação como 500
+formatado e esconderia bug em produção.
