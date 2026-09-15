@@ -16,9 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "usuario")
@@ -35,9 +33,6 @@ public class Usuario {
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
-    @Column(name = "naty_id", nullable = false, length = 100)
-    private String natyId;
-
     @Column(nullable = false)
     private String nome;
 
@@ -48,16 +43,6 @@ public class Usuario {
 
     @Column(nullable = false, length = 20)
     private String status;
-
-    @Column(name = "ultimo_acesso_naty")
-    private OffsetDateTime ultimoAcessoNaty;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(nullable = false)
-    private String payload;
-
-    @Column(name = "sincronizado_em")
-    private OffsetDateTime sincronizadoEm;
 
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)

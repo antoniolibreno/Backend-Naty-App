@@ -19,8 +19,9 @@ Não vire card nada disto, já existe e funciona:
   sem autenticação.
 - Entidades `Trilha`, `Modulo`, `Atividade`, `Quiz`, `Pergunta`, `Alternativa`,
   `Usuario` e `Empresa`, com repositórios e mappers.
-- Migrations `V1`, `V2` e `V3` mais o seed de desenvolvimento, tratamento global de
-  erro em formato único, Docker Compose e 15 testes de integração.
+- Migrations `V1` a `V5` mais o seed de desenvolvimento, tratamento global de erro em
+  formato único e Docker Compose. A `V5` removeu as colunas que existiam só por causa
+  da Naty API.
 - Progresso na trilha: migration `V4`, pacote `progresso`, desbloqueio linear,
   `GET /api/v1/trilhas/{trilhaId}/progresso` e
   `POST /api/v1/atividades/{atividadeId}/video-assistido`. O integrante chega no
@@ -30,15 +31,12 @@ Não vire card nada disto, já existe e funciona:
 
 Ganchos que já estão no banco e que o backlog aproveita em vez de recriar:
 `atividade.xp` com valor 10, `quiz.nota_minima` com valor 70,
-`atividade.duracao_segundos`, `atividade.video_url` hoje sempre nulo e
-`usuario.payload` em jsonb.
+`atividade.duracao_segundos` e `atividade.video_url` hoje sempre nulo.
 
 ## Ordem dos épicos
 
 ```
-1. Naty API V3
-        |
-        +---> 2. Sincronização de integrantes
+11. Painel administrativo
         |
         +---> 3. Autenticação e identidade
                      |
@@ -46,11 +44,12 @@ Ganchos que já estão no banco e que o backlog aproveita em vez de recriar:
                      |            |                              |
                      |            |                              v
                      |            +----------------------> 6. Gamificação
-                     |            |                              |
-                     |            +---> 8. Vídeo na atividade    v
-                     |                                    7. Acompanhamento
+                     |            |
+                     |            +---> 8. Vídeo na atividade
+                     |
                      +---> 9. Administração de conteúdo
 
+7. Acompanhamento: depois do MVP, precisa de quem administra estar definido
 10. Endurecimento e observabilidade: em paralelo, a qualquer momento
 ```
 
@@ -58,170 +57,12 @@ A autenticação vem antes do progresso de propósito. Pontuação, sequência e
 construídos sobre um e-mail não verificado nascem fraudáveis, e o CRUD de conteúdo
 não pode ficar aberto na internet.
 
-## 1. Integração com a Naty API V3
-
-- [ ] **1.1 Adicionar Resilience4j ao `pom.xml`**
-  Coloca a biblioteca de resiliência no projeto. Sem ela o cliente da Naty não tem
-  retry nem circuit breaker, e uma instabilidade da Naty derruba a sincronização.
-  Toca: `pom.xml`
-
-- [ ] **1.2 Preencher `RestClientConfig` com base URL e timeout**
-  Hoje é uma classe de configuração vazia. Passa a montar o `RestClient` que fala
-  com a Naty, lendo a URL e o timeout de `NatyApiProperties`.
-  Toca: `config/RestClientConfig.java`
-
-- [ ] **1.3 Transformar `NatyUsuarioResponse` em record espelhando o JSON da Naty**
-  Hoje é uma classe vazia. Vira um record com os campos que a Naty devolve, com os
-  nomes que a Naty usa, sem traduzir nada para português aqui.
-  Toca: `natyapi/dto/NatyUsuarioResponse.java`
-
-- [ ] **1.4 Transformar `NatyPaginaResponse` em record de paginação**
-  Hoje é uma classe vazia. Vira o envelope de página da Naty, para o cliente saber
-  quantos registros existem e se há próxima página.
-  Toca: `natyapi/dto/NatyPaginaResponse.java`
-
-- [ ] **1.5 Implementar `NatyApiClient` com listagem paginada de usuários**
-  É o único ponto do sistema que faz chamada HTTP para a Naty. Busca os integrantes
-  de uma empresa percorrendo todas as páginas até o fim.
-  Toca: `natyapi/NatyApiClient.java`
-
-- [ ] **1.6 Injetar o token da empresa por requisição**
-  O token da Naty mora em `empresa.naty_api_token`, um por cliente, e não no
-  `application.yml`. O cliente precisa receber o token de quem está sincronizando, e
-  esse valor nunca pode aparecer em log ou em resposta de erro.
-  Toca: `natyapi/NatyApiClient.java`, coluna `empresa.naty_api_token`
-
-- [ ] **1.7 Falhar com `NatyAuthenticationException` quando o token for vazio ou recusado**
-  O token pode subir vazio de propósito, para a aplicação funcionar sem credencial.
-  Nesse caso, e em 401 e 403, o erro tem que ser claro, não `NullPointerException`.
-  Toca: `natyapi/NatyApiClient.java`
-
-- [ ] **1.8 Traduzir 429 em `NatyRateLimitException` com a espera do header**
-  Quando a Naty responde que estamos chamando demais, ela diz quanto esperar. Esse
-  valor precisa chegar na exceção, porque ignorar e tentar de novo em seguida derruba
-  a integração inteira.
-  Toca: `natyapi/NatyApiClient.java`
-
-- [ ] **1.9 Aplicar retry e circuit breaker no cliente**
-  Faz falha momentânea de rede ser repetida e falha contínua abrir o circuito, em vez
-  de cada chamada esperar o timeout inteiro.
-  Toca: `natyapi/NatyApiClient.java`, `application.yml`
-
-- [ ] **1.10 Implementar `NatyApiHealthIndicator`**
-  Hoje é um componente vazio que não aparece em `/actuator/health`. Passa a dizer se
-  a Naty responde, distinguindo "sem credencial configurada" de "Naty fora do ar", e
-  sem expor token nem URL interna, porque esse endpoint é público.
-  Toca: `health/NatyApiHealthIndicator.java`, `/actuator/health`
-
-- [ ] **1.11 Testar o cliente contra um servidor HTTP falso**
-  Cobre paginação com mais de uma página, token vazio, 401, 429 com espera e queda da
-  Naty, sem depender da Naty real.
-  Toca: `src/test/java/.../natyapi`
-
-- [ ] **1.12 Atualizar `natyapi/CLAUDE.md` e `health/CLAUDE.md`**
-  Tira das seções Estado atual o que deixou de ser stub, para o próximo a mexer não
-  reimplementar o que já existe.
-  Toca: `natyapi/CLAUDE.md`, `health/CLAUDE.md`
-
-## 2. Sincronização de integrantes
-
-- [ ] **2.1 Criar `SincronizacaoProperties` lendo `habilitada` e `cron`**
-  As duas propriedades já existem no `application.yml` e nenhuma classe Java as lê
-  hoje. Passa a existir um único lugar tipado que as expõe.
-  Toca: `sincronizacao`, `application.yml`
-
-- [ ] **2.2 Preencher `UsuarioMapper` convertendo `NatyUsuarioResponse` em `Usuario`**
-  É a fronteira onde o JSON da Naty vira domínio nosso: nome, e-mail, identificador
-  da Naty, perfil, status e último acesso.
-  Toca: `usuario/UsuarioMapper.java`
-
-- [ ] **2.3 Guardar o payload cru da Naty na coluna jsonb**
-  Salva a resposta original em `usuario.payload`, para que campo novo da Naty não
-  exija migration antes de podermos investigar um caso estranho.
-  Toca: coluna `usuario.payload`
-
-- [ ] **2.4 Implementar o upsert idempotente por `(empresa_id, naty_id)`**
-  Rodar a sincronização duas vezes não pode duplicar integrante. A unicidade é o par
-  empresa mais identificador da Naty, porque o mesmo identificador pode existir em
-  duas empresas diferentes.
-  Toca: `sincronizacao/SincronizacaoUsuarioService.java`, índice `usuario_empresa_naty_id_idx`
-
-- [ ] **2.5 Tornar o lote tolerante a falha de um integrante**
-  Um integrante com dado inválido não pode abortar a sincronização dos outros. A
-  decisão de continuar precisa estar explícita no serviço.
-  Toca: `sincronizacao/SincronizacaoUsuarioService.java`
-
-- [ ] **2.6 Devolver relatório de criados, atualizados e falhos**
-  Quem dispara a sincronização precisa saber o que aconteceu, quantos integrantes
-  entraram, quantos mudaram e quais falharam e por quê.
-  Toca: `sincronizacao`, `POST /api/v1/sincronizacoes/usuarios`
-
-- [ ] **2.7 Expor `POST /api/v1/sincronizacoes/usuarios`**
-  O controller já existe com o caminho declarado e nenhum método mapeado. Passa a
-  aceitar o disparo manual, útil para colocar uma empresa nova em produção sem
-  esperar o cron.
-  Toca: `POST /api/v1/sincronizacoes/usuarios`
-
-- [ ] **2.8 Ligar o agendamento respeitando `sincronizacao.habilitada`**
-  Habilita o agendamento no `SchedulerConfig` e o `@Scheduled` no scheduler, mas só
-  dispara quando a flag estiver ligada. Ela nasce desligada porque scheduler ligado
-  por padrão bate na Naty no primeiro `docker compose up`.
-  Toca: `config/SchedulerConfig.java`, `sincronizacao/SincronizacaoScheduler.java`
-
-- [ ] **2.9 Respeitar a espera do rate limit entre páginas e empresas**
-  Quando a Naty pedir para esperar, o lote espera o tempo que ela mandou antes de
-  continuar, em vez de insistir e ser bloqueado.
-  Toca: `sincronizacao/SincronizacaoUsuarioService.java`
-
-- [ ] **2.10 Sincronizar todas as empresas ativas, cada uma com seu token**
-  O cron percorre as empresas ativas e usa o token de cada uma. Empresa sem token
-  configurado é registrada e pulada, não derruba o lote.
-  Toca: `sincronizacao`, tabela `empresa`
-
-- [ ] **2.11 Testar idempotência rodando a sincronização duas vezes**
-  Prova que a segunda passada não cria linha nova e atualiza o que mudou, com a Naty
-  simulada por servidor falso.
-  Toca: `src/test/java/.../sincronizacao`
-
-- [ ] **2.12 Filtrar por empresa a busca de integrante por e-mail**
-  Hoje a consulta procura o e-mail sem filtrar empresa e devolve um único
-  resultado. Com duas empresas sincronizadas, um e-mail repetido faz
-  `POST /api/v1/sessoes` estourar em vez de resolver o integrante.
-  Toca: `usuario/UsuarioRepository.java`, `POST /api/v1/sessoes`
-
-- [ ] **2.13 Marcar o integrante que desapareceu da Naty**
-  A Naty é a fonte da verdade de quem existe. Quem sai de lá precisa parar de
-  aparecer no ranking, sem apagar o registro, porque progresso e pontuação apontam
-  para ele.
-  Toca: nova migration em `db/migration`, tabela `usuario`
-
-- [ ] **2.14 Persistir o histórico de execução da sincronização**
-  Guarda início, fim, contadores e erros de cada execução, para conferir depois se o
-  cron rodou e o que ele fez, sem depender de log que já rotacionou.
-  Toca: nova migration em `db/migration`, `sincronizacao`
-
-- [ ] **2.15 Impedir duas sincronizações simultâneas**
-  O cron e o disparo manual chamam o mesmo serviço e podem colidir no mesmo
-  integrante. Serializa a execução.
-  Toca: `sincronizacao/SincronizacaoUsuarioService.java`
-
-- [ ] **2.16 Preparar a criação de empresa por código**
-  A entidade `Empresa` não gera id nem preenche os carimbos de data, então
-  persistir uma empresa nova pelo JPA falha hoje. Sem isso não há caminho para
-  colocar um cliente novo em produção fora do SQL escrito à mão.
-  Toca: `empresa/Empresa.java`, tabela `empresa`
-
-- [ ] **2.17 Atualizar `sincronizacao/CLAUDE.md`**
-  Registra o que virou real, a política de erro do lote e como o rate limit é tratado.
-  Toca: `sincronizacao/CLAUDE.md`
-
 ## 3. Autenticação e identidade
 
-- [ ] **3.1 Decidir o mecanismo de autenticação e registrar a decisão**
-  Hoje qualquer pessoa entra digitando um e-mail. Como o sistema nunca cadastra
-  usuário próprio, a decisão é entre validar credencial na Naty, mandar código de
-  acesso por e-mail ou emitir token próprio após confirmação. A escolha muda todas as
-  tasks seguintes deste grupo.
+- [ ] **3.1 Escrever a proposta OpenSpec do épico**
+  O mecanismo já está decidido em `decisoes.md`: credencial nossa, cadastrada pelo
+  painel, validada contra o nosso banco, com token opaco de sessão em tabela. A
+  proposta registra o desenho antes do código, como manda o `CLAUDE.md` raiz.
   Toca: proposta OpenSpec do épico
 
 - [ ] **3.2 Adicionar Spring Security e a biblioteca de token ao `pom.xml`**
@@ -261,21 +102,15 @@ não pode ficar aberto na internet.
   abertura nem manter sessão eterna.
   Toca: `POST /api/v1/sessoes`, `usuario`
 
-- [ ] **3.9 Separar o papel administrativo do campo `perfil` da Naty**
-  O campo `usuario.perfil` traz `admin`, `supervisor` e `user` da Naty API e não vale
-  como permissão no treinamento. Quem pode administrar conteúdo e ver acompanhamento
-  precisa de um papel nosso, explícito.
-  Toca: `usuario`, nova migration
-
 - [ ] **3.10 Testar que integrante de uma empresa não lê dado de outra**
   Cria duas empresas com integrantes e prova que o token de uma não alcança nada da
   outra, em todos os endpoints por empresa.
   Toca: `src/test/java/.../usuario`
 
 - [ ] **3.11 Registrar o último acesso sem escrever em `usuario`**
-  Só a sincronização escreve na tabela `usuario`. O último login do integrante
-  precisa morar na tabela de sessão, ou a regra tem que ser reescrita de propósito no
-  `CLAUDE.md` do pacote.
+  Só o painel escreve na tabela `usuario`. O último login do integrante precisa morar
+  na tabela de sessão, ou a regra tem que ser reescrita de propósito no `CLAUDE.md` do
+  pacote.
   Toca: `usuario/CLAUDE.md`, nova migration em `db/migration`
 
 - [ ] **3.12 Guardar a chave de assinatura fora do código**
@@ -456,7 +291,10 @@ não pode ficar aberto na internet.
   ponto é idempotente.
   Toca: `gamificacao/CLAUDE.md`
 
-## 7. Acompanhamento pela Naty
+## 7. Acompanhamento
+
+Fora do MVP. Falta decidir quem enxerga mais de uma empresa, e a decisão está
+registrada como pendente em `decisoes.md`.
 
 - [ ] **7.1 Definir o que é "parou"**
   Sem um número de dias sem concluir atividade, "quem parou" não é consultável.
@@ -478,10 +316,9 @@ não pode ficar aberto na internet.
   comparar clientes sem abrir integrante por integrante.
   Toca: `GET /api/v1/acompanhamento/empresas/{empresaId}/metricas`
 
-- [ ] **7.5 Restringir o acompanhamento ao papel da Naty**
-  Este é o único lugar que lê dado de mais de uma empresa. Só o papel nosso definido
-  na etapa de autenticação entra aqui, e não o campo `usuario.perfil` que vem da Naty
-  API.
+- [ ] **7.5 Restringir o acompanhamento ao papel administrativo**
+  Este é o único lugar que lê dado de mais de uma empresa. Só o papel definido na
+  migration 11.1 entra aqui.
   Toca: `acompanhamento`, `config/SecurityConfig.java`
 
 - [ ] **7.6 Mostrar onde as pessoas travam**
@@ -640,24 +477,19 @@ não pode ficar aberto na internet.
   Toca: `shared/util/DataUtil.java`
 
 - [ ] **10.8 Expor métricas da aplicação**
-  Publica métricas de requisição, banco e chamada à Naty, para dar para responder
-  "está lento onde" sem adivinhar.
+  Publica métricas de requisição e de banco, para dar para responder "está lento onde"
+  sem adivinhar.
   Toca: `application.yml`, `/actuator`
 
 - [ ] **10.9 Padronizar log sem vazar credencial**
-  Define o que é logado em cada camada e garante que `empresa.naty_api_token` e token
-  de sessão nunca apareçam em log nem em mensagem de erro.
-  Toca: `natyapi`, `sincronizacao`, `shared`
-
-- [ ] **10.10 Repassar `SINCRONIZACAO_CRON` e `NATY_API_TIMEOUT` no `docker-compose.yml`**
-  As duas variáveis existem no `.env.example` e no `application.yml`, mas o compose
-  não as passa para o contêiner, então mudar o `.env` não muda nada em Docker.
-  Toca: `docker-compose.yml`
+  Define o que é logado em cada camada e garante que senha, hash de senha e token de
+  sessão nunca apareçam em log nem em mensagem de erro.
+  Toca: `painel`, `usuario`, `shared`
 
 - [ ] **10.11 Testar as regras de dependência entre pacotes**
   Faz o build falhar se `trilha` passar a depender de `progresso`, se algum pacote
-  além de `sincronizacao` escrever em `usuario`, ou se um DTO de leitura ganhar campo
-  de gabarito. Essas setas são fáceis de inverter por conveniência.
+  além de `painel` escrever em `usuario`, ou se um DTO de leitura ganhar campo de
+  gabarito. Essas setas são fáceis de inverter por conveniência.
   Toca: `src/test/java`
 
 - [ ] **10.12 Verificar a regra de comentários no build**
@@ -676,57 +508,81 @@ não pode ficar aberto na internet.
   Toca: `config`, `shared`
 
 - [ ] **10.15 Fechar o detalhe do Actuator em produção**
-  O arquivo base mostra detalhe de saúde sempre, e o indicador da Naty passa por ali.
-  Revisa o que fica exposto fora de desenvolvimento.
+  O arquivo base mostra detalhe de saúde sempre, incluindo o estado do banco. Revisa o
+  que fica exposto fora de desenvolvimento.
   Toca: `application.yml`, `application-prod.yml`
 
 - [ ] **10.16 Definir retenção de dado operacional**
-  Limpa execução de sincronização antiga e decide o que fazer com tentativa velha,
-  para tabela de histórico não crescer para sempre.
-  Toca: `sincronizacao`, `progresso`
+  Decide o que fazer com tentativa de quiz velha e com sessão expirada, para tabela de
+  histórico não crescer para sempre.
+  Toca: `progresso`, `usuario`
 
 - [ ] **10.17 Expor a leitura de integrante em `UsuarioController`**
   O controller existe com o caminho declarado e nenhum método mapeado, e
   `UsuarioResponse` e `UsuarioFiltro` são classes vazias. A tela de ranking e o
-  acompanhamento precisam ler integrante, sempre filtrado por empresa e sem nunca
-  criar, alterar ou apagar, porque a fonte da verdade é o Naty App.
+  acompanhamento precisam ler integrante, sempre filtrado por empresa. A escrita mora
+  no painel, e só lá.
   Toca: `GET /api/v1/usuarios`, `usuario/UsuarioController.java`
 
-## Decisões em aberto
+## 11. Painel administrativo
 
-Cada linha precisa de resposta antes de codar o épico correspondente:
+Nasce com a decisão de que o cadastro é nosso. É o épico que destrava o login, e por
+isso vem antes do épico 3.
 
-- **Paginação da Naty API (1.5):** página e tamanho, deslocamento e limite, ou
-  cursor. Muda a assinatura do cliente e o envelope de página, e precisa de uma
-  chamada real registrada antes do código.
-- **Onde o token entra na requisição (1.6):** cabeçalho `Authorization` com bearer ou
-  cabeçalho proprietário da Naty.
-- **`naty.api.token` do `application.yml` (1.6):** ele conflita com o token por
-  empresa. Ou vira token apenas do indicador de saúde e do teste de fumaça, ou sai.
-- **Integrante que saiu da Naty (2.13):** coluna de ativo, data de remoção ou valor
-  no campo de status. Progresso, ranking e acompanhamento leem isso, então é decisão
-  anterior a eles.
-- **Qual empresa no login (3.1):** o mesmo e-mail pode existir em duas empresas. O
-  app envia a empresa, o token da Naty determina a empresa, ou o login pede um código
-  do cliente.
-- **Token de sessão (3.5):** token assinado sem estado, mais simples, ou token opaco
-  em tabela, que permite revogar.
-- **Autenticação (3.1):** validar credencial na Naty, código de acesso por e-mail ou
-  token próprio após confirmação. Nós não podemos cadastrar usuário.
-- **Papel administrativo (3.9):** quem define que alguém administra conteúdo, se o
-  campo `perfil` da Naty não serve como permissão.
-- **Fuso da sequência (6.4):** fuso fixo do produto, fuso da empresa ou fuso do
-  integrante.
-- **Ranking (6.8 e 6.10):** calculado a cada consulta ou materializado em tabela, e
-  qual o período, sempre ou por semana.
-- **Tentativas de quiz (5.5 e 5.6):** limite e espera entre tentativas, e se a nota
-  que vale é a última ou a melhor.
-- **Gabarito depois da aprovação (5.7):** revela a resposta certa ou não.
-- **Hospedagem de vídeo (8.1):** plataforma pública, plataforma privada ou
-  armazenamento próprio.
-- **Quem é a Naty (7.5):** como uma pessoa da Naty entra no sistema, se ela não é
-  integrante de nenhuma empresa cliente.
-- **Definição de parado (7.1):** quantos dias sem concluir atividade contam como
-  parado.
-- **Empresa nova em produção (2.10):** como uma empresa e seu token entram no
-  sistema, se não existe CRUD de empresa e ela nasce por seed.
+- [ ] **11.1 Escrever a migration de credencial, papel e sessão**
+  Cria a senha com hash do integrante, o papel administrativo nosso e a tabela de
+  sessão que guarda o token opaco e o último acesso.
+  Toca: nova migration em `db/migration`
+
+- [ ] **11.2 Expor o CRUD de empresa com fuso horário**
+  A entidade `Empresa` não gera id nem preenche carimbo de data, então persistir por
+  código falha hoje. Passa a nascer pelo painel, com o fuso horário que a sequência de
+  dias precisa.
+  Toca: `empresa/Empresa.java`, tabela `empresa`, `/api/v1/empresas`
+
+- [ ] **11.3 Expor o cadastro de integrante vinculado à empresa**
+  Cria o integrante direto no nosso banco, com nome, e-mail e empresa. O e-mail é
+  único no sistema inteiro, porque é ele que resolve a empresa no login.
+  Toca: `/api/v1/integrantes`, tabela `usuario`
+
+- [ ] **11.4 Definir e resetar a senha do integrante**
+  Quem administra define a senha no cadastro e consegue resetá-la depois. A senha é
+  guardada como hash e nunca volta em resposta nem aparece em log.
+  Toca: `/api/v1/integrantes/{integranteId}/senha`
+
+- [ ] **11.5 Desativar integrante sem apagar progresso**
+  Desativado some do ranking e não consegue logar, mas o progresso e a pontuação
+  continuam de pé, porque o histórico da empresa aponta para ele.
+  Toca: tabela `usuario`, `progresso`, `gamificacao`
+
+- [ ] **11.6 Listar integrantes da empresa com busca e paginação**
+  É a tela principal de quem administra. Sempre filtrada por empresa, nunca devolvendo
+  lista inteira sem página.
+  Toca: `GET /api/v1/integrantes`
+
+- [ ] **11.7 Proteger todo o painel pelo papel administrativo**
+  Nenhuma rota de cadastro pode responder para token de integrante comum. O papel vem
+  da migration 11.1, e a coluna `usuario.perfil` não vale como permissão.
+  Toca: `config/SecurityConfig.java`, `usuario`
+
+- [ ] **11.8 Testar que administrador de uma empresa não enxerga outra**
+  Cria duas empresas com integrantes e prova que o cadastro, a listagem e o reset de
+  senha de uma nunca alcançam a outra.
+  Toca: `src/test/java/.../painel`
+
+- [ ] **11.9 Escrever `painel/CLAUDE.md`**
+  Registra que este pacote é o único que escreve em `usuario` e por que a credencial é
+  nossa.
+  Toca: `painel/CLAUDE.md`
+
+## Decisões tomadas
+
+As dezesseis decisões que travavam o backlog estão resolvidas em `decisoes.md`, com a
+escolha, o motivo e o que cada uma muda aqui. Decisão registrada lá é premissa: mudar
+uma delas obriga a revisar as tasks que ela libera.
+
+O resumo do que elas mudaram neste documento: a integração com a Naty API saiu do
+projeto e levou junto os épicos 1 e 2, o épico 11 nasceu no lugar deles, o épico 7
+ficou para depois do MVP, o quiz aceita tentativa ilimitada valendo a melhor nota e sem
+revelar gabarito, o vídeo vai para o YouTube não listado, a sequência de dias usa o
+fuso da empresa e o ranking é calculado a cada consulta.

@@ -12,15 +12,15 @@ utilitários sem dono claro. É o menor pacote do projeto de propósito.
 - `exception/ErroResposta`: corpo de erro devolvido ao app Flutter.
 - `exception/RecursoNaoEncontradoException`: 404 de domínio, jogada por qualquer
   serviço.
-- `util/DataUtil`: conversão de data e hora vinda da Naty API.
+- `util/DataUtil`: conversão de data e hora. Classe vazia, sem consumidor.
 
 ## Decisões
 
 `ErroResposta` é o único formato de erro da API. O app Flutter faz parse de um shape
 só, em vez de um por endpoint.
 
-Exceção de integração com a Naty mora em `natyapi/exception`, não aqui. `shared` fica
-com o que é transversal de verdade.
+Exceção de um pacote só mora no pacote dele, não aqui. `shared` fica com o que é
+transversal de verdade.
 
 ## Armadilhas
 

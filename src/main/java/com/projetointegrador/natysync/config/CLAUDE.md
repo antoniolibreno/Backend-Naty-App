@@ -2,15 +2,11 @@
 
 ## Responsabilidade
 
-Beans de infraestrutura que atravessam mais de um pacote: cliente HTTP, agendamento,
-documentação OpenAPI e CORS. Não contém regra de negocio nem endpoint.
+Beans de infraestrutura que atravessam mais de um pacote: documentação OpenAPI, CORS e
+resolvedor de argumento de controller. Não contém regra de negocio nem endpoint.
 
 ## Contratos
 
-- `RestClientConfig`: vai expor o `RestClient` usado pelo `natyapi` para falar com a
-  Naty API, com timeout e interceptor de token.
-- `SchedulerConfig`: vai habilitar `@EnableScheduling` e definir o pool de threads do
-  `SincronizacaoScheduler`.
 - `OpenApiConfig`: vai customizar título, versão e servidores do documento OpenAPI.
 - `CorsConfig`: única classe real do pacote nesta etapa. Lê `app.cors.origens` e
   libera `/api/**` para essas origens.
@@ -41,9 +37,7 @@ curinga junto com credenciais. Trocar de volta quebra `http://localhost:*` em de
 
 ## Estado atual
 
-Stub: `RestClientConfig`, `SchedulerConfig`, `OpenApiConfig`. São `@Configuration`
-vazias que compilam. `RestClientConfig` é preenchido pela etapa da integração com a
-Naty API, `SchedulerConfig` pela etapa da sincronização, `OpenApiConfig` pela etapa
+Stub: `OpenApiConfig`. É uma `@Configuration` vazia que compila, preenchida pela etapa
 que fechar o contrato REST.
 
 Real: `CorsConfig` e `WebMvcResolverConfig`.

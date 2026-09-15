@@ -23,9 +23,6 @@ public class Empresa {
     @Column(nullable = false)
     private String nome;
 
-    @Column(name = "naty_api_token")
-    private String natyApiToken;
-
     @Column(nullable = false)
     private boolean ativa;
 

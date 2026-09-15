@@ -23,16 +23,6 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
-naty:
-  api:
-    url: ${NATY_API_URL:https://api.naty.app/v3}
-    token: ${NATY_API_TOKEN:}
-    timeout: ${NATY_API_TIMEOUT:10s}
-
-sincronizacao:
-  habilitada: ${SINCRONIZACAO_HABILITADA:false}
-  cron: ${SINCRONIZACAO_CRON:0 0 3 * * *}
-
 app:
   cors:
     origens: ${APP_CORS_ORIGENS:http://localhost:*}

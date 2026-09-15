@@ -65,15 +65,13 @@ class ProgressoApiTest extends IntegracaoTest {
         empresaRepository.deleteById(empresaId);
     }
 
-    private UUID criarIntegrante(Empresa empresa, String natyId, String email) {
+    private UUID criarIntegrante(Empresa empresa, String identificador, String email) {
         Usuario usuario = new Usuario();
         usuario.setEmpresa(empresa);
-        usuario.setNatyId(natyId);
-        usuario.setNome("Integrante " + natyId);
+        usuario.setNome("Integrante " + identificador);
         usuario.setEmail(email);
         usuario.setPerfil("user");
         usuario.setStatus("offline");
-        usuario.setPayload("{}");
         return usuarioRepository.save(usuario).getId();
     }
 

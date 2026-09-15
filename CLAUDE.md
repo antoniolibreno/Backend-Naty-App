@@ -8,14 +8,12 @@ a Naty percorrem uma trilha de atividades, cada uma com um vídeo e um quiz, no 
 Duolingo. Há pontuação, sequência de dias, conquistas e ranking entre os integrantes da
 mesma empresa. A Naty acompanha quem está avançando e quem parou.
 
-O backend expõe REST para um app Flutter e lê usuários da Naty API V3 para saber quem
-são os integrantes de cada empresa. O sistema nunca cadastra usuário próprio: a fonte
-da verdade de quem existe é o Naty App. Todo o conteúdo de treinamento e todo o
-progresso são do nosso banco, porque a Naty API não tem nada disso.
+O backend expõe REST para um app Flutter e para um painel administrativo. O painel é a
+fonte da verdade de quem existe: empresa, integrante e credencial nascem lá. Não há
+integração com a Naty API, e o sistema não depende de nenhum serviço externo para subir.
 
-O sistema atende várias empresas. Cada empresa é um cliente da Naty com seu próprio
-token da Naty API. Usuário, progresso e ranking são sempre filtrados por empresa.
-Conteúdo de treinamento é global: todas as empresas fazem a mesma trilha.
+O sistema atende várias empresas. Usuário, progresso e ranking são sempre filtrados por
+empresa. Conteúdo de treinamento é global: todas as empresas fazem a mesma trilha.
 
 ## Regra número um
 
@@ -25,11 +23,11 @@ Pacote sem `CLAUDE.md` está incompleto: escreva um antes de mexer no código.
 
 ## Stack
 
-Java 21, Spring Boot 4.1.1, Maven, Spring RestClient, PostgreSQL, Spring Data JPA,
+Java 21, Spring Boot 4.1.1, Maven, PostgreSQL, Spring Data JPA,
 Flyway, MapStruct, Bean Validation, springdoc-openapi, Spotless, JUnit 5,
 Testcontainers PostgreSQL, Docker Compose.
 
-Resilience4j ainda não está no `pom.xml`. Entra na etapa que o usa.
+Spring Security ainda não está no `pom.xml`. Entra na etapa de autenticação.
 
 ## Comandos
 
@@ -70,7 +68,7 @@ Domínio em português sem sufixo desnecessário: `Usuario`, não `UsuarioEntity
 permitidos: `Repository`, `Service`, `Controller`, `Response`, `Request`, `Filtro`,
 `Exception`. Pacotes em minúsculo, singular, sem underline.
 
-Endpoints REST em português: `/api/v1/usuarios`, `/api/v1/sincronizacoes/usuarios`.
+Endpoints REST em português: `/api/v1/usuarios`, `/api/v1/atividades/{id}/quiz`.
 
 Schema do banco é do Flyway. `ddl-auto` fica em `validate` e não muda.
 
@@ -78,35 +76,30 @@ Schema do banco é do Flyway. `ddl-auto` fica em `validate` e não muda.
 
 Existem hoje:
 
-`config`: beans de infraestrutura, cliente HTTP, agendamento, OpenAPI e CORS.
+`config`: beans de infraestrutura, OpenAPI, CORS e resolvedor de argumento.
 `SecurityConfig` está deliberadamente ausente, o motivo está em `config/CLAUDE.md`.
 
-`natyapi`: único ponto que fala com a Naty API V3. DTOs espelham o JSON externo, não o
-domínio. As três exceções já são reais e formam o contrato de erro da integração.
+`usuario`: integrantes das empresas e a resolução provisória de identidade em
+`POST /api/v1/sessoes`. Só lê; a escrita é do painel.
 
-`usuario`: espelho local dos integrantes das empresas, e a resolução provisória de
-identidade em `POST /api/v1/sessoes`. Não escreve dado de integrante, só lê.
-
-`empresa`: cliente da Naty, com o token da Naty API dele. Raiz do isolamento de dados.
+`empresa`: cliente da Naty e raiz do isolamento de dados.
 
 `trilha`: conteúdo do treinamento e a leitura dele. Trilha, módulo, atividade, quiz,
 pergunta e alternativa. Conteúdo semeado por migration, sem CRUD.
 
-`sincronizacao`: único pacote com permissão de escrita em `usuario`. Orquestra
-`natyapi` e `usuario`, no cron e no disparo manual.
-
 `shared`: tratamento global de erro e utilitário transversal. Mantenha pequeno.
-
-`health`: indicadores customizados de `/actuator/health`.
 
 `progresso`: estado de cada integrante na trilha. Desbloqueio linear e conclusão de
 atividade. Tentativa de quiz, correção e nota mínima entram na etapa do quiz.
 
 Previstos, cada um nascendo com sua própria proposta OpenSpec:
 
+`painel`: cadastro de empresa, de integrante e de credencial. Único pacote com
+permissão de escrita em `usuario`.
+
 `gamificacao`: pontos, sequência de dias, conquistas e ranking dentro da empresa.
 
-`acompanhamento`: visão da Naty sobre quem avançou e quem parou.
+`acompanhamento`: quem avançou e quem parou, atravessando empresas.
 
 ## Planejamento
 
@@ -118,7 +111,12 @@ Todo trabalho passa pelo OpenSpec antes do código, em `openspec/`. O CLI roda p
 Não há autenticação. O app identifica a pessoa pelo e-mail digitado, sem verificação.
 Consequência aceita no primeiro corte: o ranking é fraudável e qualquer um consegue
 consultar qualquer empresa. Isso é resolvido na etapa de autenticação, que também
-protege o CRUD de conteúdo. Não trate essa ausência como esquecimento.
+protege o painel e o CRUD de conteúdo. Não trate essa ausência como esquecimento.
+
+Não existe caminho para cadastrar empresa nem integrante. A migration `V5` removeu as
+colunas que vinham da Naty API, então `usuario` só é populada pelo seed de
+desenvolvimento até o pacote `painel` existir. As decisões que sustentam esse desenho
+estão em `docs/decisoes.md`, e o backlog em `docs/tasks.md`.
 
 `POST /api/v1/sessoes` exige senha no corpo e a descarta. Ela não é verificada, não é
 guardada e não é registrada em log. Existe para o app já mandar o corpo definitivo antes

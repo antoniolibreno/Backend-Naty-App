@@ -2,9 +2,8 @@
 
 ## Responsabilidade
 
-Espelho local dos integrantes que vivem no Naty App, e a API REST que o app Flutter
-consome para le-los. Este pacote nunca cadastra usuário próprio: quem escreve na
-tabela é o pacote `sincronizacao`.
+Integrantes das empresas e a API REST que o app Flutter consome para le-los. Este
+pacote só lê: quem escreve na tabela é o pacote `painel`, que ainda não existe.
 
 O usuário é o sujeito do treinamento. `progresso` e `gamificacao` apontam para ele,
 mas ele não conhece nenhum dos dois.
@@ -16,8 +15,7 @@ mas ele não conhece nenhum dos dois.
 - `UsuarioService`: leitura e regra de consulta. Sem método de escrita exposto para
   o controller.
 - `UsuarioController`: `/api/v1/usuarios`, só verbos de leitura.
-- `UsuarioMapper`: traduz `NatyUsuarioResponse` em `Usuario` e `Usuario` em
-  `UsuarioResponse`.
+- `UsuarioMapper`: traduz `Usuario` em `UsuarioResponse`.
 - `dto/UsuarioResponse` e `dto/UsuarioFiltro`: contrato de saída e de filtro de busca.
 
 ## Decisões
@@ -25,26 +23,24 @@ mas ele não conhece nenhum dos dois.
 A entidade se chama `Usuario`, sem sufixo `Entity`. O nome do domínio é o nome da
 classe.
 
-`UsuarioController` expõe apenas leitura. Criar, alterar ou apagar usuário aqui
-inverteria a fonte da verdade, que é o Naty App. Escrita chega só pela sincronização.
-
-A tabela `usuario` guarda o payload cru da Naty API em coluna `payload jsonb`, além
-das colunas tipadas. Campo novo que a Naty adicionar fica disponível sem migration,
-e só vira coluna quando alguém precisar consultar por ele.
+`UsuarioController` expõe apenas leitura. Criar, alterar ou apagar integrante é
+trabalho do `painel`, e concentrar a escrita num lugar só é o que mantém a regra
+auditável.
 
 Todo usuário pertence a uma empresa. `empresa_id` é obrigatório e nenhuma consulta de
-usuário roda sem filtro de empresa. O token da Naty API é por empresa, então dois
-integrantes de clientes diferentes podem colidir em qualquer campo menos nesse par.
+usuário roda sem filtro de empresa.
 
 ## Armadilhas
 
-`naty_id` é a chave natural vinda da Naty API, e o índice único é no par
-`(empresa_id, naty_id)`, não em `naty_id` sozinho. O upsert da sincronização depende
-disso. Remover essa restrição transforma resincronização em duplicação silenciosa de
-linha.
+A migration `V5` removeu `naty_id`, `payload`, `ultimo_acesso_naty` e
+`sincronizado_em`, junto com o índice único de `(empresa_id, naty_id)`. O identificador
+natural do integrante passou a ser o e-mail, e `usuario_empresa_email_idx` é o único
+índice único que sobrou. A decisão de e-mail único no sistema inteiro está em
+`docs/decisoes.md` e vira migration na etapa do painel.
 
-O campo `perfil` (`admin`, `supervisor`, `user`) vem da Naty API e não muda nada no
-treinamento: todos fazem a mesma trilha. Não use esse campo como permissão.
+O campo `perfil` (`admin`, `supervisor`, `user`) descreve o que a pessoa faz no
+WhatsApp e não muda nada no treinamento: todos fazem a mesma trilha. Não use esse campo
+como permissão. O papel administrativo nasce como coluna própria na etapa do painel.
 
 `ddl-auto` está em `validate`. Adicionar campo na entidade sem escrever a migration
 correspondente derruba a aplicação na subida, e isso é proposital.
@@ -75,6 +71,5 @@ Validation roda depois do construtor, então normalizar no serviço chegaria tar
 e-mail com espaço seria rejeitado com 400 antes de qualquer busca.
 
 Stub: `UsuarioController`, `UsuarioMapper`, `dto/UsuarioResponse` e
-`dto/UsuarioFiltro`. O `UsuarioMapper` é preenchido pela etapa da integração com a
-Naty API, que precisa converter `NatyUsuarioResponse` em `Usuario`. Os outros esperam
-a etapa que tiver um caso de uso de listagem de integrante.
+`dto/UsuarioFiltro`. Todos esperam a etapa que tiver um caso de uso de listagem de
+integrante, que é a do painel.

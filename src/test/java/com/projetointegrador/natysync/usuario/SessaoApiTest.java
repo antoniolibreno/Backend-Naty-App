@@ -40,12 +40,10 @@ class SessaoApiTest extends IntegracaoTest {
 
         Usuario usuario = new Usuario();
         usuario.setEmpresa(empresa);
-        usuario.setNatyId("naty-teste-001");
         usuario.setNome("Integrante de Teste");
         usuario.setEmail("integrante@teste.com.br");
         usuario.setPerfil("user");
         usuario.setStatus("offline");
-        usuario.setPayload("{}");
         usuarioId = usuarioRepository.save(usuario).getId();
     }
 
