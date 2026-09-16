@@ -10,20 +10,20 @@
 A migration vem antes da entidade. `ddl-auto` está em `validate`, e campo em entidade sem
 coluna no banco derruba a subida.
 
-- [ ] 2.1 Escrever `src/main/resources/db/migration/V6__credencial_papel_e_sessao.sql`.
+- [x] 2.1 Escrever `src/main/resources/db/migration/V6__credencial_papel_e_sessao.sql`.
   Não editar `V1` a `V5`: o Flyway valida o checksum do que já rodou.
-- [ ] 2.2 Adicionar a `usuario` as colunas `senha_hash` text, `papel` varchar(20) not
+- [x] 2.2 Adicionar a `usuario` as colunas `senha_hash` text, `papel` varchar(20) not
   null com padrão `INTEGRANTE` e `ativo` boolean not null com padrão `true`. As colunas
   nascem com padrão porque o seed repetível roda depois das migrations versionadas.
-- [ ] 2.3 Criar a tabela `sessao` com `id` uuid padrão `gen_random_uuid()`, `usuario_id`
+- [x] 2.3 Criar a tabela `sessao` com `id` uuid padrão `gen_random_uuid()`, `usuario_id`
   not null referenciando `usuario(id)` com `on delete cascade`, `token_hash` text not
   null, `criado_em`, `expira_em`, `ultimo_acesso_em` e `revogado_em` timestamptz.
-- [ ] 2.4 Criar o índice único `sessao_token_hash_idx` sobre `token_hash` e o índice
+- [x] 2.4 Criar o índice único `sessao_token_hash_idx` sobre `token_hash` e o índice
   `sessao_usuario_idx` sobre `usuario_id`.
-- [ ] 2.5 Dropar `usuario_empresa_email_idx` e criar o índice único global
+- [x] 2.5 Dropar `usuario_empresa_email_idx` e criar o índice único global
   `usuario_email_idx` sobre `lower(email)`. A migration falha alto se já existir e-mail
   repetido entre empresas, e não deduplica em silêncio.
-- [ ] 2.6 Subir com `docker compose down -v` antes, porque `baseline-on-migrate` mascara
+- [x] 2.6 Subir com `docker compose down -v` antes, porque `baseline-on-migrate` mascara
   divergência de histórico em banco já migrado. Conferir com `\d usuario` e `\d sessao`.
 
 ## 3. Seed de desenvolvimento
