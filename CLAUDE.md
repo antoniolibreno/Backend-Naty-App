@@ -87,6 +87,9 @@ Endpoints REST em português: `/api/v1/usuarios`, `/api/v1/atividades/{id}/quiz`
 
 Schema do banco é do Flyway. `ddl-auto` fica em `validate` e não muda.
 
+Mensagem de commit não leva linha de atribuição de ferramenta nem trailer
+`Co-Authored-By`. A autoria do histórico é só de quem assina o commit.
+
 ## Pacotes
 
 `config`: beans de infraestrutura, OpenAPI, CORS e resolvedor de argumento.
