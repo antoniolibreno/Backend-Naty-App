@@ -8,19 +8,18 @@ context: |
   e ranking entre os integrantes da mesma empresa. A Naty acompanha quem esta
   avancando e quem parou.
 
-  O backend expoe REST para um app Flutter, e le usuarios da Naty API V3 para saber
-  quem sao os integrantes de cada empresa. O sistema nunca cadastra usuario proprio:
-  a fonte da verdade de quem existe e o Naty App. Todo o conteudo de treinamento e
-  todo o progresso sao do nosso banco, porque a Naty API nao tem nada disso.
+  O backend expoe REST para um app Flutter e para um painel administrativo. O painel
+  e a fonte da verdade de quem existe: empresa, integrante e credencial nascem la. O
+  sistema nao depende de nenhum servico externo para subir. Todo o conteudo de
+  treinamento e todo o progresso sao do nosso banco.
 
-  O sistema atende varias empresas. Cada empresa e um cliente da Naty com seu
-  proprio token da Naty API. Usuario, progresso e ranking sao sempre filtrados por
-  empresa. Conteudo de treinamento e global: todas as empresas fazem a mesma trilha.
+  O sistema atende varias empresas. Usuario, progresso e ranking sao sempre
+  filtrados por empresa. Conteudo de treinamento e global: todas as empresas fazem a
+  mesma trilha.
 
-  Stack: Java 21, Spring Boot 4.1.1, Maven, Spring RestClient, PostgreSQL,
-  Spring Data JPA, Flyway, MapStruct, Bean Validation, Resilience4j,
-  springdoc-openapi, Spotless, JUnit 5, Mockito, Testcontainers PostgreSQL,
-  Docker Compose.
+  Stack: Java 21, Spring Boot 4.1.1, Maven, PostgreSQL, Spring Data JPA, Flyway,
+  MapStruct, Bean Validation, springdoc-openapi, Spotless, JUnit 5,
+  Testcontainers PostgreSQL, Docker Compose.
 
   Pacote raiz: com.projetointegrador.natysync
 
@@ -31,13 +30,23 @@ context: |
   - Dominio em portugues sem sufixo desnecessario: Usuario, nao UsuarioEntity.
   - Sufixos: Repository, Service, Controller, Response, Request, Filtro, Exception.
   - Pacotes em minusculo, singular, sem underline.
-  - Endpoints REST em portugues: /api/v1/usuarios, /api/v1/sincronizacoes/usuarios.
+  - Endpoints REST em portugues: /api/v1/usuarios, /api/v1/atividades/{id}/quiz.
   - Todo pacote nasce com seu proprio CLAUDE.md. Pacote sem CLAUDE.md e incompleto.
   - Ler o CLAUDE.md do pacote antes de alterar qualquer arquivo dentro dele.
   - Sem uso de em dash em nenhum texto gerado.
   - Dependencias entram no pom.xml apenas na etapa que realmente as usa.
-  - Payload cru vindo da Naty API e guardado em coluna jsonb. Schema do banco e
-    do Flyway, nunca do ddl-auto do Hibernate.
+  - Schema do banco e do Flyway, nunca do ddl-auto do Hibernate.
+
+  Regra de escrita dos documentos:
+  - Documento enuncia a regra que vale, nunca a historia de como se chegou nela.
+  - Proibido verbo de mudanca: removeu, saiu, deixa de valer, passou a ser, nasce no
+    lugar, substituido por.
+  - Proibido referencia a etapa ou a numeracao de tarefa, e proibido contagem de
+    alteracao.
+  - Proibido marcador de tempo: hoje, ainda, por ora, nesta etapa, temporario,
+    provisorio.
+  - Escrever a propriedade que vale agora. O aviso nao se perde, muda de forma.
+    Historico e do git.
 
   Regra de comentarios no codigo:
   - Proibido comentario explicativo. Se um trecho precisa de comentario para ser
@@ -50,8 +59,10 @@ context: |
   - Proibido marcador temporal ou de autoria. Nada de "mudado em ago/26",
     TODO com nome, FIXME com ano, @since, @author, "alterado por" ou changelog
     inline. Esse historico e do git.
-  - Pendencia vira tarefa no tasks.md do OpenSpec ou linha na secao Estado atual
-    do CLAUDE.md do pacote, nunca comentario no codigo.
+  - Pendencia vira item de docs/backlog.md ou tarefa no tasks.md da proposta
+    OpenSpec em andamento, nunca comentario no codigo.
+
+  Regras de produto vigentes em docs/regras.md. Backlog em docs/backlog.md.
 
   Propostas, tarefas e specs escritas em portugues.
 

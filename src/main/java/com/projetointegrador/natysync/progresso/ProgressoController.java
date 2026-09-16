@@ -21,8 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProgressoController {
 
     private static final String DESCRICAO_CABECALHO_INTEGRANTE =
-            "PROVISORIO E FORJAVEL. Identificador do integrante devolvido por POST /api/v1/sessoes."
-                    + " Substituido por token de autenticacao em etapa futura.";
+            "FORJAVEL. Identificador do integrante devolvido por POST /api/v1/sessoes."
+                    + " Nenhuma verificacao de identidade acontece: quem chama responde por qualquer integrante.";
 
     private final ProgressoService progressoService;
 

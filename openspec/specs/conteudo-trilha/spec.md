@@ -67,7 +67,7 @@ pontuação, duração quando houver, e a indicação de que ela possui quiz.
 
 #### Scenario: Atividade sem vídeo publicado
 
-- **WHEN** a atividade ainda não tem vídeo associado
+- **WHEN** a atividade não tem vídeo associado
 - **THEN** o sistema devolve a atividade com a imagem preenchida e o vídeo ausente,
   sem tratar isso como erro
 

@@ -9,8 +9,8 @@ Duolingo. Há pontuação, sequência de dias, conquistas e ranking entre os int
 mesma empresa. A Naty acompanha quem está avançando e quem parou.
 
 O backend expõe REST para um app Flutter e para um painel administrativo. O painel é a
-fonte da verdade de quem existe: empresa, integrante e credencial nascem lá. Não há
-integração com a Naty API, e o sistema não depende de nenhum serviço externo para subir.
+fonte da verdade de quem existe: empresa, integrante e credencial nascem lá. O sistema
+não depende de nenhum serviço externo para subir.
 
 O sistema atende várias empresas. Usuário, progresso e ranking são sempre filtrados por
 empresa. Conteúdo de treinamento é global: todas as empresas fazem a mesma trilha.
@@ -18,16 +18,17 @@ empresa. Conteúdo de treinamento é global: todas as empresas fazem a mesma tri
 ## Regra número um
 
 Antes de alterar qualquer arquivo dentro de um pacote, leia o `CLAUDE.md` daquele
-pacote. Ele diz o que é stub, o que é decisão deliberada e o que quebra silenciosamente.
-Pacote sem `CLAUDE.md` está incompleto: escreva um antes de mexer no código.
+pacote. Ele diz o que é decisão deliberada e o que quebra silenciosamente. Pacote sem
+`CLAUDE.md` está incompleto: escreva um antes de mexer no código.
 
 ## Stack
 
-Java 21, Spring Boot 4.1.1, Maven, PostgreSQL, Spring Data JPA,
-Flyway, MapStruct, Bean Validation, springdoc-openapi, Spotless, JUnit 5,
-Testcontainers PostgreSQL, Docker Compose.
+Java 21, Spring Boot 4.1.1, Maven, PostgreSQL, Spring Data JPA, Flyway, MapStruct,
+Bean Validation, springdoc-openapi, Spotless, JUnit 5, Testcontainers PostgreSQL,
+Docker Compose.
 
-Spring Security ainda não está no `pom.xml`. Entra na etapa de autenticação.
+Dependência entra no `pom.xml` apenas na proposta que realmente a usa. Spring Security
+não está no `pom.xml`.
 
 ## Comandos
 
@@ -40,6 +41,21 @@ docker compose down -v        # derruba e limpa o volume
 
 Health em `http://localhost:8080/actuator/health`, Swagger UI em
 `http://localhost:8080/swagger-ui.html`.
+
+## Regra de escrita dos documentos
+
+Documento enuncia a regra que vale, nunca a história de como se chegou nela. Vale para
+este arquivo, para o `CLAUDE.md` de cada pacote, para `docs/`, para `README.md`, para
+`openspec/` e para todo texto que sai no Swagger.
+
+Proibido verbo de mudança: removeu, saiu, deixa de valer, passou a ser, nasce no lugar,
+substituído por. Proibido referência a etapa ou a numeração de tarefa. Proibido marcador
+de tempo: hoje, ainda, por ora, nesta etapa, temporário, provisório. Proibido contagem
+de alteração.
+
+Escreva a propriedade que vale agora. "O cabeçalho `X-Integrante-Id` é forjável" no
+lugar de "o cabeçalho é forjável enquanto não existir autenticação". O aviso não se
+perde, muda de forma. Histórico é do git.
 
 ## Regra de comentários no código
 
@@ -54,10 +70,9 @@ limitação de biblioteca. Uma linha, curtíssimo.
 
 Proibido marcador temporal ou de autoria. Nada de "mudado em ago/26", `TODO` com nome,
 `FIXME` com ano, `@since`, `@author`, "alterado por" ou changelog dentro do arquivo.
-Esse histórico é do git.
 
-Pendência vira tarefa no `tasks.md` do OpenSpec ou linha na seção Estado atual do
-`CLAUDE.md` do pacote. Nunca comentário no código.
+Pendência não vira comentário no código nem linha de `CLAUDE.md`. Ela vira item de
+`docs/backlog.md` ou tarefa no `tasks.md` da proposta OpenSpec em andamento.
 
 ## Convenções
 
@@ -74,59 +89,70 @@ Schema do banco é do Flyway. `ddl-auto` fica em `validate` e não muda.
 
 ## Pacotes
 
-Existem hoje:
-
 `config`: beans de infraestrutura, OpenAPI, CORS e resolvedor de argumento.
-`SecurityConfig` está deliberadamente ausente, o motivo está em `config/CLAUDE.md`.
 
-`usuario`: integrantes das empresas e a resolução provisória de identidade em
-`POST /api/v1/sessoes`. Só lê; a escrita é do painel.
+`usuario`: integrantes das empresas e a resolução de identidade em
+`POST /api/v1/sessoes`. Só lê; a escrita pertence ao painel.
 
 `empresa`: cliente da Naty e raiz do isolamento de dados.
 
 `trilha`: conteúdo do treinamento e a leitura dele. Trilha, módulo, atividade, quiz,
 pergunta e alternativa. Conteúdo semeado por migration, sem CRUD.
 
+`progresso`: estado de cada integrante na trilha, com desbloqueio linear e conclusão de
+atividade.
+
 `shared`: tratamento global de erro e utilitário transversal. Mantenha pequeno.
 
-`progresso`: estado de cada integrante na trilha. Desbloqueio linear e conclusão de
-atividade. Tentativa de quiz, correção e nota mínima entram na etapa do quiz.
-
-Previstos, cada um nascendo com sua própria proposta OpenSpec:
-
-`painel`: cadastro de empresa, de integrante e de credencial. Único pacote com
-permissão de escrita em `usuario`.
-
-`gamificacao`: pontos, sequência de dias, conquistas e ranking dentro da empresa.
-
-`acompanhamento`: quem avançou e quem parou, atravessando empresas.
+Pacote novo nasce com sua própria proposta OpenSpec e com o seu `CLAUDE.md`.
 
 ## Planejamento
 
 Todo trabalho passa pelo OpenSpec antes do código, em `openspec/`. O CLI roda por
 `npx --yes @fission-ai/openspec@latest`, sem instalação global.
 
-## Dívidas conhecidas
+O backlog vive em `docs/backlog.md`. A exportação para ferramenta de card é gerada sob
+demanda e não é versionada.
 
-Não há autenticação. O app identifica a pessoa pelo e-mail digitado, sem verificação.
-Consequência aceita no primeiro corte: o ranking é fraudável e qualquer um consegue
-consultar qualquer empresa. Isso é resolvido na etapa de autenticação, que também
-protege o painel e o CRUD de conteúdo. Não trate essa ausência como esquecimento.
+### Quem é fonte da verdade de quê
 
-Não existe caminho para cadastrar empresa nem integrante. A migration `V5` removeu as
-colunas que vinham da Naty API, então `usuario` só é populada pelo seed de
-desenvolvimento até o pacote `painel` existir. As decisões que sustentam esse desenho
-estão em `docs/decisoes.md`, e o backlog em `docs/tasks.md`.
+Cada documento responde a uma pergunta e não invade a do vizinho.
 
-`POST /api/v1/sessoes` exige senha no corpo e a descarta. Ela não é verificada, não é
-guardada e não é registrada em log. Existe para o app já mandar o corpo definitivo antes
-da etapa de autenticação. Qualquer senha não vazia é aceita.
+| Documento | Pergunta | Fonte da verdade de |
+|---|---|---|
+| `docs/regras.md` | Por que o sistema é assim? | Invariantes de desenho, inclusive do que não está construído |
+| `openspec/specs/` | O que o sistema faz? | Contrato observável do construído e verificado |
+| `CLAUDE.md` raiz e de pacote | Onde mexo e o que quebra? | Mapa do código, limites aceitos, armadilhas |
+| `docs/backlog.md` | O que falta? | Delta entre `docs/regras.md` e `openspec/specs/` |
+| `README.md` | O que é isto? | O construído, para quem chega de fora |
+
+Divergência entre `docs/regras.md` e `openspec/specs/` não é erro de documento, é item de
+backlog. Spec não é editada para acertar com a regra fora de uma proposta; regra não é
+rebaixada para caber no construído.
+
+## Limites do sistema
+
+Não há autenticação. O app identifica a pessoa pelo e-mail digitado, sem verificação. O
+ranking é fraudável e qualquer um consulta qualquer empresa. Não trate essa ausência
+como esquecimento: ela é o corte de escopo aceito e está registrada em `docs/backlog.md`.
+
+Não existe caminho para cadastrar empresa nem integrante. A tabela `usuario` é populada
+pelo seed de desenvolvimento.
+
+`POST /api/v1/sessoes` exige senha no corpo e a descarta. A senha não é verificada, não
+é guardada e não é registrada em log. Qualquer senha não vazia é aceita. O endpoint
+existe para o app usar o corpo definitivo, e não emite credencial nem token.
 
 As operações de progresso identificam o integrante pelo cabeçalho `X-Integrante-Id`, que
-é forjável: qualquer um marca atividade como concluída em nome de outro. Aceito enquanto
-não existe pontuação nem ranking a fraudar. Quando a autenticação entrar, muda só
-`usuario/IntegranteArgumentResolver`, e nenhuma rota nem chamada do app é reescrita.
+é forjável: qualquer um marca atividade como concluída em nome de outro. A troca desse
+mecanismo por autenticação mexe só em `usuario/IntegranteArgumentResolver`, sem
+reescrever rota nem chamada do app.
 
-Atividade conclui com o vídeo assistido, tenha ela quiz ou não. Temporário: exigir
-aprovação no quiz antes de a tentativa de quiz existir travaria a trilha no primeiro nó.
-A regra muda na etapa do quiz.
+Atividade conclui quando o vídeo é marcado como assistido, tenha ela quiz ou não. O quiz
+é apenas leitura: nenhuma tentativa é recebida, corrigida ou guardada, e `quiz.nota_minima`
+não é aplicada a nada.
+
+`atividade.video_url` é nulo em todo o conteúdo semeado. A atividade mostra só a imagem.
+
+Não existe pontuação, sequência de dias, conquista nem ranking. `atividade.xp` é
+devolvido na leitura porque a tela mostra o valor, e nada o soma.

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/sessoes")
-@Tag(name = "Sessoes", description = "Resolucao provisoria de identidade do integrante")
+@Tag(name = "Sessoes", description = "Resolucao de identidade do integrante, sem autenticacao")
 public class SessaoController {
 
     private final UsuarioService usuarioService;
@@ -24,11 +24,10 @@ public class SessaoController {
     @PostMapping
     @Operation(
             summary = "Resolve o integrante a partir do e-mail",
-            description = "PROVISORIO E SEM AUTENTICACAO. Nao emite token, credencial nem cookie de sessao."
+            description = "SEM AUTENTICACAO. Nao emite token, credencial nem cookie de sessao."
                     + " Qualquer e-mail existente na base e aceito sem verificar a identidade de quem chama."
-                    + " A senha e exigida no corpo apenas para fixar o contrato do app: ela nao e verificada,"
-                    + " nao e guardada e nao e registrada em log. Qualquer senha nao vazia e aceita."
-                    + " Substituido por autenticacao real em etapa futura.")
+                    + " A senha e exigida no corpo e descartada: ela nao e verificada, nao e guardada"
+                    + " e nao e registrada em log. Qualquer senha nao vazia e aceita.")
     public SessaoResponse resolver(@Valid @RequestBody SessaoRequest requisicao) {
         return usuarioService.resolverPorEmail(requisicao.email());
     }

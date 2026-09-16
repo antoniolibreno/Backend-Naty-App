@@ -62,7 +62,7 @@ public class ProgressoService {
         SequenciaDaTrilha sequencia = montador.sequenciar(trilha, progressos);
 
         if (sequencia.estadoDe(atividadeId) == EstadoAtividade.BLOQUEADO) {
-            throw new AtividadeBloqueadaException("Atividade ainda nao liberada para o integrante: " + atividadeId);
+            throw new AtividadeBloqueadaException("Atividade nao liberada para o integrante: " + atividadeId);
         }
 
         ProgressoAtividade progresso = progressos.get(atividadeId);

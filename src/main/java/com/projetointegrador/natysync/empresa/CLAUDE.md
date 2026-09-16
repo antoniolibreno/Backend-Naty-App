@@ -3,8 +3,8 @@
 ## Responsabilidade
 
 Representa um cliente da Naty. É a raiz do isolamento de dados: todo integrante, todo
-progresso e todo ranking pertencem a uma empresa. Este pacote não conhece treinamento
-nem trilha.
+progresso e todo ranking pertencem a uma empresa. Este pacote não conhece treinamento nem
+trilha.
 
 ## Contratos
 
@@ -13,23 +13,22 @@ nem trilha.
 
 ## Decisões
 
-Conteúdo de treinamento não pertence à empresa. Todas fazem a mesma trilha, então
-nenhuma tabela de conteúdo tem `empresa_id`. Se um dia existir conteúdo exclusivo, ele
-entra como tabela de associação entre empresa e trilha, sem alterar o que já existe.
+Conteúdo de treinamento não pertence à empresa. Todas fazem a mesma trilha, então nenhuma
+tabela de conteúdo tem `empresa_id`. Conteúdo exclusivo, se existir, entra como tabela de
+associação entre empresa e trilha, sem alterar o que já existe.
 
 ## Armadilhas
 
-Hoje nenhum endpoint expõe `Empresa`, e essa ausência é proposital até o pacote
-`painel` existir.
+`Empresa` não gera identificador e não preenche os carimbos de data que as outras
+entidades preenchem. Persistir uma empresa por código exige montar o id à mão.
 
-Empresa inativa ainda tem integrantes e progresso no banco. Desativar não apaga nada,
-e nenhuma consulta filtra por `ativa` automaticamente. Quem precisar desse filtro
-escreve ele.
+Empresa inativa continua com integrantes e progresso no banco. Desativar não apaga nada, e
+nenhuma consulta filtra por `ativa` automaticamente. Quem precisar desse filtro escreve
+ele.
 
-## Estado atual
+## Ausências deliberadas
 
-Real: `Empresa` e `EmpresaRepository`.
+Nenhum endpoint expõe `Empresa`. O cadastro pertence ao pacote `painel`, junto com o fuso
+horário que a sequência de dias exige.
 
-Não existe endpoint de empresa, nem CRUD. A empresa nasce por seed, e a entidade não
-gera id nem preenche os carimbos de data, então persistir por código falha hoje. O
-pacote `painel` conserta isso e passa a cadastrar empresa com fuso horário.
+A empresa existente vem do seed de desenvolvimento.
