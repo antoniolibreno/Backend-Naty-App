@@ -7,38 +7,35 @@ estilo Duolingo, e a fonte de leitura que a Home do app Flutter usa para se dese
 
 ## Requirements
 
-### Requirement: Integrante da requisição
+### Requirement: Integrante autenticado da requisição
 
-Toda operação de progresso SHALL ser executada em nome de um integrante informado pelo
-cliente no cabeçalho da requisição. O sistema SHALL resolver, a partir desse
-identificador, o integrante e a empresa dele. O sistema NÃO SHALL aceitar operação de
-progresso sem esse identificador.
+Toda operação de progresso SHALL ser executada em nome do integrante dono do token de
+sessão apresentado na requisição. O sistema SHALL resolver, a partir desse token, o
+integrante e a empresa dele. O sistema NÃO SHALL aceitar operação de progresso sem token
+válido, e NÃO SHALL aceitar integrante informado pelo cliente por qualquer outro meio.
 
-Esse identificador NÃO constitui prova de identidade e pode ser forjado. Essa limitação
-SHALL estar visível na documentação da API.
+#### Scenario: Token válido
 
-#### Scenario: Identificador presente e existente
-
-- **WHEN** o cliente envia uma operação de progresso informando o identificador de um
-  integrante existente
-- **THEN** o sistema executa a operação em nome desse integrante e da empresa dele
-
-#### Scenario: Identificador ausente
-
-- **WHEN** o cliente envia uma operação de progresso sem informar o identificador do
-  integrante
-- **THEN** o sistema devolve erro de validação, e NÃO executa a operação
-
-#### Scenario: Identificador malformado
-
-- **WHEN** o cliente informa um identificador de integrante que não é um identificador
+- **WHEN** o cliente envia uma operação de progresso apresentando um token de sessão
   válido
-- **THEN** o sistema devolve erro de validação, e NÃO executa a operação
+- **THEN** o sistema executa a operação em nome do integrante dono do token e da empresa
+  dele
 
-#### Scenario: Identificador de integrante inexistente
+#### Scenario: Token ausente
 
-- **WHEN** o cliente informa um identificador que não corresponde a nenhum integrante
-- **THEN** o sistema devolve erro de recurso não encontrado
+- **WHEN** o cliente envia uma operação de progresso sem apresentar token
+- **THEN** o sistema recusa a chamada, e NÃO executa a operação
+
+#### Scenario: Token inválido ou expirado
+
+- **WHEN** o cliente apresenta um token desconhecido, revogado ou expirado
+- **THEN** o sistema recusa a chamada, e NÃO executa a operação
+
+#### Scenario: Integrante informado pelo cliente é ignorado
+
+- **WHEN** o cliente apresenta um token válido e informa, por qualquer outro meio, um
+  identificador de integrante diferente do dono do token
+- **THEN** o sistema executa a operação em nome do dono do token
 
 ### Requirement: Desbloqueio linear das atividades
 

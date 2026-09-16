@@ -1,43 +1,57 @@
 # sessao-integrante Specification
 
 ## Purpose
-Resolve qual integrante está usando o aplicativo a partir do e-mail que ele digita,
-devolvendo o identificador dele e o da empresa a que pertence. É o que permite saber de
-quem é o progresso em um sistema sem autenticação.
+Autentica o integrante pelo e-mail e pela senha cadastrados no nosso banco e emite a
+sessao que identifica quem chama em todas as demais rotas. E o que permite saber de quem
+e o progresso, e o que o servidor verifica antes de responder qualquer coisa.
 
 ## Requirements
 
-### Requirement: Resolução de integrante por e-mail
+### Requirement: Autenticação por e-mail e senha
 
-O sistema SHALL aceitar um e-mail e uma senha, e devolver o identificador do integrante,
-o identificador da empresa dele e o nome, quando existir integrante com aquele e-mail. A
-comparação de e-mail SHALL ignorar diferença entre maiúsculas e minúsculas e espaços nas
-pontas.
+O sistema SHALL aceitar um e-mail e uma senha, verificar a senha contra a credencial
+guardada e, quando a verificação passar, devolver o identificador do integrante, o
+identificador da empresa dele, o nome e um token de sessão com o momento em que ele
+expira. A comparação de e-mail SHALL ignorar diferença entre maiúsculas e minúsculas e
+espaços nas pontas.
 
-A senha SHALL ser exigida no corpo da requisição e SHALL ser descartada em seguida. O
-sistema NÃO SHALL verificar a senha, NÃO SHALL guardá-la e NÃO SHALL registrá-la em log
-ou em mensagem de erro. Qualquer senha não vazia SHALL ser aceita.
+A senha SHALL ser guardada apenas como hash. O sistema NÃO SHALL guardar a senha em
+texto, NÃO SHALL devolvê-la em resposta e NÃO SHALL registrá-la em log ou em mensagem de
+erro. O token de sessão SHALL obedecer à mesma regra.
 
-#### Scenario: E-mail cadastrado
+O erro de e-mail não cadastrado e o erro de senha incorreta SHALL ser indistinguíveis
+para quem chama, para a resposta não revelar quais e-mails existem.
 
-- **WHEN** o cliente envia um e-mail que pertence a um integrante existente, com senha
-  preenchida
-- **THEN** o sistema devolve o identificador do integrante, o da empresa e o nome
+Integrante desativado NÃO SHALL obter sessão.
+
+#### Scenario: E-mail cadastrado com senha correta
+
+- **WHEN** o cliente envia um e-mail que pertence a um integrante ativo, com a senha
+  correta
+- **THEN** o sistema devolve o identificador do integrante, o da empresa, o nome, um
+  token de sessão e o momento de expiração dele
 
 #### Scenario: E-mail com maiúsculas e espaços
 
-- **WHEN** o cliente envia o mesmo e-mail com letras maiúsculas e espaços nas pontas
+- **WHEN** o cliente envia o mesmo e-mail com letras maiúsculas e espaços nas pontas,
+  com a senha correta
 - **THEN** o sistema resolve o mesmo integrante
 
-#### Scenario: Qualquer senha é aceita
+#### Scenario: Senha incorreta
 
-- **WHEN** o cliente envia um e-mail cadastrado com duas senhas diferentes entre si
-- **THEN** o sistema resolve o mesmo integrante nas duas vezes
+- **WHEN** o cliente envia um e-mail cadastrado com senha incorreta
+- **THEN** o sistema recusa a autenticação e NÃO emite token
 
 #### Scenario: E-mail não cadastrado
 
 - **WHEN** o cliente envia um e-mail que não pertence a nenhum integrante
-- **THEN** o sistema devolve erro de recurso não encontrado
+- **THEN** o sistema recusa a autenticação com a mesma resposta que devolve para senha
+  incorreta
+
+#### Scenario: Integrante desativado
+
+- **WHEN** um integrante desativado envia a senha correta
+- **THEN** o sistema recusa a autenticação e NÃO emite token
 
 #### Scenario: E-mail ausente ou inválido
 
@@ -49,25 +63,64 @@ ou em mensagem de erro. Qualquer senha não vazia SHALL ser aceita.
 - **WHEN** o cliente envia corpo sem senha ou com senha vazia
 - **THEN** o sistema devolve erro de validação
 
-### Requirement: Resolução não é autenticação
-
-A resolução de integrante NÃO constitui autenticação. O sistema NÃO SHALL emitir
-credencial, token de sessão ou cookie a partir dela. A senha exigida no corpo NÃO SHALL
-ser tratada como segredo verificado. Essa limitação SHALL estar visível na documentação
-da API.
-
-#### Scenario: Nenhuma credencial emitida
-
-- **WHEN** a resolução de integrante ocorre com sucesso
-- **THEN** a resposta NÃO contém token, credencial ou cookie de sessão
-
 #### Scenario: Senha não retorna na resposta
 
-- **WHEN** a resolução de integrante ocorre com sucesso
+- **WHEN** a autenticação ocorre com sucesso
 - **THEN** a resposta NÃO contém a senha enviada, em nenhuma forma
 
-#### Scenario: Limitação documentada
+### Requirement: Identidade de toda chamada vem do token
 
-- **WHEN** alguém consulta a documentação da API
-- **THEN** a operação de resolução de integrante está marcada como não autenticada, e a
-  senha está marcada como aceita sem verificação
+Toda operação que depende de saber quem chama SHALL obter o integrante e a empresa a
+partir do token de sessão apresentado na requisição. O sistema NÃO SHALL aceitar o
+integrante ou a empresa informados pelo cliente no corpo, na URL ou em cabeçalho próprio.
+
+São públicas apenas a emissão de sessão, a verificação de saúde da aplicação e a
+documentação da API em desenvolvimento.
+
+#### Scenario: Token válido
+
+- **WHEN** o cliente apresenta um token de sessão válido
+- **THEN** o sistema executa a operação em nome do integrante dono do token e da empresa
+  dele
+
+#### Scenario: Token ausente
+
+- **WHEN** o cliente chama uma operação protegida sem apresentar token
+- **THEN** o sistema recusa a chamada e NÃO executa a operação
+
+#### Scenario: Token desconhecido
+
+- **WHEN** o cliente apresenta um token que não corresponde a nenhuma sessão
+- **THEN** o sistema recusa a chamada e NÃO executa a operação
+
+#### Scenario: Emissão de sessão é pública
+
+- **WHEN** o cliente chama a emissão de sessão sem apresentar token
+- **THEN** o sistema processa a autenticação normalmente
+
+### Requirement: Sessão expira e é revogável
+
+A sessão SHALL ter um momento de expiração, e o sistema NÃO SHALL aceitar token expirado.
+O sistema SHALL oferecer a revogação da sessão em uso, e token revogado NÃO SHALL ser
+aceito na chamada seguinte.
+
+O tempo de expiração SHALL ser lido de configuração de ambiente, nunca de constante em
+código.
+
+A sessão SHALL guardar o momento do último acesso do integrante.
+
+#### Scenario: Token expirado
+
+- **WHEN** o cliente apresenta um token cuja expiração já passou
+- **THEN** o sistema recusa a chamada e NÃO executa a operação
+
+#### Scenario: Revogação
+
+- **WHEN** o integrante revoga a sessão em uso
+- **THEN** a chamada seguinte com aquele token é recusada
+
+#### Scenario: Último acesso registrado
+
+- **WHEN** o integrante usa uma sessão válida
+- **THEN** o sistema registra o momento do acesso na própria sessão, e NÃO no cadastro do
+  integrante

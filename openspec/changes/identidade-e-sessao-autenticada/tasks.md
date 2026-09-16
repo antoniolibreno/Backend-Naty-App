@@ -120,7 +120,8 @@ coluna no banco derruba a subida.
 
 ## 11. Fechamento
 
-- [ ] 11.1 Rodar `./mvnw -B verify` com Docker ativo e conferir que todos os testes
+- [x] 11.1 Rodar `./mvnw -B verify` com Docker ativo e conferir que todos os testes
   passam.
-- [ ] 11.2 Rodar `npx --yes @fission-ai/openspec@latest validate identidade-e-sessao-autenticada`.
-- [ ] 11.3 Sincronizar as specs e arquivar a proposta.
+- [x] 11.2 Rodar `npx --yes @fission-ai/openspec@latest validate identidade-e-sessao-autenticada`.
+- [x] 11.3 Sincronizar as specs.
+- [ ] 11.4 Arquivar a proposta, depois do aviso ao time do app.
