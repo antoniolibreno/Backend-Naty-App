@@ -28,9 +28,9 @@ coluna no banco derruba a subida.
 
 ## 3. Seed de desenvolvimento
 
-- [x] 3.1 Dar `senha_hash` e `papel` às três contas de
-  `db/seed-dev/R__seed_empresa_exemplo.sql`, com Ana Souza como `ADMIN` e as outras duas
-  como `INTEGRANTE`. O arquivo é repetível e recalcula o próprio checksum.
+- [x] 3.1 Dar `senha_hash` e `papel` às duas contas de
+  `db/seed-dev/R__seed_empresa_exemplo.sql`, uma `ADMIN` e uma `INTEGRANTE`. O arquivo é
+  repetível e recalcula o próprio checksum.
 - [x] 3.2 Registrar a senha de desenvolvimento no `.env.example` e no
   `usuario/CLAUDE.md`, para o time do app conseguir entrar.
 

@@ -59,7 +59,7 @@ empresa. A mesma pessoa em duas empresas precisa de dois e-mails.
 padrão no banco. O padrão do banco não alcança quem persiste pela JPA, porque o insert
 carrega a coluna explicitamente.
 
-A senha de desenvolvimento das três contas do seed é `desenvolvimento`.
+A senha de desenvolvimento das duas contas do seed é `123qweasd`.
 
 O campo `perfil` (`admin`, `supervisor`, `user`) descreve o que a pessoa faz no WhatsApp e
 não muda nada no treinamento: todos fazem a mesma trilha. Não use esse campo como
