@@ -87,8 +87,11 @@ Endpoints REST em português: `/api/v1/usuarios`, `/api/v1/atividades/{id}/quiz`
 
 Schema do banco é do Flyway. `ddl-auto` fica em `validate` e não muda.
 
-Mensagem de commit não leva linha de atribuição de ferramenta nem trailer
-`Co-Authored-By`. A autoria do histórico é só de quem assina o commit.
+Mensagem de commit, descrição de pull request e qualquer texto publicado no repositório
+não levam atribuição de ferramenta: nem trailer `Co-Authored-By`, nem linha de geração
+assistida, nem link de sessão. A autoria é só de quem assina o commit. A regra vale para
+qualquer agente que trabalhe aqui e está imposta em `.claude/settings.json`, com
+`attribution.commit`, `attribution.pr` e `attribution.sessionUrl` desligados.
 
 ## Pacotes
 
