@@ -31,9 +31,15 @@ A entidade se chama `Usuario`, sem sufixo `Entity`. O nome do domínio é o nome
 Todo usuário pertence a uma empresa. `empresa_id` é obrigatório e nenhuma consulta de
 usuário roda sem filtro de empresa.
 
-O nome é `IntegranteDaRequisicao`, e não `IntegranteAutenticado`, porque é o integrante que
-a requisição alega ser. A troca do cabeçalho por autenticação muda só a fonte do
-identificador dentro do resolvedor, e nenhum controller é reescrito.
+`IntegranteArgumentResolver` lê o integrante do contexto de segurança, preenchido por
+`TokenSessaoFiltro`. O identificador nunca vem do corpo, da URL ou de cabeçalho próprio.
+
+O token é opaco e o banco guarda só o hash SHA-256 dele, nunca o valor em claro. Vazamento
+do banco não vira sessão ativa. A senha usa bcrypt, que é lento de propósito; o token não
+precisa disso porque já nasce com 32 bytes de entropia.
+
+E-mail inexistente e senha incorreta devolvem a mesma recusa, com a mesma mensagem. Separar
+as duas respostas entregaria a lista de quem tem conta.
 
 `SessaoRequest` normaliza o e-mail no próprio construtor do record, em minúsculas e sem
 espaço nas pontas. Isso é obrigatório e não é detalhe: a validação do Bean Validation roda
@@ -42,17 +48,18 @@ seria rejeitado com 400 antes de qualquer busca.
 
 ## Armadilhas
 
-`SessaoRequest` exige senha além do e-mail, e a senha é descartada. Ela não é verificada,
-não é guardada e não é registrada em log. Qualquer senha não vazia é aceita. Não trate isso
-como implementação pela metade, e não escreva verificação de senha aqui sem a migration de
-credencial.
+A senha, o hash dela e o token de sessão nunca entram em log nem em mensagem de erro. O
+token em claro existe uma única vez, na resposta da emissão.
 
-`IntegranteArgumentResolver` lê o cabeçalho `X-Integrante-Id`, que é forjável: nenhuma
-verificação de identidade acontece.
+O identificador natural do integrante é o e-mail, e `usuario_email_idx` é único no sistema
+inteiro sobre `lower(email)`. É ele que resolve a empresa no login sem o app informar
+empresa. A mesma pessoa em duas empresas precisa de dois e-mails.
 
-O identificador natural do integrante é o e-mail, e `usuario_empresa_email_idx` é o único
-índice único da tabela. A unicidade de e-mail no sistema inteiro está registrada em
-`docs/regras.md` e depende de migration própria.
+`Usuario.papel` e `Usuario.ativo` nascem com valor no próprio campo, e não só com valor
+padrão no banco. O padrão do banco não alcança quem persiste pela JPA, porque o insert
+carrega a coluna explicitamente.
+
+A senha de desenvolvimento das três contas do seed é `desenvolvimento`.
 
 O campo `perfil` (`admin`, `supervisor`, `user`) descreve o que a pessoa faz no WhatsApp e
 não muda nada no treinamento: todos fazem a mesma trilha. Não use esse campo como
@@ -69,4 +76,4 @@ de listagem de integrante pertence ao painel.
 
 A tabela `usuario` é populada pelo seed de desenvolvimento.
 
-`POST /api/v1/sessoes` não emite token, credencial nem cookie.
+A sessão não renova: quando o token expira, o app autentica de novo.

@@ -47,14 +47,13 @@ resultado. O app desenha a tela inteira com uma chamada só.
 Os carimbos são gravados em UTC, para a mesma gravação não sair com offset local na
 resposta imediata e com `Z` depois de passar pelo banco.
 
-O integrante da requisição chega no cabeçalho `X-Integrante-Id`, resolvido em
-`usuario/IntegranteArgumentResolver`. Trocar esse mecanismo por autenticação mexe só no
-resolvedor: nenhum endpoint deste pacote é reescrito.
+O integrante da requisição é o dono do token apresentado em `Authorization: Bearer`,
+resolvido em `usuario/IntegranteArgumentResolver` a partir do contexto de segurança.
 
 ## Armadilhas
 
-O cabeçalho `X-Integrante-Id` é forjável. Nenhuma verificação de identidade acontece, e
-qualquer um registra progresso em nome de outro.
+Identificador de integrante informado pelo cliente é ignorado. O progresso é sempre do
+dono do token, e existe teste que prova isso.
 
 Assistir o vídeo conclui a atividade, tenha ela quiz ou não. A regra tem gatilho único
 porque não existe tentativa de quiz: exigir aprovação sem ela travaria a trilha no primeiro

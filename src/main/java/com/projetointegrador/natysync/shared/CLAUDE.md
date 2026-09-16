@@ -9,13 +9,12 @@ utilitários sem dono claro. É o menor pacote do projeto de propósito.
 
 - `exception/ApiExceptionHandler`: `@RestControllerAdvice` que traduz exceção em resposta
   HTTP, ponto único de formatação de erro da API. Recurso não encontrado vira 404, falha
-  de validação vira 400, integrante não informado vira 400 com código
-  `INTEGRANTE_NAO_INFORMADO` e atividade bloqueada vira 409 com código
-  `ATIVIDADE_BLOQUEADA`.
+  de validação vira 400, credencial inválida vira 401 com código `CREDENCIAL_INVALIDA` e
+  atividade bloqueada vira 409 com código `ATIVIDADE_BLOQUEADA`.
 - `exception/ErroResposta`: corpo de erro devolvido ao app Flutter, com o campo `codigo`
   estável para o cliente ramificar.
 - `exception/RecursoNaoEncontradoException`: 404 de domínio, jogada por qualquer serviço.
-- `exception/IntegranteNaoInformadoException` e `exception/AtividadeBloqueadaException`.
+- `exception/CredencialInvalidaException` e `exception/AtividadeBloqueadaException`.
 
 ## Decisões
 
@@ -37,6 +36,11 @@ shared.
 Cada exceção nova precisa do seu `@ExceptionHandler` explícito. Não existe handler
 genérico de `Exception`, e isso é proposital: ele mascararia erro de programação como 500
 formatado e esconderia bug em produção.
+
+O 401 sai por dois caminhos: `CredencialInvalidaException` quando um serviço recusa, e
+`config/RecusaDeAcesso` quando a cadeia de segurança barra antes do controller. Os dois
+devolvem `ErroResposta` com o mesmo código, senão o app teria dois formatos para o mesmo
+caso.
 
 ## Ausências deliberadas
 

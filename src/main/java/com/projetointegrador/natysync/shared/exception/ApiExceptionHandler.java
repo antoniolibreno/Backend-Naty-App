@@ -41,14 +41,14 @@ public class ApiExceptionHandler {
                         campos));
     }
 
-    @ExceptionHandler(IntegranteNaoInformadoException.class)
-    public ResponseEntity<ErroResposta> tratarIntegranteNaoInformado(
-            IntegranteNaoInformadoException excecao, HttpServletRequest requisicao) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(CredencialInvalidaException.class)
+    public ResponseEntity<ErroResposta> tratarCredencialInvalida(
+            CredencialInvalidaException excecao, HttpServletRequest requisicao) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ErroResposta(
                         OffsetDateTime.now(),
-                        HttpStatus.BAD_REQUEST.value(),
-                        "INTEGRANTE_NAO_INFORMADO",
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "CREDENCIAL_INVALIDA",
                         excecao.getMessage(),
                         requisicao.getRequestURI(),
                         List.of()));

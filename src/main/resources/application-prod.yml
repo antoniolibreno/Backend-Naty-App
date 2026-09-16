@@ -1,3 +1,9 @@
+app:
+  sessao:
+    expiracao: ${APP_SESSAO_EXPIRACAO}
+  senha:
+    forca-hash: ${APP_SENHA_FORCA_HASH}
+
 spring:
   flyway:
     locations: classpath:db/migration
@@ -13,4 +19,6 @@ management:
 
 springdoc:
   swagger-ui:
+    enabled: false
+  api-docs:
     enabled: false

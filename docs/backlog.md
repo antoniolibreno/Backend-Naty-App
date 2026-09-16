@@ -14,14 +14,16 @@ Nada desta lista vira card.
 - Leitura do conteúdo: `GET /api/v1/trilhas`, `GET /api/v1/trilhas/{trilhaId}`,
   `GET /api/v1/atividades/{atividadeId}` e `GET /api/v1/atividades/{atividadeId}/quiz`
   sem gabarito.
-- `POST /api/v1/sessoes` resolvendo o integrante pelo e-mail digitado, sem autenticação.
+- Autenticação por e-mail e senha em `POST /api/v1/sessoes`, com token opaco em tabela,
+  revogação em `DELETE /api/v1/sessoes/atual` e toda a demais rota exigindo
+  `Authorization: Bearer`.
 - Entidades `Trilha`, `Modulo`, `Atividade`, `Quiz`, `Pergunta`, `Alternativa`,
-  `Usuario`, `Empresa` e `ProgressoAtividade`, com repositórios e mappers.
-- Migrations `V1` a `V5`, seed de desenvolvimento, tratamento global de erro em formato
-  único e Docker Compose.
+  `Usuario`, `Empresa`, `Sessao` e `ProgressoAtividade`, com repositórios e mappers.
+- Migrations `V1` a `V6`, seed de desenvolvimento com credencial, tratamento global de
+  erro em formato único e Docker Compose.
 - Progresso na trilha: desbloqueio linear, `GET /api/v1/trilhas/{trilhaId}/progresso` e
-  `POST /api/v1/atividades/{atividadeId}/video-assistido`, com o integrante chegando no
-  cabeçalho `X-Integrante-Id`, coberto por testes de integração.
+  `POST /api/v1/atividades/{atividadeId}/video-assistido`, com o integrante resolvido a
+  partir do token da sessão, coberto por testes de integração.
 
 Ganchos que já estão no banco e que o backlog aproveita em vez de recriar:
 `atividade.xp` com valor 10, `quiz.nota_minima` com valor 70, `atividade.duracao_segundos`
@@ -75,46 +77,46 @@ As arestas que fixam a ordem:
 É a menor fatia que destrava o resto. Sem estas colunas, nada da Fase 1 sobe, porque
 `ddl-auto` está em `validate`.
 
-- [ ] **0.1 Escrever a migration de credencial, papel e sessão**
+- [x] **0.1 Escrever a migration de credencial, papel e sessão**
   Cria a senha com hash do integrante, o papel administrativo, a marca de ativo e a
   tabela de sessão que guarda o token opaco, a expiração e o último acesso. Troca o índice
   de e-mail por único global, porque é o e-mail que resolve a empresa no login. A coluna
   `usuario.status` é status de WhatsApp e não serve.
   Toca: nova migration em `db/migration`
 
-- [ ] **0.2 Dar credencial às contas de desenvolvimento**
+- [x] **0.2 Dar credencial às contas de desenvolvimento**
   Sem credencial válida em banco nenhum teste de login roda. O seed é repetível, então
   recalcula o checksum sozinho.
   Toca: `db/seed-dev/R__seed_empresa_exemplo.sql`
 
 ## Fase 1. Autenticação e identidade
 
-- [ ] **3.1 Escrever a proposta OpenSpec do épico**
+- [x] **3.1 Escrever a proposta OpenSpec do épico**
   O mecanismo está decidido em `regras.md`: credencial nossa, cadastrada pelo painel,
   validada contra o nosso banco, com token opaco de sessão em tabela. A proposta registra
   o desenho antes do código.
   Toca: proposta OpenSpec do épico
 
-- [ ] **3.2 Adicionar Spring Security ao `pom.xml`**
+- [x] **3.2 Adicionar Spring Security ao `pom.xml`**
   O projeto não tem nenhuma dependência de segurança. O token é opaco e mora em tabela,
   então nenhuma biblioteca de token entra junto.
   Toca: `pom.xml`
 
-- [ ] **3.3 Criar `SecurityConfig`**
+- [x] **3.3 Criar `SecurityConfig`**
   Define o que é público, health e emissão de token, e o que exige identificação.
   Toca: `config/SecurityConfig.java`
 
-- [ ] **3.5 Trocar `POST /api/v1/sessoes` por emissão de token**
+- [x] **3.5 Trocar `POST /api/v1/sessoes` por emissão de token**
   O endpoint autentica de verdade e devolve token. A tela de login do app é o consumidor,
   e a senha já chega no corpo.
   Toca: `POST /api/v1/sessoes`
 
-- [ ] **3.6 Criar o filtro que resolve integrante e empresa da requisição**
+- [x] **3.6 Criar o filtro que resolve integrante e empresa da requisição**
   Cada chamada autenticada sabe quem é o integrante e de qual empresa, sem que o app
   mande isso no corpo ou na URL, onde seria forjável.
   Toca: `config`, `usuario`
 
-- [ ] **3.7 Amarrar toda leitura à empresa do integrante autenticado**
+- [x] **3.7 Amarrar toda leitura à empresa do integrante autenticado**
   Fecha o buraco de qualquer um consultar qualquer empresa. Progresso, ranking e
   integrante são filtrados pela empresa de quem chamou.
   Toca: todos os controllers de leitura por empresa
@@ -124,26 +126,26 @@ As arestas que fixam a ordem:
   manter sessão eterna.
   Toca: `POST /api/v1/sessoes`, `usuario`
 
-- [ ] **3.10 Testar que integrante de uma empresa não lê dado de outra**
+- [x] **3.10 Testar que integrante de uma empresa não lê dado de outra**
   Cria duas empresas com integrantes e prova que o token de uma não alcança nada da
   outra, em todos os endpoints por empresa.
   Toca: `src/test/java/.../usuario`
 
-- [ ] **3.11 Registrar o último acesso na tabela de sessão**
+- [x] **3.11 Registrar o último acesso na tabela de sessão**
   Só o painel escreve em `usuario`, então o último login do integrante mora na sessão.
   Toca: nova migration em `db/migration`, `usuario`
 
-- [ ] **3.12 Guardar os parâmetros de segurança fora do código**
+- [x] **3.12 Guardar os parâmetros de segurança fora do código**
   Tempo de expiração da sessão e parâmetros de hash de senha só por variável de ambiente,
   e a aplicação recusa subir em produção sem eles.
   Toca: `application.yml`, `application-prod.yml`, `.env.example`
 
-- [ ] **3.13 Declarar o esquema de segurança no OpenAPI**
+- [x] **3.13 Declarar o esquema de segurança no OpenAPI**
   Sem isso o Swagger não deixa testar endpoint protegido e o time do app perde o contrato
   de como mandar o token.
   Toca: `config/OpenApiConfig.java`, `/v3/api-docs`
 
-- [ ] **3.14 Atualizar os limites do sistema no `CLAUDE.md` raiz**
+- [x] **3.14 Atualizar os limites do sistema no `CLAUDE.md` raiz**
   A ausência de autenticação sai da lista de limites, junto com o aviso de que o ranking é
   fraudável.
   Toca: `CLAUDE.md`
@@ -443,7 +445,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
 
 ## Em paralelo. Endurecimento, observabilidade e dívidas
 
-- [ ] **10.1 Preencher `OpenApiConfig`**
+- [x] **10.1 Preencher `OpenApiConfig`**
   A classe não define título, versão, servidores nem agrupamento de tags, e o Swagger é o
   contrato do time do app.
   Toca: `config/OpenApiConfig.java`, `/v3/api-docs`

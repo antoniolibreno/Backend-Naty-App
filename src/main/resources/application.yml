@@ -26,6 +26,10 @@ server:
 app:
   cors:
     origens: ${APP_CORS_ORIGENS:http://localhost:*}
+  sessao:
+    expiracao: ${APP_SESSAO_EXPIRACAO:7d}
+  senha:
+    forca-hash: ${APP_SENHA_FORCA_HASH:10}
 
 management:
   endpoints:

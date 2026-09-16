@@ -51,8 +51,10 @@ linhas pelos UUIDs fixos. Não edite `V3`: o Flyway valida o checksum do que já
 
 ## Ausências deliberadas
 
-Este pacote não escreve conteúdo. Não existe endpoint de criação ou edição: sem
-autenticação, um CRUD administrativo ficaria aberto na internet. CRUD e login nascem no
-mesmo diff.
+Este pacote não escreve conteúdo. Não existe endpoint de criação ou edição: o CRUD
+administrativo pertence à proposta do painel, junto do papel que o protege.
+
+A leitura de conteúdo exige token. O conteúdo continua global e idêntico para todas as
+empresas: o que a sessão decide é se o servidor responde, não o que ele responde.
 
 `Atividade.videoUrl` é nulo em todo o conteúdo semeado, e a atividade mostra só a imagem.

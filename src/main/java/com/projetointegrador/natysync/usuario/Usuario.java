@@ -3,6 +3,8 @@ package com.projetointegrador.natysync.usuario;
 import com.projetointegrador.natysync.empresa.Empresa;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -43,6 +45,16 @@ public class Usuario {
 
     @Column(nullable = false, length = 20)
     private String status;
+
+    @Column(name = "senha_hash")
+    private String senhaHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Papel papel = Papel.INTEGRANTE;
+
+    @Column(nullable = false)
+    private boolean ativo = true;
 
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)

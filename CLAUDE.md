@@ -132,21 +132,13 @@ rebaixada para caber no construído.
 
 ## Limites do sistema
 
-Não há autenticação. O app identifica a pessoa pelo e-mail digitado, sem verificação. O
-ranking é fraudável e qualquer um consulta qualquer empresa. Não trate essa ausência
-como esquecimento: ela é o corte de escopo aceito e está registrada em `docs/backlog.md`.
-
 Não existe caminho para cadastrar empresa nem integrante. A tabela `usuario` é populada
-pelo seed de desenvolvimento.
+pelo seed de desenvolvimento, e a conta administrativa de produção depende do painel.
 
-`POST /api/v1/sessoes` exige senha no corpo e a descarta. A senha não é verificada, não
-é guardada e não é registrada em log. Qualquer senha não vazia é aceita. O endpoint
-existe para o app usar o corpo definitivo, e não emite credencial nem token.
+A sessão não renova. Quando o token expira, o app autentica de novo.
 
-As operações de progresso identificam o integrante pelo cabeçalho `X-Integrante-Id`, que
-é forjável: qualquer um marca atividade como concluída em nome de outro. A troca desse
-mecanismo por autenticação mexe só em `usuario/IntegranteArgumentResolver`, sem
-reescrever rota nem chamada do app.
+O papel `ADMIN` existe em `usuario.papel` e nenhuma rota o exige, porque nenhuma rota
+administrativa existe.
 
 Atividade conclui quando o vídeo é marcado como assistido, tenha ela quiz ou não. O quiz
 é apenas leitura: nenhuma tentativa é recebida, corrigida ou guardada, e `quiz.nota_minima`

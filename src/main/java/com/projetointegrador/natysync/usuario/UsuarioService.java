@@ -1,8 +1,8 @@
 package com.projetointegrador.natysync.usuario;
 
-import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
-import com.projetointegrador.natysync.usuario.dto.SessaoResponse;
+import com.projetointegrador.natysync.shared.exception.CredencialInvalidaException;
 import java.util.Locale;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,17 +10,31 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class UsuarioService {
 
-    private final UsuarioRepository usuarioRepository;
+    private static final String RECUSA_UNICA = "E-mail ou senha invalidos.";
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder codificadorDeSenha;
+
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder codificadorDeSenha) {
         this.usuarioRepository = usuarioRepository;
+        this.codificadorDeSenha = codificadorDeSenha;
     }
 
-    public SessaoResponse resolverPorEmail(String email) {
+    public Usuario verificarCredencial(String email, String senha) {
         String emailNormalizado = email.trim().toLowerCase(Locale.ROOT);
         Usuario usuario = usuarioRepository
                 .buscarPorEmailNormalizado(emailNormalizado)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Integrante nao encontrado: " + emailNormalizado));
-        return new SessaoResponse(usuario.getId(), usuario.getEmpresa().getId(), usuario.getNome(), usuario.getEmail());
+                .orElseThrow(() -> new CredencialInvalidaException(RECUSA_UNICA));
+        if (!usuario.isAtivo() || !senhaConfere(senha, usuario.getSenhaHash())) {
+            throw new CredencialInvalidaException(RECUSA_UNICA);
+        }
+        return usuario;
+    }
+
+    private boolean senhaConfere(String senha, String hashGuardado) {
+        if (hashGuardado == null) {
+            return false;
+        }
+        return codificadorDeSenha.matches(senha, hashGuardado);
     }
 }
