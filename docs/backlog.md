@@ -155,7 +155,7 @@ As arestas que fixam a ordem:
 O cadastro é nosso. As rotas de escrita de integrante nascem depois da autenticação,
 para o painel nunca passar por um estado aberto na internet.
 
-- [ ] **11.2 Expor o CRUD de empresa com fuso horário**
+- [x] **11.2 Expor o CRUD de empresa com fuso horário**
   A entidade `Empresa` não gera id nem preenche carimbo de data, então persistir por
   código falha. A empresa nasce pelo painel, com o fuso horário que a sequência de dias
   exige.
