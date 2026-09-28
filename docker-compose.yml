@@ -1,12 +1,12 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:15-alpine
     environment:
       POSTGRES_DB: ${DATABASE_NAME:-natysync}
       POSTGRES_USER: ${DATABASE_USERNAME:-natysync}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-natysync}
     ports:
-      - "${DATABASE_PORT:-5432}:5432"
+      - "${DATABASE_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
