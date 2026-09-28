@@ -1,6 +1,8 @@
 services:
   postgres:
     image: postgres:15-alpine
+    container_name: naty-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DATABASE_NAME:-natysync}
       POSTGRES_USER: ${DATABASE_USERNAME:-natysync}
@@ -17,6 +19,7 @@ services:
 
   app:
     build: .
+    container_name: naty-app
     depends_on:
       postgres:
         condition: service_healthy
