@@ -67,10 +67,12 @@ class EmpresaServiceTest {
         Empresa empresa = new Empresa();
         empresa.setId(UUID.randomUUID());
         when(repository.findById(empresa.getId())).thenReturn(Optional.of(empresa));
-        doThrow(new DataIntegrityViolationException("FK usuario")).when(repository).flush();
+        doThrow(new DataIntegrityViolationException("FK usuario"))
+                .when(repository)
+                .flush();
 
         assertThatThrownBy(() -> service.excluir(empresa.getId()))
-                .isInstanceOfSatisfying(ResponseStatusException.class,
-                        excecao -> assertThat(excecao.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+                .isInstanceOfSatisfying(ResponseStatusException.class, excecao -> assertThat(excecao.getStatusCode())
+                        .isEqualTo(HttpStatus.CONFLICT));
     }
 }

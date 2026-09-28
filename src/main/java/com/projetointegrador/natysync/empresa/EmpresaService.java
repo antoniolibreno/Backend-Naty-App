@@ -24,7 +24,9 @@ public class EmpresaService {
     }
 
     public List<EmpresaResponse> listar() {
-        return empresaRepository.findAll().stream().map(empresaMapper::paraResposta).toList();
+        return empresaRepository.findAll().stream()
+                .map(empresaMapper::paraResposta)
+                .toList();
     }
 
     public EmpresaResponse buscarPorId(UUID empresaId) {
@@ -65,7 +67,8 @@ public class EmpresaService {
     }
 
     private Empresa buscarEmpresa(UUID empresaId) {
-        return empresaRepository.findById(empresaId)
+        return empresaRepository
+                .findById(empresaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Empresa nao encontrada: " + empresaId));
     }
 }

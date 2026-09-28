@@ -44,7 +44,8 @@ public class EmpresaController {
     @Operation(summary = "Cria uma empresa")
     public ResponseEntity<EmpresaResponse> criar(@Valid @RequestBody EmpresaRequest requisicao) {
         EmpresaResponse resposta = empresaService.criar(requisicao);
-        return ResponseEntity.created(URI.create("/api/v1/empresas/" + resposta.id())).body(resposta);
+        return ResponseEntity.created(URI.create("/api/v1/empresas/" + resposta.id()))
+                .body(resposta);
     }
 
     @PutMapping("/{empresaId}")
