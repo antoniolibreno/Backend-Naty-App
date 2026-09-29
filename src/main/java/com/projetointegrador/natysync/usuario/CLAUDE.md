@@ -5,20 +5,21 @@
 Integrantes das empresas, a autenticação e a sessão. Este pacote não escreve cadastro:
 quem escreve em `usuario` é o pacote `painel`.
 
-O usuário é o sujeito do treinamento. `progresso` e `gamificacao` apontam para ele, e ele
-não conhece nenhum dos dois.
+O usuário é o sujeito do treinamento. `progresso` aponta para ele, e `painel` escreve nele.
+Este pacote não conhece nenhum dos dois.
 
 ## Contratos
 
 - `Usuario`: entidade JPA mapeada na tabela `usuario`, ligada a `Empresa`.
 - `Usuario.podeEntrar()`: integrante ativo de empresa ativa. É a regra única de quem entra,
   usada no login e em cada chamada autenticada.
-- `UsuarioRepository`: busca por e-mail normalizado, busca por identificador com a empresa,
-  busca por identificador dentro de uma empresa e `JpaSpecificationExecutor` para a
-  listagem do painel.
+- `UsuarioRepository`: busca por identificador dentro de uma empresa,
+  `JpaSpecificationExecutor` para a listagem do painel, checagens de existência por e-mail,
+  papel e empresa, e as buscas com trava de linha (`travarPorEmailNormalizado`,
+  `travarNaEmpresa`, `travarTodosDaEmpresa`).
 - `Papel`: `INTEGRANTE`, `ADMIN` e `NATY`.
-- `UsuarioService`: resolução de integrante. Sem método de escrita exposto para o
-  controller.
+- `UsuarioService.verificarCredencial`: confere e-mail e senha no login, com a linha do
+  usuário travada. Exige transação aberta por quem chama.
 - `SessaoController`: `POST /api/v1/sessoes`.
 - `dto/SessaoRequest` e `dto/SessaoResponse`.
 - `IntegranteDaRequisicao` e `IntegranteArgumentResolver`: injetam o integrante, a empresa
@@ -40,8 +41,9 @@ A sessão confere `Usuario.podeEntrar()` a cada chamada. A busca da sessão já 
 integrante ou empresa vale na chamada seguinte. A revogação em lote garante que reativar
 não ressuscita token antigo.
 
-Todo usuário pertence a uma empresa. `empresa_id` é obrigatório e nenhuma consulta de
-usuário roda sem filtro de empresa.
+Todo usuário pertence a uma empresa. `empresa_id` é obrigatório, e toda consulta que
+devolve integrante para o cliente filtra por empresa. O login, a unicidade de e-mail e o
+bootstrap consultam o sistema inteiro de propósito.
 
 `IntegranteArgumentResolver` lê o integrante do contexto de segurança, preenchido por
 `TokenSessaoFiltro`. O identificador nunca vem do corpo, da URL ou de cabeçalho próprio.
@@ -50,8 +52,14 @@ O token é opaco e o banco guarda só o hash SHA-256 dele, nunca o valor em clar
 do banco não vira sessão ativa. A senha usa bcrypt, que é lento de propósito; o token não
 precisa disso porque já nasce com 32 bytes de entropia.
 
-E-mail inexistente e senha incorreta devolvem a mesma recusa, com a mesma mensagem. Separar
-as duas respostas entregaria a lista de quem tem conta.
+E-mail inexistente, conta inativa e senha incorreta devolvem a mesma recusa, com a mesma
+mensagem e o mesmo custo: o caminho sem credencial compara a senha com um hash fictício.
+Separar as respostas, pelo texto ou pelo tempo, entregaria a lista de quem tem conta.
+
+Login, troca de senha e desativação travam a linha do usuário (`PESSIMISTIC_WRITE`).
+Desativar empresa trava as linhas dos integrantes dela. Isso serializa o login com a
+revogação: um login que começa antes de a troca de senha commitar espera e lê o hash novo,
+e um que commitou antes tem a sessão revogada pelo update em lote.
 
 `SessaoRequest` normaliza o e-mail no próprio construtor do record, em minúsculas e sem
 espaço nas pontas. Isso é obrigatório e não é detalhe: a validação do Bean Validation roda
@@ -79,7 +87,15 @@ não muda nada no treinamento: todos fazem a mesma trilha. Não use esse campo c
 permissão. A permissão é `usuario.papel`, restrita por check constraint aos três valores de
 `Papel`.
 
-`IntegranteDaRequisicao` é construído só em `SessaoService`. Componente novo no record
+Nenhuma escrita na tabela `sessao` passa pela entidade gerenciada. O Hibernate regrava a
+linha inteira no update, e um `setUltimoAcessoEm` concorrente com a revogação escreveria
+`revogado_em = null` por cima dela. Último acesso e revogação são updates em lote em
+`SessaoRepository`.
+
+A trava do login é só na linha de `usuario`, sem `join fetch` da empresa. Travar a empresa
+serializaria todos os logins de uma empresa atrás de um bcrypt cada.
+
+`IntegranteDaRequisicao` é construído só em `SessaoService`, no código de produção. Componente novo no record
 quebra quem o constrói, e não quem só lê `usuarioId` e `empresaId`.
 
 `ddl-auto` está em `validate`. Adicionar campo na entidade sem escrever a migration

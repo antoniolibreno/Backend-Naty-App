@@ -66,6 +66,20 @@ class AutorizacaoPainelTest extends PainelTest {
     }
 
     @Test
+    void escritaDeEmpresaEhNegadaParaAdminEIntegrante() {
+        Map<String, Object> corpo = Map.of("nome", "Tentativa", "ativa", false, "fusoHorario", "America/Sao_Paulo");
+        String caminho = "/api/v1/painel/empresas/" + empresa.getId();
+
+        for (Conta conta : List.of(admin, integrante)) {
+            assertNegado(chamar(conta.token(), HttpMethod.POST, "/api/v1/painel/empresas", corpo));
+            assertNegado(chamar(conta.token(), HttpMethod.PUT, caminho, corpo));
+            assertNegado(chamar(conta.token(), HttpMethod.DELETE, caminho));
+        }
+        assertThat(empresaRepository.findById(empresa.getId()).orElseThrow().isAtiva())
+                .isTrue();
+    }
+
+    @Test
     void natyNaoUsaARotaDoAdmin() {
         assertNegado(chamar(naty.token(), HttpMethod.GET, "/api/v1/painel/integrantes"));
     }

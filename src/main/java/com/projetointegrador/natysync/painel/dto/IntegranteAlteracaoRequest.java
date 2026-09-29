@@ -25,8 +25,8 @@ public record IntegranteAlteracaoRequest(
         if (email != null) {
             email = email.trim().toLowerCase(Locale.ROOT);
         }
-        if (perfil == null || perfil.isBlank()) {
-            perfil = PERFIL_PADRAO;
+        if (perfil != null && perfil.isBlank()) {
+            perfil = null;
         }
     }
 

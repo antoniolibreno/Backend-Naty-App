@@ -30,8 +30,8 @@ public class SessaoController {
             summary = "Autentica o integrante e emite a sessao",
             description = "Verifica a senha contra a credencial guardada e devolve um token opaco com a"
                     + " expiracao dele. E-mail nao cadastrado e senha incorreta devolvem a mesma recusa,"
-                    + " para a resposta nao revelar quais e-mails existem. Integrante desativado nao obtem"
-                    + " sessao. O token viaja nas demais chamadas em Authorization: Bearer.")
+                    + " para a resposta nao revelar quais e-mails existem. Integrante desativado e integrante de"
+                    + " empresa inativa nao obtem sessao. O token viaja nas demais chamadas em Authorization: Bearer.")
     public SessaoResponse autenticar(@Valid @RequestBody SessaoRequest requisicao) {
         return sessaoService.autenticar(requisicao);
     }

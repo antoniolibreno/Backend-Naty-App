@@ -17,6 +17,14 @@ public interface SessaoRepository extends JpaRepository<Sessao, UUID> {
     List<Sessao> findByUsuarioId(UUID usuarioId);
 
     @Modifying
+    @Query("update Sessao s set s.ultimoAcessoEm = :momento where s.id = :id and s.revogadoEm is null")
+    int registrarAcesso(@Param("id") UUID id, @Param("momento") OffsetDateTime momento);
+
+    @Modifying
+    @Query("update Sessao s set s.revogadoEm = :momento where s.tokenHash = :tokenHash and s.revogadoEm is null")
+    int revogarPorTokenHash(@Param("tokenHash") String tokenHash, @Param("momento") OffsetDateTime momento);
+
+    @Modifying
     @Query("update Sessao s set s.revogadoEm = :momento where s.usuario.id = :usuarioId and s.revogadoEm is null")
     int revogarTodasDoIntegrante(@Param("usuarioId") UUID usuarioId, @Param("momento") OffsetDateTime momento);
 

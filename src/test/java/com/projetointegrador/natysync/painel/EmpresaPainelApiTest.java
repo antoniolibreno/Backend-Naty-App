@@ -53,10 +53,12 @@ class EmpresaPainelApiTest extends PainelTest {
 
     @Test
     void fusoDesconhecidoEhErroDeValidacao() {
-        ResponseEntity<JsonNode> resposta = criarPelaApi("Cliente", "Lua/Crateras");
+        ResponseEntity<JsonNode> resposta = criarPelaApi("Cliente Lua", "Lua/Crateras");
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("FALHA_DE_VALIDACAO");
+        assertThat(jdbc.queryForObject("select count(*) from empresa where nome = 'Cliente Lua'", Long.class))
+                .isZero();
     }
 
     @Test
@@ -67,9 +69,17 @@ class EmpresaPainelApiTest extends PainelTest {
         JsonNode pagina = chamar(naty.token(), HttpMethod.GET, "/api/v1/painel/empresas?pagina=0&tamanho=1")
                 .getBody();
 
+        JsonNode segunda = chamar(naty.token(), HttpMethod.GET, "/api/v1/painel/empresas?pagina=1&tamanho=1")
+                .getBody();
+
         assertThat(pagina.get("itens").size()).isEqualTo(1);
         assertThat(pagina.get("tamanho").asInt()).isEqualTo(1);
         assertThat(pagina.get("totalItens").asLong()).isGreaterThanOrEqualTo(3);
+        assertThat(pagina.get("totalPaginas").asInt())
+                .isEqualTo(pagina.get("totalItens").asInt());
+        assertThat(segunda.get("pagina").asInt()).isEqualTo(1);
+        assertThat(segunda.get("itens").get(0).get("id").asText())
+                .isNotEqualTo(pagina.get("itens").get(0).get("id").asText());
     }
 
     @Test
@@ -115,7 +125,7 @@ class EmpresaPainelApiTest extends PainelTest {
     }
 
     @Test
-    void natyNaoDesativaNemExcluiAPropriaEmpresa() {
+    void empresaComContaNatyNaoEhDesativadaNemExcluida() {
         String caminho = "/api/v1/painel/empresas/" + naty.empresaId();
 
         ResponseEntity<JsonNode> desativar = chamar(
@@ -126,8 +136,47 @@ class EmpresaPainelApiTest extends PainelTest {
         ResponseEntity<JsonNode> excluir = chamar(naty.token(), HttpMethod.DELETE, caminho);
 
         assertThat(desativar.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-        assertThat(desativar.getBody().get("codigo").asText()).isEqualTo("OPERACAO_NA_PROPRIA_CONTA");
+        assertThat(desativar.getBody().get("codigo").asText()).isEqualTo("EMPRESA_COM_CONTA_NATY");
         assertThat(excluir.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(excluir.getBody().get("codigo").asText()).isEqualTo("EMPRESA_COM_CONTA_NATY");
+        assertThat(lerTrilhas(naty.token()).getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void natyNaoTrancaOutroNatyPelaEmpresa() {
+        Empresa outraInterna = criarEmpresa("Outra Naty");
+        Conta outroNaty = criarConta(outraInterna, Papel.NATY);
+
+        ResponseEntity<JsonNode> resposta = chamar(
+                naty.token(),
+                HttpMethod.PUT,
+                "/api/v1/painel/empresas/" + outraInterna.getId(),
+                Map.of("nome", "Outra Naty", "ativa", false, "fusoHorario", "America/Sao_Paulo"));
+
+        assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("EMPRESA_COM_CONTA_NATY");
+        assertThat(lerTrilhas(outroNaty.token()).getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void reativarEmpresaNaoRessuscitaTokenAntigo() {
+        Empresa empresa = criarEmpresa("Cliente que Volta");
+        Conta integrante = criarConta(empresa, Papel.INTEGRANTE);
+        String caminho = "/api/v1/painel/empresas/" + empresa.getId();
+
+        chamar(
+                naty.token(),
+                HttpMethod.PUT,
+                caminho,
+                Map.of("nome", "Cliente que Volta", "ativa", false, "fusoHorario", "America/Sao_Paulo"));
+        chamar(
+                naty.token(),
+                HttpMethod.PUT,
+                caminho,
+                Map.of("nome", "Cliente que Volta", "ativa", true, "fusoHorario", "America/Sao_Paulo"));
+
+        assertThat(lerTrilhas(integrante.token()).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(autenticarCom(integrante.email(), SENHA_DE_TESTE).getStatusCode())
+                .isEqualTo(HttpStatus.OK);
     }
 
     @Test

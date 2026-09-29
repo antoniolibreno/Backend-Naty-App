@@ -36,8 +36,9 @@ Com identificador gerado, salvar uma `Empresa` nova com o id preenchido é trata
 `merge` e falha no Hibernate. Crie sem id.
 
 Empresa inativa continua com integrantes e progresso no banco. Desativar não apaga nada, e
-nenhuma consulta filtra por `ativa` automaticamente, fora a da sessão. Quem precisar desse
+nenhuma consulta filtra por `ativa` automaticamente. `Usuario.podeEntrar` confere o
+indicador no login e em cada chamada autenticada; qualquer outra leitura que precise do
 filtro escreve ele.
 
 A empresa interna da Naty, onde mora a conta `NATY`, aparece na listagem de empresas como
-qualquer outra.
+qualquer outra. Empresa com conta `NATY` não é desativada nem excluída.

@@ -18,17 +18,25 @@ Depende de `usuario` e de `empresa`. Nenhum pacote depende dele.
 - `IntegranteService`: toda operação recebe a empresa já resolvida pelo controller.
 - `EmpresaService`: desativar empresa revoga as sessões dos integrantes dela.
 - `BootstrapNaty`: `ApplicationRunner` que cria a empresa interna e a conta `NATY` a partir
-  de `app.bootstrap.naty.*` quando não existe nenhum `NATY`.
+  de `app.bootstrap.naty.*` quando não existe nenhum `NATY`. Recusa subir quando o
+  bootstrap é obrigatório e faltam as variáveis, quando a senha está fora do limite e
+  quando o e-mail pertence a uma conta que não é `NATY`.
+- `TravaDaContaDeSeed`: `ApplicationRunner` que recusa subir fora do perfil `dev` quando
+  encontra uma das contas do seed, cuja senha é pública.
 - `CodigoDeConflito`: códigos estáveis dos 409 deste pacote.
+- `ViolacaoDeConstraint`: reconhece, pelo nome, a constraint que uma
+  `DataIntegrityViolationException` violou.
 
 ## Decisões
 
 A credencial é nossa. O painel cadastra o integrante e define a senha, o backend guarda o
 hash bcrypt, e nenhum serviço externo responde por quem existe.
 
-Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`. `ADMIN` administra os integrantes da própria
-empresa. `NATY` é o time da Naty: administra empresas e os integrantes de qualquer uma. A
-regra de papel mora em `config/SecurityConfig`, por prefixo de rota.
+Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, sem hierarquia. `ADMIN` cadastra integrante
+e `ADMIN` na própria empresa, e altera, redefine senha e desativa só contas `INTEGRANTE`
+dela: conta `ADMIN` recebe 403 `ACESSO_NEGADO`. `NATY` é o time da Naty e administra
+empresas e as contas `INTEGRANTE` e `ADMIN` de qualquer uma. A regra de rota mora em
+`config/SecurityConfig`, e a regra sobre a conta alvo mora em `IntegranteService`.
 
 Dois controllers sobre o mesmo serviço, porque a empresa do `ADMIN` vem da identidade e
 nunca da URL, e a do `NATY` vem da URL, já que atravessar empresas é o papel dele.
@@ -40,8 +48,25 @@ escrita pelo painel. Isso fecha a escalada de privilégio pela própria API.
 Integrante nunca é apagado: não existe `DELETE`. Desativar revoga as sessões e preserva o
 progresso, que aponta para ele.
 
-Ninguém altera o próprio papel nem se desativa, e `NATY` não desativa nem exclui a empresa
-a que pertence. Sem isso o último administrador tranca todos para fora.
+`ADMIN` não administra conta `ADMIN`, nem a própria. Um `ADMIN` que redefine a senha de
+outro assume a conta dele, e um token roubado viraria credencial permanente pela troca da
+própria senha. A consequência é que ninguém altera, redefine ou desativa a própria conta
+pelo painel.
+
+Empresa com conta `NATY` não é desativada nem excluída (409 `EMPRESA_COM_CONTA_NATY`).
+Senão um `NATY` tranca outro, e o bootstrap não recupera, porque ele conta `NATY` inativo.
+
+Escrita em integrante trava a linha do usuário, e desativar empresa trava as linhas dos
+integrantes dela. O login trava a mesma linha, então os dois se serializam e nenhuma sessão
+escapa da revogação.
+
+Violação de integridade só vira `EMAIL_JA_CADASTRADO` quando a constraint é
+`usuario_email_idx`. Qualquer outra sobe como erro, para bug de schema não se disfarçar de
+conflito de negócio. A exclusão de empresa traduz violação de FK em `EMPRESA_COM_VINCULOS`,
+porque um cadastro concorrente pode entrar entre a checagem e o `delete`.
+
+`BootstrapNaty` toma `pg_advisory_xact_lock` antes de checar se existe `NATY`. Réplicas que
+sobem juntas se enfileiram, e só a primeira cria a conta.
 
 O controller, o serviço e os DTOs de empresa moram aqui e não em `empresa`, porque
 desativar empresa revoga sessão em `usuario`, e `usuario` depende de `empresa`.
@@ -71,12 +96,16 @@ por campo livre expõe coluna e quebra paginação estável.
 Validação com `@AssertTrue` em método `isX` do record gera erro de campo com o nome `x`,
 não com o nome do componente. O app lê `codigo`, não o nome do campo.
 
-O seed de desenvolvimento apaga os integrantes das empresas dele a cada mudança de
-checksum. Integrante cadastrado pelo painel na `Empresa Exemplo` ou na `Naty` some quando o
-seed roda de novo.
+O seed de desenvolvimento faz upsert pelos ids fixos. A cada mudança de checksum as três
+contas dele voltam à senha e ao estado do seed, e o que o painel cadastrou nas empresas do
+seed fica intacto.
+
+`PUT` de integrante sem `perfil` mantém o perfil atual. O padrão `user` vale só no
+cadastro.
 
 ## Ausências deliberadas
 
 Nenhuma rota exclui integrante.
 
-Conta `NATY` não troca senha pelo painel. A senha dela vem do bootstrap ou do seed.
+Conta `NATY` não troca senha pelo painel. A senha dela vem do bootstrap ou do seed, e
+recuperar a senha do único `NATY` é operação no banco.

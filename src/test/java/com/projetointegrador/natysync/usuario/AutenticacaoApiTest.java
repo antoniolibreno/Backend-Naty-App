@@ -183,4 +183,27 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
         assertThat(lerTrilhaCom(token).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
+
+    @Test
+    void usoDaSessaoRegistraOUltimoAcessoNaSessao() {
+        String token = autenticar("ativo@teste.com.br", SENHA_DE_TESTE);
+        Sessao sessao = sessaoRepository.findByUsuarioId(integranteId).getFirst();
+        sessao.setUltimoAcessoEm(OffsetDateTime.now(ZoneOffset.UTC).minusDays(1));
+        sessaoRepository.save(sessao);
+
+        assertThat(lerTrilhaCom(token).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        Sessao lida = sessaoRepository.findById(sessao.getId()).orElseThrow();
+        assertThat(lida.getUltimoAcessoEm())
+                .isAfter(OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(1));
+        assertThat(lida.getRevogadoEm()).isNull();
+    }
+
+    @Test
+    void emailVazioEhErroDeValidacao() {
+        ResponseEntity<JsonNode> resposta = autenticarCom("", SENHA_DE_TESTE);
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("FALHA_DE_VALIDACAO");
+    }
 }

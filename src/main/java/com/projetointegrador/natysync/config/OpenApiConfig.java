@@ -29,7 +29,9 @@ public class OpenApiConfig {
                         .version("v1")
                         .description("Trilha de treinamento dos integrantes das empresas clientes da Naty."
                                 + " Toda rota exige Authorization: Bearer, com excecao da emissao de sessao,"
-                                + " da verificacao de saude e desta documentacao."))
+                                + " da verificacao de saude e desta documentacao."
+                                + " As rotas de /api/v1/painel exigem o papel ADMIN ou NATY e devolvem 403 ACESSO_NEGADO"
+                                + " sem ele."))
                 .servers(List.of(new Server().url("/").description("Servidor que atende esta documentacao")))
                 .components(new Components()
                         .addSecuritySchemes(

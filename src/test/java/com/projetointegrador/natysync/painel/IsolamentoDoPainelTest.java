@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import tools.jackson.databind.JsonNode;
 
 class IsolamentoDoPainelTest extends PainelTest {
@@ -61,5 +62,19 @@ class IsolamentoDoPainelTest extends PainelTest {
         assertThat(pagina.get("itens").get(0).get("id").asText())
                 .isEqualTo(adminA.id().toString());
         assertThat(pagina.toString()).doesNotContain(integranteB.email());
+    }
+
+    @Test
+    void adminNaoCadastraIntegranteEmOutraEmpresa() {
+        ResponseEntity<JsonNode> resposta = chamar(
+                adminA.token(),
+                HttpMethod.POST,
+                "/api/v1/painel/empresas/" + integranteB.empresaId() + "/integrantes",
+                novoIntegrante("invasor-" + java.util.UUID.randomUUID() + "@teste.com.br", Papel.INTEGRANTE));
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(jdbc.queryForObject(
+                        "select count(*) from usuario where empresa_id = ?", Long.class, integranteB.empresaId()))
+                .isEqualTo(1L);
     }
 }

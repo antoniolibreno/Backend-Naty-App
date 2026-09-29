@@ -82,12 +82,15 @@ public class EmpresaIntegranteController {
 
     @PutMapping("/{integranteId}/senha")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Define a senha do integrante", description = "Revoga todas as sessoes do integrante.")
+    @Operation(
+            summary = "Define a senha do integrante",
+            description = "Revoga todas as sessoes do integrante. Conta ADMIN so tem a senha definida pelo papel NATY.")
     public void definirSenha(
             @PathVariable UUID empresaId,
             @PathVariable UUID integranteId,
-            @Valid @RequestBody SenhaRequest requisicao) {
-        integranteService.definirSenha(empresaId, integranteId, requisicao.senha());
+            @Valid @RequestBody SenhaRequest requisicao,
+            IntegranteDaRequisicao quem) {
+        integranteService.definirSenha(empresaId, integranteId, requisicao.senha(), quem);
     }
 
     @PutMapping("/{integranteId}/ativo")

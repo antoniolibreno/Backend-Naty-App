@@ -53,7 +53,7 @@
   `NATY`.
 - [x] 5.4 Criar os DTOs com e-mail normalizado no construtor, senha mascarada no
   `toString` e limite de 72 bytes.
-- [x] 5.5 Recusar operação sobre a própria conta.
+- [x] 5.5 Recusar operação de `ADMIN` sobre conta `ADMIN` e escrita em conta `NATY`.
 
 ## 6. Autorização
 
@@ -86,12 +86,29 @@
 - [x] 9.5 Marcar os itens entregues em `docs/backlog.md`.
 - [x] 9.6 Esconder `IntegranteDaRequisicao` dos parâmetros do Swagger em `config/OpenApiConfig`.
 
-## 10. Fechamento
+## 10. Endurecimento
 
-- [x] 10.1 Rodar `./mvnw -B verify` com Docker ativo.
-- [x] 10.2 Subir com `docker compose up --build` sobre banco já migrado e percorrer o fluxo do
+- [x] 10.a Gravar último acesso e revogação por update em lote, sem regravar a sessão.
+- [x] 10.b Travar a linha do usuário no login, na troca de senha e na desativação, e as
+  linhas da empresa na desativação dela.
+- [x] 10.c Comparar a senha com hash fictício em toda recusa de login.
+- [x] 10.d Mascarar senha e token no `toString` de `SessaoRequest` e `SessaoResponse`.
+- [x] 10.e Recusar desativar ou excluir empresa com conta `NATY`.
+- [x] 10.f Traduzir violação de integridade pelo nome da constraint e a corrida da exclusão
+  em `EMPRESA_COM_VINCULOS`.
+- [x] 10.g Manter o perfil atual quando a alteração não traz perfil.
+- [x] 10.h Serializar o bootstrap com `pg_advisory_xact_lock`.
+- [x] 10.i Criar `TravaDaContaDeSeed`, fazer o seed por upsert, repassar `.env` no compose
+  e desligar `baseline-on-migrate` em produção.
+- [x] 10.j Registrar no `CLAUDE.md` e em `docs/regras.md` que conteúdo exige `NATY`, a ordem
+  dos matchers e a regra de FK e default em `usuario` e `empresa`.
+
+## 11. Fechamento
+
+- [x] 11.1 Rodar `./mvnw -B verify` com Docker ativo.
+- [x] 11.2 Subir com `docker compose up --build` sobre banco já migrado e percorrer o fluxo do
   painel pela API.
-- [x] 10.3 Conferir que `trilha` e `progresso` não aparecem no diff.
-- [x] 10.4 Rodar `npx --yes @fission-ai/openspec@latest validate painel-administrativo`.
-- [x] 10.5 Sincronizar as specs.
-- [ ] 10.6 Arquivar a proposta com `--skip-specs` depois do merge.
+- [x] 11.3 Conferir que `trilha` e `progresso` não aparecem no diff.
+- [x] 11.4 Rodar `npx --yes @fission-ai/openspec@latest validate painel-administrativo`.
+- [x] 11.5 Sincronizar as specs.
+- [ ] 11.6 Arquivar a proposta com `--skip-specs` depois do merge.

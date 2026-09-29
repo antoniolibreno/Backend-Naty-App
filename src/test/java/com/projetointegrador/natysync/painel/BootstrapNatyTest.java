@@ -15,6 +15,7 @@ import com.projetointegrador.natysync.usuario.Usuario;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
 class BootstrapNatyTest {
@@ -27,6 +28,7 @@ class BootstrapNatyTest {
                 usuarioRepository,
                 empresaRepository,
                 NoOpPasswordEncoder.getInstance(),
+                mock(JdbcTemplate.class),
                 obrigatorio,
                 "Equipe Naty",
                 email,
@@ -80,5 +82,25 @@ class BootstrapNatyTest {
 
         assertThatThrownBy(() -> bootstrap(true, "naty@naty.com", "curta").run(null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void recusaSenhaAcimaDoLimiteDoBcrypt() {
+        when(usuarioRepository.existsByPapel(Papel.NATY)).thenReturn(false);
+
+        assertThatThrownBy(
+                        () -> bootstrap(true, "naty@naty.com", "é".repeat(37)).run(null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void recusaEmailQuePertenceAContaQueNaoEhNaty() {
+        when(usuarioRepository.existsByPapel(Papel.NATY)).thenReturn(false);
+        when(usuarioRepository.existeEmailNormalizado("admin@cliente.com")).thenReturn(true);
+
+        assertThatThrownBy(() ->
+                        bootstrap(true, "admin@cliente.com", "senha-forte-1").run(null))
+                .isInstanceOf(IllegalStateException.class);
+        verify(usuarioRepository, never()).save(any());
     }
 }

@@ -9,7 +9,8 @@ Duolingo. Há pontuação, sequência de dias, conquistas e ranking entre os int
 mesma empresa. A Naty acompanha quem está avançando e quem parou.
 
 O backend expõe REST para um app Flutter e para um painel administrativo. O painel é a
-fonte da verdade de quem existe: empresa, integrante e credencial nascem lá. O sistema
+fonte da verdade de quem existe: empresa, integrante e credencial nascem lá. A exceção é a
+conta `NATY`, que nasce do bootstrap ou do seed. O sistema
 não depende de nenhum serviço externo para subir.
 
 O sistema atende várias empresas. Usuário, progresso e ranking são sempre filtrados por
@@ -28,7 +29,7 @@ Bean Validation, springdoc-openapi, Spotless, JUnit 5, Testcontainers PostgreSQL
 Docker Compose.
 
 Dependência entra no `pom.xml` apenas na proposta que realmente a usa. Spring Security
-não está no `pom.xml`.
+sustenta a cadeia de sessão opaca, sem biblioteca de token.
 
 ## Comandos
 
@@ -87,6 +88,11 @@ Endpoints REST em português: `/api/v1/usuarios`, `/api/v1/atividades/{id}/quiz`
 
 Schema do banco é do Flyway. `ddl-auto` fica em `validate` e não muda.
 
+Toda FK nova para `usuario` ou para `empresa` leva `on delete cascade`, e toda coluna nova
+`not null` nessas duas tabelas leva default. A limpeza dos testes e o seed repetível apagam
+e inserem nelas por SQL, e sem isso quebram todos os testes de uma vez. Papel novo em
+`Papel` exige migration que refaz `usuario_papel_check`.
+
 Mensagem de commit, descrição de pull request e qualquer texto publicado no repositório
 não levam atribuição de ferramenta: nem trailer `Co-Authored-By`, nem linha de geração
 assistida, nem link de sessão. A autoria é só de quem assina o commit. A regra vale para
@@ -95,7 +101,7 @@ qualquer agente que trabalhe aqui e está imposta em `.claude/settings.json`, co
 
 ## Pacotes
 
-`config`: beans de infraestrutura, OpenAPI, CORS e resolvedor de argumento.
+`config`: cadeia de segurança e regras de papel, OpenAPI, CORS e resolvedor de argumento.
 
 `usuario`: integrantes das empresas, papel e a resolução de identidade em
 `POST /api/v1/sessoes`. Só lê o cadastro; a escrita pertence ao `painel`.
@@ -143,14 +149,17 @@ rebaixada para caber no construído.
 ## Limites do sistema
 
 Empresa e integrante nascem pelo painel. A primeira conta `NATY` nasce do seed em
-desenvolvimento e do bootstrap por variável de ambiente em produção, e produção recusa
-subir sem nenhuma das duas.
+desenvolvimento e do bootstrap por variável de ambiente em produção. Produção recusa subir
+sem conta `NATY` e sem as variáveis do bootstrap, e qualquer perfil fora de `dev` recusa
+subir se encontrar uma conta do seed.
 
 A sessão não renova. Quando o token expira, o app autentica de novo.
 
-Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`. Só as rotas de `/api/v1/painel/**` exigem
-papel. `ADMIN` alcança só a própria empresa, e `NATY` alcança todas. Conteúdo de
-treinamento não tem rota de escrita.
+Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, sem hierarquia entre eles. Só as rotas de
+`/api/v1/painel/**` exigem papel. `ADMIN` administra as contas `INTEGRANTE` da própria
+empresa. `NATY` administra empresas e as contas `INTEGRANTE` e `ADMIN` de qualquer empresa.
+Conta `NATY` não é administrada pelo painel. Conteúdo de treinamento não tem rota de
+escrita, e quando tiver ela exige `NATY`, porque o conteúdo é global.
 
 Integrante e empresa nunca somem por desativação. Integrante não tem rota de exclusão, e
 empresa só é excluída sem integrante.

@@ -7,10 +7,11 @@ import com.projetointegrador.natysync.painel.dto.EmpresaResponse;
 import com.projetointegrador.natysync.shared.exception.ConflitoException;
 import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
 import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
-import com.projetointegrador.natysync.usuario.IntegranteDaRequisicao;
+import com.projetointegrador.natysync.usuario.Papel;
 import com.projetointegrador.natysync.usuario.SessaoService;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -56,11 +57,12 @@ public class EmpresaService {
     }
 
     @Transactional
-    public EmpresaResponse atualizar(UUID empresaId, EmpresaRequest requisicao, IntegranteDaRequisicao quem) {
+    public EmpresaResponse atualizar(UUID empresaId, EmpresaRequest requisicao) {
         Empresa empresa = buscarEmpresa(empresaId);
         boolean desativando = empresa.isAtiva() && !requisicao.ativa();
         if (desativando) {
-            recusarSeForAPropria(empresaId, quem);
+            recusarSeTiverContaNaty(empresaId);
+            usuarioRepository.travarTodosDaEmpresa(empresaId);
         }
         preencher(empresa, requisicao);
         Empresa salva = empresaRepository.saveAndFlush(empresa);
@@ -71,14 +73,18 @@ public class EmpresaService {
     }
 
     @Transactional
-    public void excluir(UUID empresaId, IntegranteDaRequisicao quem) {
+    public void excluir(UUID empresaId) {
         Empresa empresa = buscarEmpresa(empresaId);
-        recusarSeForAPropria(empresaId, quem);
+        recusarSeTiverContaNaty(empresaId);
         if (usuarioRepository.existsByEmpresaId(empresaId)) {
-            throw new ConflitoException(
-                    CodigoDeConflito.EMPRESA_COM_VINCULOS, "Empresa possui integrantes e nao pode ser excluida.");
+            throw empresaComVinculos();
         }
-        empresaRepository.delete(empresa);
+        try {
+            empresaRepository.delete(empresa);
+            empresaRepository.flush();
+        } catch (DataIntegrityViolationException excecao) {
+            throw empresaComVinculos();
+        }
     }
 
     private void preencher(Empresa empresa, EmpresaRequest requisicao) {
@@ -87,12 +93,17 @@ public class EmpresaService {
         empresa.setFusoHorario(requisicao.fuso());
     }
 
-    private void recusarSeForAPropria(UUID empresaId, IntegranteDaRequisicao quem) {
-        if (empresaId.equals(quem.empresaId())) {
+    private void recusarSeTiverContaNaty(UUID empresaId) {
+        if (usuarioRepository.existsByEmpresaIdAndPapel(empresaId, Papel.NATY)) {
             throw new ConflitoException(
-                    CodigoDeConflito.OPERACAO_NA_PROPRIA_CONTA,
-                    "A empresa de quem chama nao pode ser desativada nem excluida.");
+                    CodigoDeConflito.EMPRESA_COM_CONTA_NATY,
+                    "Empresa com conta NATY nao pode ser desativada nem excluida.");
         }
+    }
+
+    private ConflitoException empresaComVinculos() {
+        return new ConflitoException(
+                CodigoDeConflito.EMPRESA_COM_VINCULOS, "Empresa possui registros vinculados e nao pode ser excluida.");
     }
 
     private Empresa buscarEmpresa(UUID empresaId) {

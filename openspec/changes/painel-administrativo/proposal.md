@@ -17,9 +17,9 @@ outra. Falta um papel que atravesse empresas e que só o time da Naty tenha.
 
 ## What Changes
 
-Papel `NATY`, acima de `ADMIN`. `NATY` administra empresas e os integrantes de qualquer
-empresa. `ADMIN` administra só os integrantes da própria empresa, resolvida pela
-identidade da requisição. `NATY` nasce apenas por bootstrap em produção e pelo seed em
+Papel `NATY`, sem hierarquia sobre `ADMIN`. `NATY` administra empresas e as contas
+`INTEGRANTE` e `ADMIN` de qualquer empresa, por rota própria. `ADMIN` administra as contas
+`INTEGRANTE` da própria empresa, resolvida pela identidade da requisição. `NATY` nasce apenas por bootstrap em produção e pelo seed em
 desenvolvimento, nunca por endpoint.
 
 Pacote `painel`, único que escreve em `usuario` e em `empresa`, com as rotas sob

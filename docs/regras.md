@@ -24,17 +24,26 @@ revoga e exigiria uma segunda tabela só para o último acesso.
 **O último acesso do integrante mora na tabela de sessão, nunca em `usuario`.** Só o
 painel escreve em `usuario`, e a regra não abre exceção para um carimbo de data.
 
-**Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, em coluna própria.** `ADMIN` administra os
-integrantes da própria empresa. `NATY` é o time da Naty e administra empresas e os
-integrantes de qualquer uma. A coluna `usuario.perfil`, que guarda `admin`, `supervisor` e
+**Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, em coluna própria e sem hierarquia.**
+`ADMIN` administra as contas `INTEGRANTE` da própria empresa. `NATY` é o time da Naty e
+administra empresas e as contas `INTEGRANTE` e `ADMIN` de qualquer uma. A coluna `usuario.perfil`, que guarda `admin`, `supervisor` e
 `user`, descreve o que a pessoa faz no WhatsApp e não vale como permissão no treinamento.
 
 **`NATY` nasce só do bootstrap ou do seed, nunca de endpoint.** Um papel que atravessa
 empresas atribuível pela API é escalada de privilégio a um `PUT` de distância. O primeiro
 `NATY` de produção vem de variável de ambiente, e produção recusa subir sem nenhum.
 
-**Ninguém altera o próprio papel nem se desativa.** Sem essa trava o último administrador
-tranca todos para fora.
+**Conta `ADMIN` é administrada só pelo `NATY`, e conta `NATY` não é administrada pelo
+painel.** Um `ADMIN` que redefine a senha de outro assume a conta dele, e um token roubado
+viraria credencial permanente. A mesma regra impede qualquer um de alterar, redefinir ou
+desativar a própria conta pelo painel.
+
+**Empresa com conta `NATY` não é desativada nem excluída.** Senão um `NATY` tranca outro,
+e produção fica sem ninguém que administre.
+
+**A recusa do login custa o mesmo tempo em todo caso.** E-mail inexistente, conta inativa
+e senha errada passam pelo mesmo bcrypt, senão o tempo de resposta entrega a lista de
+quem tem conta.
 
 **Integrante desativado mantém o histórico.** O registro nunca é apagado, porque
 progresso e pontuação apontam para ele. Desativado não entra no sistema e some do
@@ -67,6 +76,9 @@ exclusivo, se existir, entra como tabela de associação entre empresa e trilha,
 alterar o que já existe.
 
 ## Conteúdo e quiz
+
+**Só o papel `NATY` escreve conteúdo.** O conteúdo é global, e um `ADMIN` de cliente que
+editasse a trilha mudaria o treinamento de todas as empresas.
 
 **O gabarito não sai em leitura.** O DTO de alternativa não tem o campo de resposta
 correta: um campo que não existe no record não vaza, enquanto uma anotação de ocultação
@@ -153,12 +165,13 @@ telas que consomem a API, e o contrato delas não muda sem aviso ao time do app:
 de sessão, leitura da trilha com progresso e registro de vídeo assistido.
 
 **O painel administrativo é a fonte da verdade de quem existe.** Empresa, integrante e
-credencial nascem lá, e nenhum outro caminho cadastra pessoa no sistema.
+credencial nascem lá, e nenhum outro caminho cadastra pessoa no sistema. A exceção é a
+conta `NATY`, que nasce do bootstrap ou do seed.
 
 ## Escrita e schema
 
-**Só o pacote `painel` escreve em `usuario` e em `empresa`.** Concentrar a escrita em um lugar é o que
-mantém a regra auditável.
+**Só o pacote `painel` escreve em `usuario` e em `empresa`.** Concentrar a escrita em um
+lugar é o que mantém a regra auditável.
 
 **O schema do banco é do Flyway.** `ddl-auto` fica em `validate`: adicionar campo em
 entidade sem a migration correspondente derruba a aplicação na subida, e isso é

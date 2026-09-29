@@ -42,8 +42,9 @@ nunca informados pelo cliente.
 
 ### Requirement: Exclusão de empresa sem vínculo
 
-O sistema SHALL excluir apenas empresa sem integrante vinculado. Empresa com integrante
-SHALL ser recusada com 409 e código `EMPRESA_COM_VINCULOS`, no formato único de erro.
+O sistema SHALL excluir apenas empresa sem integrante nem outro registro vinculado.
+Empresa com vínculo SHALL ser recusada com 409 e código `EMPRESA_COM_VINCULOS`, no formato
+único de erro, inclusive quando o vínculo nasce durante a exclusão.
 
 #### Scenario: Empresa sem integrante
 
@@ -60,18 +61,25 @@ SHALL ser recusada com 409 e código `EMPRESA_COM_VINCULOS`, no formato único d
 Empresa inativa SHALL manter integrantes e progresso. Desativar a empresa SHALL revogar as
 sessões dos integrantes dela.
 
-O `NATY` NÃO SHALL desativar nem excluir a empresa a que pertence. A tentativa SHALL ser
-recusada com 409 e código `OPERACAO_NA_PROPRIA_CONTA`.
+Empresa com conta `NATY` NÃO SHALL ser desativada nem excluída. A tentativa SHALL ser
+recusada com 409 e código `EMPRESA_COM_CONTA_NATY`. Reativar a empresa NÃO SHALL tornar
+válido token revogado na desativação.
 
 #### Scenario: Desativação derruba sessões
 
 - **WHEN** um `NATY` desativa uma empresa cujo integrante tem sessão aberta
 - **THEN** a chamada seguinte com aquele token é recusada com 401
 
-#### Scenario: Empresa do próprio NATY
+#### Scenario: Empresa com conta NATY
 
-- **WHEN** um `NATY` desativa ou exclui a empresa a que pertence
-- **THEN** o sistema devolve 409 com código `OPERACAO_NA_PROPRIA_CONTA`
+- **WHEN** um `NATY` desativa ou exclui uma empresa que tem conta `NATY`, inclusive a dele
+- **THEN** o sistema devolve 409 com código `EMPRESA_COM_CONTA_NATY` e as sessões dos `NATY`
+  daquela empresa continuam válidas
+
+#### Scenario: Reativação da empresa
+
+- **WHEN** um `NATY` desativa e depois reativa uma empresa cujo integrante tinha sessão aberta
+- **THEN** o token anterior à desativação continua recusado, e o integrante autentica de novo
 
 ### Requirement: Primeiro NATY por bootstrap
 
@@ -82,6 +90,10 @@ Na subida, quando não existe nenhum `NATY` e as variáveis do bootstrap estão 
 o sistema SHALL criar a empresa interna e a conta `NATY`. Quando já existe um `NATY`, o
 sistema NÃO SHALL criar outro. Quando não existe `NATY`, faltam as variáveis e o bootstrap
 é obrigatório no ambiente, o sistema SHALL recusar subir.
+
+O sistema SHALL recusar subir quando a senha do bootstrap está fora do limite de senha ou
+quando o e-mail do bootstrap pertence a uma conta que não é `NATY`. Instâncias que sobem ao
+mesmo tempo SHALL criar uma única conta.
 
 A senha do bootstrap NÃO SHALL aparecer em log.
 
@@ -100,3 +112,24 @@ A senha do bootstrap NÃO SHALL aparecer em log.
 - **WHEN** a aplicação sobe com bootstrap obrigatório, sem nenhum `NATY` e sem as
   variáveis
 - **THEN** a aplicação recusa subir
+
+#### Scenario: E-mail do bootstrap em uso
+
+- **WHEN** a aplicação sobe sem `NATY` e o e-mail do bootstrap pertence a uma conta que não
+  é `NATY`
+- **THEN** a aplicação recusa subir e NÃO altera a conta existente
+
+### Requirement: Conta do seed só em desenvolvimento
+
+As contas do seed de desenvolvimento têm senha pública. Fora do perfil de desenvolvimento,
+a aplicação SHALL recusar subir quando encontra uma delas.
+
+#### Scenario: Conta do seed fora de desenvolvimento
+
+- **WHEN** a aplicação sobe fora do perfil de desenvolvimento e existe uma conta do seed
+- **THEN** a aplicação recusa subir
+
+#### Scenario: Desenvolvimento
+
+- **WHEN** a aplicação sobe no perfil de desenvolvimento com as contas do seed
+- **THEN** a aplicação sobe normalmente

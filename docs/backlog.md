@@ -60,11 +60,6 @@ em desenvolvimento e de bootstrap por variável de ambiente em produção, nunca
 
 As arestas que fixam a ordem:
 
-- 3.3 antes de 11.7, porque 11.7 não cria cadeia de segurança, só acrescenta uma regra de
-  papel à cadeia que nasce em 3.3.
-- 3.6 antes de 11.6 e 11.8, porque a empresa vem da identidade da requisição. Sem 3.6 a
-  listagem nasceria com um contrato que muda depois.
-- 10.2 antes de 11.2, porque persistir empresa por código exige id e carimbo gerados.
 - 5.9 antes de 6.3, porque 5.9 troca o gatilho de conclusão, e conceder ponto antes é
   escrever sobre um gatilho que muda no diff seguinte.
 - 11.2 antes de 6.4, porque a sequência de dias precisa do fuso horário da empresa.
@@ -101,8 +96,8 @@ As arestas que fixam a ordem:
   Toca: proposta OpenSpec do épico
 
 - [x] **3.2 Adicionar Spring Security ao `pom.xml`**
-  O projeto não tem nenhuma dependência de segurança. O token é opaco e mora em tabela,
-  então nenhuma biblioteca de token entra junto.
+  O token é opaco e mora em tabela, então nenhuma biblioteca de token entra junto com o
+  Spring Security.
   Toca: `pom.xml`
 
 - [x] **3.3 Criar `SecurityConfig`**
@@ -124,9 +119,9 @@ As arestas que fixam a ordem:
   integrante são filtrados pela empresa de quem chamou.
   Toca: todos os controllers de leitura por empresa
 
-- [ ] **3.8 Expirar e renovar token**
-  Define validade e caminho de renovação, para o app não exigir login a cada abertura nem
-  manter sessão eterna.
+- [ ] **3.8 Renovar token**
+  A sessão expira pelo prazo de `app.sessao.expiracao`. Falta o caminho de renovação, para o
+  app não exigir login a cada abertura nem manter sessão eterna.
   Toca: `POST /api/v1/sessoes`, `usuario`
 
 - [x] **3.10 Testar que integrante de uma empresa não lê dado de outra**
@@ -149,7 +144,7 @@ As arestas que fixam a ordem:
   Toca: `config/OpenApiConfig.java`, `/v3/api-docs`
 
 - [x] **3.14 Atualizar os limites do sistema no `CLAUDE.md` raiz**
-  A ausência de autenticação sai da lista de limites, junto com o aviso de que o ranking é
+  Os limites do sistema descrevem a autenticação construída, e o ranking não aparece como
   fraudável.
   Toca: `CLAUDE.md`
 
@@ -454,14 +449,13 @@ Decisões que o épico carrega e que precisam sair antes do código:
 ## Em paralelo. Endurecimento, observabilidade e dívidas
 
 - [x] **10.1 Preencher `OpenApiConfig`**
-  A classe não define título, versão, servidores nem agrupamento de tags, e o Swagger é o
-  contrato do time do app.
+  O Swagger é o contrato do time do app, com título, versão, servidores e agrupamento de
+  tags.
   Toca: `config/OpenApiConfig.java`, `/v3/api-docs`
 
 - [x] **10.2 Padronizar `Empresa` com id gerado e timestamps automáticos**
-  É a única entidade sem geração de id e sem os timestamps automáticos que as outras têm,
-  então o id precisa ser preenchido à mão. Alinhar evita bug em quem criar empresa por
-  código.
+  `Empresa` gera id e carimbos como as outras entidades, então criar empresa por código não
+  exige montar o id.
   Toca: `empresa/Empresa.java`
 
 - [ ] **10.3 Trocar o assert frágil de `QuizApiTest`**
@@ -470,10 +464,10 @@ Decisões que o épico carrega e que precisam sair antes do código:
   Verificar a estrutura da resposta no lugar.
   Toca: `src/test/java/.../trilha/QuizApiTest.java`
 
-- [ ] **10.4 Paginar as listagens**
-  Ranking, integrantes e acompanhamento crescem com a empresa. Definir paginação padrão
-  antes de a primeira empresa grande entrar.
-  Toca: controllers de listagem
+- [x] **10.4 Paginar as listagens**
+  Listagem usa `pagina` e `tamanho`, com padrão 20 e máximo 100, e devolve `PaginaResponse`.
+  Ranking e acompanhamento seguem o mesmo padrão.
+  Toca: `shared/pagina/PaginaResponse.java`, `application.yml`
 
 - [ ] **10.5 Criar `src/test/resources` com `application-test.yml`**
   Não existe recurso de teste, então os testes herdam o perfil de desenvolvimento. Um
@@ -518,8 +512,8 @@ Decisões que o épico carrega e que precisam sair antes do código:
   Toca: `config`, `shared`
 
 - [ ] **10.13 Fechar o detalhe do Actuator em produção**
-  O arquivo base mostra detalhe de saúde sempre, incluindo o estado do banco. Revisa o que
-  fica exposto fora de desenvolvimento.
+  Em produção o detalhe de saúde aparece para qualquer token autenticado, inclusive o de um
+  integrante, e mostra o estado do banco. Falta restringir o detalhe por papel.
   Toca: `application.yml`, `application-prod.yml`
 
 - [ ] **10.14 Definir retenção de dado operacional**
@@ -532,3 +526,21 @@ Decisões que o épico carrega e que precisam sair antes do código:
   `UsuarioFiltro` são classes vazias. A tela de ranking e o acompanhamento precisam ler
   integrante, sempre filtrado por empresa. A escrita mora no painel.
   Toca: `GET /api/v1/usuarios`, `usuario/UsuarioController.java`
+
+- [x] **10.16 Responder rota inexistente com 404 e não com 401**
+  Rota que não existe, identificador malformado, método e tipo de conteúdo não suportados
+  respondem com o status verdadeiro. O despacho de erro do container não carrega
+  autenticação, e barrá-lo faz o app mandar o integrante logar de novo por um erro que não
+  é de sessão.
+  Toca: `config/SecurityConfig.java`, `shared/exception/ApiExceptionHandler.java`
+
+- [x] **10.17 Responder JSON malformado em `ErroResposta`**
+  Corpo ilegível sai com 400 `REQUISICAO_MALFORMADA` e mensagem fixa, sem ecoar trecho do
+  corpo, que no login carrega a senha.
+  Toca: `shared/exception/ApiExceptionHandler.java`
+
+- [ ] **10.18 Trocar os e-mails fixos dos testes por e-mails aleatórios**
+  O índice de e-mail é único no sistema inteiro e o banco de teste é compartilhado. Uma
+  limpeza que falha deixa um e-mail fixo no banco e derruba as classes seguintes que usam o
+  mesmo e-mail.
+  Toca: `src/test/java`

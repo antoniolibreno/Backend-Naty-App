@@ -3,6 +3,7 @@ package com.projetointegrador.natysync.painel;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,7 +14,6 @@ import com.projetointegrador.natysync.empresa.EmpresaRepository;
 import com.projetointegrador.natysync.painel.dto.EmpresaRequest;
 import com.projetointegrador.natysync.shared.exception.ConflitoException;
 import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
-import com.projetointegrador.natysync.usuario.IntegranteDaRequisicao;
 import com.projetointegrador.natysync.usuario.Papel;
 import com.projetointegrador.natysync.usuario.SessaoService;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import org.springframework.dao.DataIntegrityViolationException;
 
 class EmpresaServiceTest {
 
@@ -30,8 +31,6 @@ class EmpresaServiceTest {
     private final SessaoService sessaoService = mock(SessaoService.class);
     private final EmpresaService service = new EmpresaService(
             empresaRepository, usuarioRepository, sessaoService, Mappers.getMapper(EmpresaMapper.class));
-    private final IntegranteDaRequisicao naty =
-            new IntegranteDaRequisicao(UUID.randomUUID(), UUID.randomUUID(), Papel.NATY);
 
     private Empresa empresaAtiva() {
         Empresa empresa = new Empresa();
@@ -56,8 +55,9 @@ class EmpresaServiceTest {
     void desativarRevogaAsSessoesDaEmpresa() {
         Empresa empresa = empresaAtiva();
 
-        service.atualizar(empresa.getId(), new EmpresaRequest("Empresa", false, "America/Sao_Paulo"), naty);
+        service.atualizar(empresa.getId(), new EmpresaRequest("Empresa", false, "America/Sao_Paulo"));
 
+        verify(usuarioRepository).travarTodosDaEmpresa(empresa.getId());
         verify(sessaoService).revogarTodasDaEmpresa(empresa.getId());
         assertThat(empresa.getFusoHorario()).isEqualTo(ZoneId.of("America/Sao_Paulo"));
     }
@@ -66,7 +66,7 @@ class EmpresaServiceTest {
     void alterarSemDesativarNaoRevogaSessao() {
         Empresa empresa = empresaAtiva();
 
-        service.atualizar(empresa.getId(), new EmpresaRequest("Outro nome", true, "America/Sao_Paulo"), naty);
+        service.atualizar(empresa.getId(), new EmpresaRequest("Outro nome", true, "America/Sao_Paulo"));
 
         verify(sessaoService, never()).revogarTodasDaEmpresa(any());
     }
@@ -77,7 +77,7 @@ class EmpresaServiceTest {
         when(empresaRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.buscarPorId(id)).isInstanceOf(RecursoNaoEncontradoException.class);
-        assertThatThrownBy(() -> service.excluir(id, naty)).isInstanceOf(RecursoNaoEncontradoException.class);
+        assertThatThrownBy(() -> service.excluir(id)).isInstanceOf(RecursoNaoEncontradoException.class);
     }
 
     @Test
@@ -85,9 +85,34 @@ class EmpresaServiceTest {
         Empresa empresa = empresaAtiva();
         when(usuarioRepository.existsByEmpresaId(empresa.getId())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.excluir(empresa.getId(), naty))
+        assertThatThrownBy(() -> service.excluir(empresa.getId()))
                 .isInstanceOfSatisfying(ConflitoException.class, excecao -> assertThat(excecao.getCodigo())
                         .isEqualTo("EMPRESA_COM_VINCULOS"));
         verify(empresaRepository, never()).delete(any());
+    }
+
+    @Test
+    void empresaComContaNatyNaoEhDesativada() {
+        Empresa empresa = empresaAtiva();
+        when(usuarioRepository.existsByEmpresaIdAndPapel(empresa.getId(), Papel.NATY))
+                .thenReturn(true);
+
+        assertThatThrownBy(() ->
+                        service.atualizar(empresa.getId(), new EmpresaRequest("Empresa", false, "America/Sao_Paulo")))
+                .isInstanceOfSatisfying(ConflitoException.class, excecao -> assertThat(excecao.getCodigo())
+                        .isEqualTo("EMPRESA_COM_CONTA_NATY"));
+        verify(sessaoService, never()).revogarTodasDaEmpresa(any());
+    }
+
+    @Test
+    void exclusaoQuePerdeACorridaParaUmCadastroViraConflito() {
+        Empresa empresa = empresaAtiva();
+        doThrow(new DataIntegrityViolationException("fk"))
+                .when(empresaRepository)
+                .flush();
+
+        assertThatThrownBy(() -> service.excluir(empresa.getId()))
+                .isInstanceOfSatisfying(ConflitoException.class, excecao -> assertThat(excecao.getCodigo())
+                        .isEqualTo("EMPRESA_COM_VINCULOS"));
     }
 }

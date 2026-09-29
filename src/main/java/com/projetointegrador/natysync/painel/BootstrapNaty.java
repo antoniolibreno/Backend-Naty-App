@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class BootstrapNaty implements ApplicationRunner {
 
+    private static final long CHAVE_DO_BOOTSTRAP = 7_164_021_311L;
+
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
     private final PasswordEncoder codificadorDeSenha;
+    private final JdbcTemplate jdbc;
     private final boolean obrigatorio;
     private final String nome;
     private final String email;
@@ -33,6 +37,7 @@ public class BootstrapNaty implements ApplicationRunner {
             UsuarioRepository usuarioRepository,
             EmpresaRepository empresaRepository,
             PasswordEncoder codificadorDeSenha,
+            JdbcTemplate jdbc,
             @Value("${app.bootstrap.obrigatorio}") boolean obrigatorio,
             @Value("${app.bootstrap.naty.nome}") String nome,
             @Value("${app.bootstrap.naty.email}") String email,
@@ -41,6 +46,7 @@ public class BootstrapNaty implements ApplicationRunner {
         this.usuarioRepository = usuarioRepository;
         this.empresaRepository = empresaRepository;
         this.codificadorDeSenha = codificadorDeSenha;
+        this.jdbc = jdbc;
         this.obrigatorio = obrigatorio;
         this.nome = nome;
         this.email = email;
@@ -51,6 +57,8 @@ public class BootstrapNaty implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments argumentos) {
+        // serializa replicas que sobem juntas; o lock solta no fim da transacao
+        jdbc.query("select pg_advisory_xact_lock(?)", resultado -> null, CHAVE_DO_BOOTSTRAP);
         if (usuarioRepository.existsByPapel(Papel.NATY)) {
             return;
         }

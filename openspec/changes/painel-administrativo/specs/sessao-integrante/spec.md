@@ -16,7 +16,8 @@ O erro de e-mail não cadastrado e o erro de senha incorreta SHALL ser indisting
 para quem chama, para a resposta não revelar quais e-mails existem.
 
 Integrante desativado e integrante de empresa inativa NÃO SHALL obter sessão, e a recusa
-SHALL ser a mesma da senha incorreta.
+SHALL ser a mesma da senha incorreta. Toda recusa SHALL passar pela mesma verificação de
+hash, para o tempo de resposta não revelar quais e-mails existem.
 
 #### Scenario: E-mail cadastrado com senha correta
 
@@ -128,7 +129,8 @@ aceito na chamada seguinte.
 
 Redefinir a senha e desativar o integrante SHALL revogar todas as sessões dele. Desativar
 a empresa SHALL revogar todas as sessões dos integrantes dela. Reativar NÃO SHALL tornar
-válido token revogado.
+válido token revogado. A revogação SHALL valer mesmo com chamadas concorrentes do token
+revogado, e o registro do último acesso NÃO SHALL desfazê-la.
 
 O tempo de expiração SHALL ser lido de configuração de ambiente, nunca de constante em
 código.

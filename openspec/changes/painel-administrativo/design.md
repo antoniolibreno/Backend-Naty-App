@@ -29,7 +29,7 @@ entregas daqui: o fuso da empresa, o mecanismo de papel e o padrão de paginaç�
 
 ## Decisions
 
-### Papel `NATY` acima de `ADMIN`
+### Papel `NATY` ao lado de `ADMIN`
 
 Cadastro de empresa atravessa empresas, e o administrador de uma empresa não enxerga
 outra. Os dois cabem num papel só apenas se o isolamento for abandonado. `NATY` é o papel
@@ -74,10 +74,19 @@ A busca da sessão pelo hash já faz `join fetch` do usuário e da empresa. Conf
 chamada seguinte. A revogação em lote na desativação garante que reativar não ressuscita
 token antigo.
 
-### Proteção da própria conta
+### Conta ADMIN só pelo NATY
 
-Ninguém altera o próprio papel nem se desativa, e `NATY` não desativa nem apaga a empresa
-a que pertence. Sem isso o último administrador tranca todo mundo para fora.
+`ADMIN` administra só contas `INTEGRANTE`. Um `ADMIN` que redefine a senha de outro assume a
+conta dele, e um token roubado viraria credencial permanente pela troca da própria senha.
+Conta `NATY` não é administrada pelo painel, e empresa com conta `NATY` não é desativada nem
+excluída, senão um `NATY` tranca outro.
+
+### Trava de linha e revogação
+
+Login, troca de senha e desativação travam a linha do usuário, e desativar empresa trava as
+linhas dos integrantes dela. Um login que começa antes da troca de senha commitar espera e
+lê o hash novo. O último acesso e a revogação são updates em lote, porque o Hibernate
+regrava a linha inteira da sessão e desfaria uma revogação concorrente.
 
 ### Senha
 

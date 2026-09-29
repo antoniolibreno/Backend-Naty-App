@@ -12,4 +12,9 @@ public record SessaoRequest(
             email = email.trim().toLowerCase(Locale.ROOT);
         }
     }
+
+    @Override
+    public String toString() {
+        return "SessaoRequest[email=" + email + ", senha=***]";
+    }
 }

@@ -2,6 +2,7 @@ package com.projetointegrador.natysync.config;
 
 import com.projetointegrador.natysync.usuario.Papel;
 import com.projetointegrador.natysync.usuario.TokenSessaoFiltro;
+import jakarta.servlet.DispatcherType;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -38,7 +39,9 @@ public class SecurityConfig {
             throws Exception {
         return http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sessao -> sessao.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(rotas -> rotas.requestMatchers(HttpMethod.OPTIONS, "/**")
+                .authorizeHttpRequests(rotas -> rotas.dispatcherTypeMatchers(DispatcherType.ERROR)
+                        .permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/sessoes")
                         .permitAll()

@@ -51,8 +51,8 @@ linhas pelos UUIDs fixos. Não edite `V3`: o Flyway valida o checksum do que já
 
 ## Ausências deliberadas
 
-Este pacote não escreve conteúdo. Não existe endpoint de criação ou edição: o CRUD
-administrativo pertence à proposta do painel, junto do papel que o protege.
+Este pacote não escreve conteúdo. Não existe endpoint de criação ou edição. O CRUD
+administrativo está no backlog e exige o papel `NATY`, porque o conteúdo é global.
 
 A leitura de conteúdo exige token. O conteúdo continua global e idêntico para todas as
 empresas: o que a sessão decide é se o servidor responde, não o que ele responde.

@@ -3,7 +3,6 @@ package com.projetointegrador.natysync.painel;
 import com.projetointegrador.natysync.painel.dto.EmpresaRequest;
 import com.projetointegrador.natysync.painel.dto.EmpresaResponse;
 import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
-import com.projetointegrador.natysync.usuario.IntegranteDaRequisicao;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -62,20 +61,19 @@ public class EmpresaController {
     @PutMapping("/{empresaId}")
     @Operation(
             summary = "Atualiza uma empresa",
-            description = "Desativar a empresa revoga as sessoes dos integrantes dela. A empresa de quem chama"
-                    + " nao pode ser desativada.")
-    public EmpresaResponse atualizar(
-            @PathVariable UUID empresaId, @Valid @RequestBody EmpresaRequest requisicao, IntegranteDaRequisicao quem) {
-        return empresaService.atualizar(empresaId, requisicao, quem);
+            description = "Desativar a empresa revoga as sessoes dos integrantes dela. Empresa com conta NATY"
+                    + " devolve 409 EMPRESA_COM_CONTA_NATY.")
+    public EmpresaResponse atualizar(@PathVariable UUID empresaId, @Valid @RequestBody EmpresaRequest requisicao) {
+        return empresaService.atualizar(empresaId, requisicao);
     }
 
     @DeleteMapping("/{empresaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Exclui uma empresa sem integrantes",
-            description = "Empresa com integrante devolve 409 EMPRESA_COM_VINCULOS. O caminho para empresa com"
-                    + " historico e a desativacao.")
-    public void excluir(@PathVariable UUID empresaId, IntegranteDaRequisicao quem) {
-        empresaService.excluir(empresaId, quem);
+            description = "Empresa com integrante devolve 409 EMPRESA_COM_VINCULOS, e empresa com conta NATY"
+                    + " devolve 409 EMPRESA_COM_CONTA_NATY. O caminho para empresa com historico e a desativacao.")
+    public void excluir(@PathVariable UUID empresaId) {
+        empresaService.excluir(empresaId);
     }
 }

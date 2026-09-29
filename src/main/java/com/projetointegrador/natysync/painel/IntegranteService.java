@@ -6,6 +6,7 @@ import com.projetointegrador.natysync.painel.dto.IntegranteAlteracaoRequest;
 import com.projetointegrador.natysync.painel.dto.IntegranteCriacaoRequest;
 import com.projetointegrador.natysync.painel.dto.IntegranteFiltro;
 import com.projetointegrador.natysync.painel.dto.IntegranteResponse;
+import com.projetointegrador.natysync.shared.exception.AcessoNegadoException;
 import com.projetointegrador.natysync.shared.exception.ConflitoException;
 import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
 import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
@@ -80,22 +81,21 @@ public class IntegranteService {
     @Transactional
     public IntegranteResponse alterar(
             UUID empresaId, UUID integranteId, IntegranteAlteracaoRequest requisicao, IntegranteDaRequisicao quem) {
-        Usuario usuario = buscarIntegranteAdministravel(empresaId, integranteId);
-        if (usuario.getId().equals(quem.usuarioId()) && usuario.getPapel() != requisicao.papel()) {
-            throw operacaoNaPropriaConta("O proprio papel nao pode ser alterado.");
-        }
+        Usuario usuario = travarIntegranteAdministravel(empresaId, integranteId, quem);
         recusarEmailRepetido(usuarioRepository.existeEmailNormalizadoEmOutro(requisicao.email(), integranteId));
 
         usuario.setNome(requisicao.nome());
         usuario.setEmail(requisicao.email());
         usuario.setPapel(requisicao.papel());
-        usuario.setPerfil(requisicao.perfil());
+        if (requisicao.perfil() != null) {
+            usuario.setPerfil(requisicao.perfil());
+        }
         return integranteMapper.paraResposta(salvar(usuario));
     }
 
     @Transactional
-    public void definirSenha(UUID empresaId, UUID integranteId, String senha) {
-        Usuario usuario = buscarIntegranteAdministravel(empresaId, integranteId);
+    public void definirSenha(UUID empresaId, UUID integranteId, String senha, IntegranteDaRequisicao quem) {
+        Usuario usuario = travarIntegranteAdministravel(empresaId, integranteId, quem);
         usuario.setSenhaHash(codificadorDeSenha.encode(senha));
         salvar(usuario);
         sessaoService.revogarTodasDoIntegrante(integranteId);
@@ -103,10 +103,7 @@ public class IntegranteService {
 
     @Transactional
     public void definirAtivo(UUID empresaId, UUID integranteId, boolean ativo, IntegranteDaRequisicao quem) {
-        Usuario usuario = buscarIntegranteAdministravel(empresaId, integranteId);
-        if (!ativo && usuario.getId().equals(quem.usuarioId())) {
-            throw operacaoNaPropriaConta("A propria conta nao pode ser desativada.");
-        }
+        Usuario usuario = travarIntegranteAdministravel(empresaId, integranteId, quem);
         usuario.setAtivo(ativo);
         salvar(usuario);
         if (!ativo) {
@@ -118,7 +115,10 @@ public class IntegranteService {
         try {
             return usuarioRepository.saveAndFlush(usuario);
         } catch (DataIntegrityViolationException excecao) {
-            throw new ConflitoException(CodigoDeConflito.EMAIL_JA_CADASTRADO, "E-mail ja cadastrado.");
+            if (ViolacaoDeConstraint.foi(excecao, ViolacaoDeConstraint.EMAIL_UNICO)) {
+                throw new ConflitoException(CodigoDeConflito.EMAIL_JA_CADASTRADO, "E-mail ja cadastrado.");
+            }
+            throw excecao;
         }
     }
 
@@ -128,15 +128,16 @@ public class IntegranteService {
         }
     }
 
-    private ConflitoException operacaoNaPropriaConta(String mensagem) {
-        return new ConflitoException(CodigoDeConflito.OPERACAO_NA_PROPRIA_CONTA, mensagem);
-    }
-
-    private Usuario buscarIntegranteAdministravel(UUID empresaId, UUID integranteId) {
-        Usuario usuario = buscarIntegrante(empresaId, integranteId);
+    private Usuario travarIntegranteAdministravel(UUID empresaId, UUID integranteId, IntegranteDaRequisicao quem) {
+        Usuario usuario = usuarioRepository
+                .travarNaEmpresa(integranteId, empresaId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Integrante nao encontrado: " + integranteId));
         if (usuario.getPapel() == Papel.NATY) {
             throw new ConflitoException(
                     CodigoDeConflito.CONTA_NATY_FORA_DO_PAINEL, "Conta NATY nao e administrada pelo painel.");
+        }
+        if (quem.papel() == Papel.ADMIN && usuario.getPapel() == Papel.ADMIN) {
+            throw new AcessoNegadoException("Conta ADMIN e administrada pelo papel NATY.");
         }
         return usuario;
     }

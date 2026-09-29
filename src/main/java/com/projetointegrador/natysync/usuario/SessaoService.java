@@ -68,18 +68,14 @@ public class SessaoService {
                 .filter(encontrada -> encontrada.estaValidaEm(agora))
                 .filter(encontrada -> encontrada.getUsuario().podeEntrar())
                 .orElseThrow(() -> new CredencialInvalidaException("Sessao invalida."));
-        sessao.setUltimoAcessoEm(agora);
+        sessaoRepository.registrarAcesso(sessao.getId(), agora);
         Usuario usuario = sessao.getUsuario();
         return new IntegranteDaRequisicao(usuario.getId(), usuario.getEmpresa().getId(), usuario.getPapel());
     }
 
     @Transactional
     public void revogar(String token) {
-        OffsetDateTime agora = agora();
-        sessaoRepository
-                .buscarComIntegrantePorTokenHash(hashDe(token))
-                .filter(sessao -> sessao.estaValidaEm(agora))
-                .ifPresent(sessao -> sessao.setRevogadoEm(agora));
+        sessaoRepository.revogarPorTokenHash(hashDe(token), agora());
     }
 
     @Transactional
