@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import com.projetointegrador.natysync.empresa.dto.EmpresaRequest;
 import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -23,22 +22,19 @@ class EmpresaServiceTest {
     private final EmpresaService service = new EmpresaService(repository, Mappers.getMapper(EmpresaMapper.class));
 
     @Test
-    void criarGeraIdentificadorEDatas() {
+    void criarNormalizaONome() {
         when(repository.save(any(Empresa.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
         var resposta = service.criar(new EmpresaRequest(" Empresa Teste ", true));
 
-        assertThat(resposta.id()).isNotNull();
         assertThat(resposta.nome()).isEqualTo("Empresa Teste");
         assertThat(resposta.ativa()).isTrue();
-        assertThat(resposta.criadoEm()).isNotNull().isEqualTo(resposta.atualizadoEm());
     }
 
     @Test
-    void atualizarPreservaIdentificadorEDataDeCriacao() {
+    void atualizarPreservaIdentificador() {
         Empresa empresa = new Empresa();
         empresa.setId(UUID.randomUUID());
-        empresa.setCriadoEm(OffsetDateTime.now().minusDays(1));
         when(repository.findById(empresa.getId())).thenReturn(Optional.of(empresa));
         when(repository.save(any(Empresa.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
@@ -47,8 +43,6 @@ class EmpresaServiceTest {
         assertThat(resposta.id()).isEqualTo(empresa.getId());
         assertThat(resposta.nome()).isEqualTo("Novo nome");
         assertThat(resposta.ativa()).isFalse();
-        assertThat(resposta.criadoEm()).isEqualTo(empresa.getCriadoEm());
-        assertThat(resposta.atualizadoEm()).isAfter(resposta.criadoEm());
     }
 
     @Test

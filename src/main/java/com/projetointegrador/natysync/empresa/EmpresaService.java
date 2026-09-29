@@ -3,7 +3,6 @@ package com.projetointegrador.natysync.empresa;
 import com.projetointegrador.natysync.empresa.dto.EmpresaRequest;
 import com.projetointegrador.natysync.empresa.dto.EmpresaResponse;
 import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -36,12 +35,8 @@ public class EmpresaService {
     @Transactional
     public EmpresaResponse criar(EmpresaRequest requisicao) {
         Empresa empresa = new Empresa();
-        OffsetDateTime agora = OffsetDateTime.now();
-        empresa.setId(UUID.randomUUID());
         empresa.setNome(requisicao.nome());
         empresa.setAtiva(requisicao.ativa());
-        empresa.setCriadoEm(agora);
-        empresa.setAtualizadoEm(agora);
         return empresaMapper.paraResposta(empresaRepository.save(empresa));
     }
 
@@ -50,7 +45,6 @@ public class EmpresaService {
         Empresa empresa = buscarEmpresa(empresaId);
         empresa.setNome(requisicao.nome());
         empresa.setAtiva(requisicao.ativa());
-        empresa.setAtualizadoEm(OffsetDateTime.now());
         return empresaMapper.paraResposta(empresaRepository.save(empresa));
     }
 

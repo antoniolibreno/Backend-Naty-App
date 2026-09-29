@@ -68,7 +68,7 @@ public class SessaoService {
                 .orElseThrow(() -> new CredencialInvalidaException("Sessao invalida."));
         sessao.setUltimoAcessoEm(agora);
         Usuario usuario = sessao.getUsuario();
-        return new IntegranteDaRequisicao(usuario.getId(), usuario.getEmpresa().getId());
+        return new IntegranteDaRequisicao(usuario.getId(), usuario.getEmpresa().getId(), usuario.getPapel());
     }
 
     @Transactional

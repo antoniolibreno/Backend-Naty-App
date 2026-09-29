@@ -30,7 +30,11 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain cadeiaDeSeguranca(
-            HttpSecurity http, TokenSessaoFiltro tokenSessaoFiltro, RecusaDeAcesso recusaDeAcesso) throws Exception {
+            HttpSecurity http,
+            TokenSessaoFiltro tokenSessaoFiltro,
+            RecusaDeAcesso recusaDeAcesso,
+            NegacaoDeAcesso negacaoDeAcesso)
+            throws Exception {
         return http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sessao -> sessao.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(rotas -> rotas.requestMatchers(HttpMethod.OPTIONS, "/**")
@@ -41,7 +45,8 @@ public class SecurityConfig {
                         .permitAll()
                         .anyRequest()
                         .authenticated())
-                .exceptionHandling(erros -> erros.authenticationEntryPoint(recusaDeAcesso))
+                .exceptionHandling(
+                        erros -> erros.authenticationEntryPoint(recusaDeAcesso).accessDeniedHandler(negacaoDeAcesso))
                 .addFilterBefore(tokenSessaoFiltro, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

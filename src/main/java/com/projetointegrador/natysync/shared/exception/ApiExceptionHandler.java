@@ -66,4 +66,16 @@ public class ApiExceptionHandler {
                         requisicao.getRequestURI(),
                         List.of()));
     }
+
+    @ExceptionHandler(ConflitoException.class)
+    public ResponseEntity<ErroResposta> tratarConflito(ConflitoException excecao, HttpServletRequest requisicao) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErroResposta(
+                        OffsetDateTime.now(),
+                        HttpStatus.CONFLICT.value(),
+                        excecao.getCodigo(),
+                        excecao.getMessage(),
+                        requisicao.getRequestURI(),
+                        List.of()));
+    }
 }
