@@ -13,6 +13,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,19 +66,26 @@ public class SessaoService {
         Sessao sessao = sessaoRepository
                 .buscarComIntegrantePorTokenHash(hashDe(token))
                 .filter(encontrada -> encontrada.estaValidaEm(agora))
+                .filter(encontrada -> encontrada.getUsuario().podeEntrar())
                 .orElseThrow(() -> new CredencialInvalidaException("Sessao invalida."));
-        sessao.setUltimoAcessoEm(agora);
+        sessaoRepository.registrarAcesso(sessao.getId(), agora);
         Usuario usuario = sessao.getUsuario();
-        return new IntegranteDaRequisicao(usuario.getId(), usuario.getEmpresa().getId());
+        return new IntegranteDaRequisicao(usuario.getId(), usuario.getEmpresa().getId(), usuario.getPapel());
     }
 
     @Transactional
     public void revogar(String token) {
-        OffsetDateTime agora = agora();
-        sessaoRepository
-                .buscarComIntegrantePorTokenHash(hashDe(token))
-                .filter(sessao -> sessao.estaValidaEm(agora))
-                .ifPresent(sessao -> sessao.setRevogadoEm(agora));
+        sessaoRepository.revogarPorTokenHash(hashDe(token), agora());
+    }
+
+    @Transactional
+    public void revogarTodasDoIntegrante(UUID usuarioId) {
+        sessaoRepository.revogarTodasDoIntegrante(usuarioId, agora());
+    }
+
+    @Transactional
+    public void revogarTodasDaEmpresa(UUID empresaId) {
+        sessaoRepository.revogarTodasDaEmpresa(empresaId, agora());
     }
 
     private String sortearToken() {

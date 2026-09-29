@@ -2,9 +2,11 @@ package com.projetointegrador.natysync;
 
 import com.projetointegrador.natysync.empresa.Empresa;
 import com.projetointegrador.natysync.empresa.EmpresaRepository;
+import com.projetointegrador.natysync.usuario.Papel;
 import com.projetointegrador.natysync.usuario.Usuario;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
-import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -13,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
@@ -35,19 +38,24 @@ public abstract class IntegracaoTest {
     @Autowired
     protected PasswordEncoder codificadorDeSenha;
 
-    private UUID empresaPadraoId;
-    private UUID integrantePadraoId;
+    @Autowired
+    protected JdbcTemplate jdbc;
+
+    private final List<UUID> empresasCriadas = new ArrayList<>();
     private String tokenPadrao;
 
     @AfterEach
-    void removerIntegrantePadrao() {
-        if (integrantePadraoId != null) {
-            usuarioRepository.deleteById(integrantePadraoId);
-            empresaRepository.deleteById(empresaPadraoId);
-            integrantePadraoId = null;
-            empresaPadraoId = null;
-            tokenPadrao = null;
+    void removerEmpresasCriadas() {
+        for (UUID empresaId : empresasCriadas) {
+            jdbc.update("delete from usuario where empresa_id = ?", empresaId);
+            jdbc.update("delete from empresa where id = ?", empresaId);
         }
+        empresasCriadas.clear();
+        tokenPadrao = null;
+    }
+
+    protected void registrarEmpresaCriada(UUID empresaId) {
+        empresasCriadas.add(empresaId);
     }
 
     protected RestClient clienteSemSessao() {
@@ -72,9 +80,8 @@ public abstract class IntegracaoTest {
     protected String tokenPadrao() {
         if (tokenPadrao == null) {
             Empresa empresa = criarEmpresa("Empresa Padrao de Teste");
-            empresaPadraoId = empresa.getId();
             String email = "padrao-" + UUID.randomUUID() + "@teste.com.br";
-            integrantePadraoId = criarIntegrante(empresa, "Integrante Padrao", email);
+            criarIntegrante(empresa, "Integrante Padrao", email);
             tokenPadrao = autenticar(email, SENHA_DE_TESTE);
         }
         return tokenPadrao;
@@ -82,16 +89,19 @@ public abstract class IntegracaoTest {
 
     protected Empresa criarEmpresa(String nome) {
         Empresa empresa = new Empresa();
-        empresa.setId(UUID.randomUUID());
         empresa.setNome(nome);
-        empresa.setAtiva(true);
-        empresa.setCriadoEm(OffsetDateTime.now());
-        empresa.setAtualizadoEm(OffsetDateTime.now());
-        return empresaRepository.save(empresa);
+        Empresa salva = empresaRepository.save(empresa);
+        registrarEmpresaCriada(salva.getId());
+        return salva;
     }
 
     protected UUID criarIntegrante(Empresa empresa, String nome, String email) {
+        return criarIntegrante(empresa, nome, email, Papel.INTEGRANTE);
+    }
+
+    protected UUID criarIntegrante(Empresa empresa, String nome, String email, Papel papel) {
         Usuario usuario = new Usuario();
+        usuario.setPapel(papel);
         usuario.setEmpresa(empresa);
         usuario.setNome(nome);
         usuario.setEmail(email);

@@ -63,4 +63,8 @@ public class Usuario {
     @UpdateTimestamp
     @Column(name = "atualizado_em", nullable = false)
     private OffsetDateTime atualizadoEm;
+
+    public boolean podeEntrar() {
+        return ativo && empresa.isAtiva();
+    }
 }

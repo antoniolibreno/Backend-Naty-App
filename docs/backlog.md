@@ -19,8 +19,12 @@ Nada desta lista vira card.
   `Authorization: Bearer`.
 - Entidades `Trilha`, `Modulo`, `Atividade`, `Quiz`, `Pergunta`, `Alternativa`,
   `Usuario`, `Empresa`, `Sessao` e `ProgressoAtividade`, com repositórios e mappers.
-- Migrations `V1` a `V6`, seed de desenvolvimento com credencial, tratamento global de
+- Migrations `V1` a `V7`, seed de desenvolvimento com credencial, tratamento global de
   erro em formato único e Docker Compose.
+- Painel administrativo sob `/api/v1/painel/**`: cadastro de empresa com fuso horário pelo
+  papel `NATY`, cadastro, senha, desativação e listagem paginada de integrante pelo `ADMIN`
+  da própria empresa e pelo `NATY` de qualquer empresa, e bootstrap da primeira conta
+  `NATY` por variável de ambiente.
 - Progresso na trilha: desbloqueio linear, `GET /api/v1/trilhas/{trilhaId}/progresso` e
   `POST /api/v1/atividades/{atividadeId}/video-assistido`, com o integrante resolvido a
   partir do token da sessão, coberto por testes de integração.
@@ -56,12 +60,6 @@ em desenvolvimento e de bootstrap por variável de ambiente em produção, nunca
 
 As arestas que fixam a ordem:
 
-- 3.3 antes de 11.7, porque 11.7 não cria cadeia de segurança, só acrescenta uma regra de
-  papel à cadeia que nasce em 3.3.
-- 3.6 antes de 11.6 e 11.8, porque a empresa vem da identidade da requisição. Sem 3.6 a
-  listagem nasceria com um contrato que muda depois.
-- 10.2 antes de 11.2, porque `Empresa` não gera id nem preenche carimbo, então persistir
-  empresa por código falha.
 - 5.9 antes de 6.3, porque 5.9 troca o gatilho de conclusão, e conceder ponto antes é
   escrever sobre um gatilho que muda no diff seguinte.
 - 11.2 antes de 6.4, porque a sequência de dias precisa do fuso horário da empresa.
@@ -98,8 +96,8 @@ As arestas que fixam a ordem:
   Toca: proposta OpenSpec do épico
 
 - [x] **3.2 Adicionar Spring Security ao `pom.xml`**
-  O projeto não tem nenhuma dependência de segurança. O token é opaco e mora em tabela,
-  então nenhuma biblioteca de token entra junto.
+  O token é opaco e mora em tabela, então nenhuma biblioteca de token entra junto com o
+  Spring Security.
   Toca: `pom.xml`
 
 - [x] **3.3 Criar `SecurityConfig`**
@@ -121,9 +119,9 @@ As arestas que fixam a ordem:
   integrante são filtrados pela empresa de quem chamou.
   Toca: todos os controllers de leitura por empresa
 
-- [ ] **3.8 Expirar e renovar token**
-  Define validade e caminho de renovação, para o app não exigir login a cada abertura nem
-  manter sessão eterna.
+- [ ] **3.8 Renovar token**
+  A sessão expira pelo prazo de `app.sessao.expiracao`. Falta o caminho de renovação, para o
+  app não exigir login a cada abertura nem manter sessão eterna.
   Toca: `POST /api/v1/sessoes`, `usuario`
 
 - [x] **3.10 Testar que integrante de uma empresa não lê dado de outra**
@@ -146,7 +144,7 @@ As arestas que fixam a ordem:
   Toca: `config/OpenApiConfig.java`, `/v3/api-docs`
 
 - [x] **3.14 Atualizar os limites do sistema no `CLAUDE.md` raiz**
-  A ausência de autenticação sai da lista de limites, junto com o aviso de que o ranking é
+  Os limites do sistema descrevem a autenticação construída, e o ranking não aparece como
   fraudável.
   Toca: `CLAUDE.md`
 
@@ -156,45 +154,51 @@ O cadastro é nosso. As rotas de escrita de integrante nascem depois da autentic
 para o painel nunca passar por um estado aberto na internet.
 
 - [x] **11.2 Expor o CRUD de empresa com fuso horário**
-  A entidade `Empresa` não gera id nem preenche carimbo de data, então persistir por
-  código falha. A empresa nasce pelo painel, com o fuso horário que a sequência de dias
-  exige.
-  Toca: `empresa/Empresa.java`, tabela `empresa`, `/api/v1/empresas`
+  A empresa nasce pelo painel, só pelo papel `NATY`, com o fuso horário que a sequência de
+  dias exige.
+  Toca: `empresa/Empresa.java`, tabela `empresa`, `/api/v1/painel/empresas`
 
-- [ ] **11.3 Expor o cadastro de integrante vinculado à empresa**
+- [x] **11.3 Expor o cadastro de integrante vinculado à empresa**
   Cria o integrante no nosso banco, com nome, e-mail e empresa. O e-mail é único no
   sistema inteiro, porque é ele que resolve a empresa no login.
-  Toca: `/api/v1/integrantes`, tabela `usuario`
+  Toca: `/api/v1/painel/integrantes`, tabela `usuario`
 
-- [ ] **11.4 Definir e resetar a senha do integrante**
+- [x] **11.4 Definir e resetar a senha do integrante**
   Quem administra define a senha no cadastro e consegue resetá-la. A senha é guardada
   como hash e não volta em resposta nem aparece em log.
-  Toca: `/api/v1/integrantes/{integranteId}/senha`
+  Toca: `/api/v1/painel/integrantes/{integranteId}/senha`
 
-- [ ] **11.5 Desativar integrante sem apagar progresso**
+- [x] **11.5 Desativar integrante sem apagar progresso**
   Desativado some do ranking e não entra no sistema, e o progresso e a pontuação dele
-  continuam de pé, porque o histórico da empresa aponta para ele.
-  Toca: tabela `usuario`, `progresso`, `gamificacao`
+  continuam de pé, porque o histórico da empresa aponta para ele. O ranking de 6.7 exclui
+  quem tem `usuario.ativo` falso.
+  Toca: tabela `usuario`, `painel`
 
-- [ ] **11.6 Listar integrantes da empresa com busca e paginação**
+- [x] **11.6 Listar integrantes da empresa com busca e paginação**
   É a tela principal de quem administra. Sempre filtrada por empresa, nunca devolvendo
   lista inteira sem página.
-  Toca: `GET /api/v1/integrantes`
+  Toca: `GET /api/v1/painel/integrantes`
 
-- [ ] **11.7 Proteger todo o painel pelo papel administrativo**
+- [x] **11.7 Proteger todo o painel pelo papel administrativo**
   Nenhuma rota de cadastro responde para token de integrante comum. O papel vem da
   migration 0.1, e a coluna `usuario.perfil` não vale como permissão.
   Toca: `config/SecurityConfig.java`, `usuario`
 
-- [ ] **11.8 Testar que administrador de uma empresa não enxerga outra**
+- [x] **11.8 Testar que administrador de uma empresa não enxerga outra**
   Cria duas empresas com integrantes e prova que o cadastro, a listagem e o reset de
   senha de uma nunca alcançam a outra.
   Toca: `src/test/java/.../painel`
 
-- [ ] **11.9 Escrever `painel/CLAUDE.md`**
+- [x] **11.9 Escrever `painel/CLAUDE.md`**
   Registra que este pacote é o único que escreve em `usuario` e por que a credencial é
   nossa.
   Toca: `painel/CLAUDE.md`
+
+- [x] **11.10 Criar a primeira conta `NATY` por bootstrap**
+  Sem ela produção não tem quem cadastre a primeira empresa. A conta nasce de variável de
+  ambiente na subida, só quando não existe nenhum `NATY`, e produção recusa subir sem
+  nenhum.
+  Toca: `painel/BootstrapNaty.java`, `application-prod.yml`, `.env.example`
 
 ## Fase 3. MVP funcional
 
@@ -390,13 +394,12 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
 
 ## Fora do MVP. Acompanhamento
 
-Fora do MVP. Depende de decidir quem enxerga mais de uma empresa.
+Fora do MVP. Depende de decidir a definição de parado.
 
 Decisões que o épico carrega e que precisam sair antes do código:
 
-- **Quem enxerga mais de uma empresa:** o acompanhamento é o único lugar que atravessa
-  empresas. Falta decidir se existe um papel acima de `ADMIN` e como essa pessoa entra no
-  sistema.
+- **Quem enxerga mais de uma empresa:** o papel `NATY`, que nasce do bootstrap e já
+  administra o cadastro de empresas.
 - **Definição de parado:** quantos dias sem concluir atividade contam como parado. O
   número nasce como propriedade configurável, não como constante no código.
 
@@ -414,7 +417,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   clientes sem abrir integrante por integrante.
   Toca: `GET /api/v1/acompanhamento/empresas/{empresaId}/metricas`
 
-- [ ] **7.4 Restringir o acompanhamento ao papel administrativo**
+- [ ] **7.4 Restringir o acompanhamento ao papel `NATY`**
   É o único lugar que lê dado de mais de uma empresa.
   Toca: `acompanhamento`, `config/SecurityConfig.java`
 
@@ -446,14 +449,13 @@ Decisões que o épico carrega e que precisam sair antes do código:
 ## Em paralelo. Endurecimento, observabilidade e dívidas
 
 - [x] **10.1 Preencher `OpenApiConfig`**
-  A classe não define título, versão, servidores nem agrupamento de tags, e o Swagger é o
-  contrato do time do app.
+  O Swagger é o contrato do time do app, com título, versão, servidores e agrupamento de
+  tags.
   Toca: `config/OpenApiConfig.java`, `/v3/api-docs`
 
-- [ ] **10.2 Padronizar `Empresa` com id gerado e timestamps automáticos**
-  É a única entidade sem geração de id e sem os timestamps automáticos que as outras têm,
-  então o id precisa ser preenchido à mão. Alinhar evita bug em quem criar empresa por
-  código.
+- [x] **10.2 Padronizar `Empresa` com id gerado e timestamps automáticos**
+  `Empresa` gera id e carimbos como as outras entidades, então criar empresa por código não
+  exige montar o id.
   Toca: `empresa/Empresa.java`
 
 - [ ] **10.3 Trocar o assert frágil de `QuizApiTest`**
@@ -462,10 +464,10 @@ Decisões que o épico carrega e que precisam sair antes do código:
   Verificar a estrutura da resposta no lugar.
   Toca: `src/test/java/.../trilha/QuizApiTest.java`
 
-- [ ] **10.4 Paginar as listagens**
-  Ranking, integrantes e acompanhamento crescem com a empresa. Definir paginação padrão
-  antes de a primeira empresa grande entrar.
-  Toca: controllers de listagem
+- [x] **10.4 Paginar as listagens**
+  Listagem usa `pagina` e `tamanho`, com padrão 20 e máximo 100, e devolve `PaginaResponse`.
+  Ranking e acompanhamento seguem o mesmo padrão.
+  Toca: `shared/pagina/PaginaResponse.java`, `application.yml`
 
 - [ ] **10.5 Criar `src/test/resources` com `application-test.yml`**
   Não existe recurso de teste, então os testes herdam o perfil de desenvolvimento. Um
@@ -510,8 +512,8 @@ Decisões que o épico carrega e que precisam sair antes do código:
   Toca: `config`, `shared`
 
 - [ ] **10.13 Fechar o detalhe do Actuator em produção**
-  O arquivo base mostra detalhe de saúde sempre, incluindo o estado do banco. Revisa o que
-  fica exposto fora de desenvolvimento.
+  Em produção o detalhe de saúde aparece para qualquer token autenticado, inclusive o de um
+  integrante, e mostra o estado do banco. Falta restringir o detalhe por papel.
   Toca: `application.yml`, `application-prod.yml`
 
 - [ ] **10.14 Definir retenção de dado operacional**
@@ -524,3 +526,21 @@ Decisões que o épico carrega e que precisam sair antes do código:
   `UsuarioFiltro` são classes vazias. A tela de ranking e o acompanhamento precisam ler
   integrante, sempre filtrado por empresa. A escrita mora no painel.
   Toca: `GET /api/v1/usuarios`, `usuario/UsuarioController.java`
+
+- [x] **10.16 Responder rota inexistente com 404 e não com 401**
+  Rota que não existe, identificador malformado, método e tipo de conteúdo não suportados
+  respondem com o status verdadeiro. O despacho de erro do container não carrega
+  autenticação, e barrá-lo faz o app mandar o integrante logar de novo por um erro que não
+  é de sessão.
+  Toca: `config/SecurityConfig.java`, `shared/exception/ApiExceptionHandler.java`
+
+- [x] **10.17 Responder JSON malformado em `ErroResposta`**
+  Corpo ilegível sai com 400 `REQUISICAO_MALFORMADA` e mensagem fixa, sem ecoar trecho do
+  corpo, que no login carrega a senha.
+  Toca: `shared/exception/ApiExceptionHandler.java`
+
+- [ ] **10.18 Trocar os e-mails fixos dos testes por e-mails aleatórios**
+  O índice de e-mail é único no sistema inteiro e o banco de teste é compartilhado. Uma
+  limpeza que falha deixa um e-mail fixo no banco e derruba as classes seguintes que usam o
+  mesmo e-mail.
+  Toca: `src/test/java`

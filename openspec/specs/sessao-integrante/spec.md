@@ -22,7 +22,9 @@ erro. O token de sessão SHALL obedecer à mesma regra.
 O erro de e-mail não cadastrado e o erro de senha incorreta SHALL ser indistinguíveis
 para quem chama, para a resposta não revelar quais e-mails existem.
 
-Integrante desativado NÃO SHALL obter sessão.
+Integrante desativado e integrante de empresa inativa NÃO SHALL obter sessão, e a recusa
+SHALL ser a mesma da senha incorreta. Toda recusa SHALL passar pela mesma verificação de
+hash, para o tempo de resposta não revelar quais e-mails existem.
 
 #### Scenario: E-mail cadastrado com senha correta
 
@@ -53,6 +55,12 @@ Integrante desativado NÃO SHALL obter sessão.
 - **WHEN** um integrante desativado envia a senha correta
 - **THEN** o sistema recusa a autenticação e NÃO emite token
 
+#### Scenario: Integrante de empresa inativa
+
+- **WHEN** um integrante ativo de uma empresa inativa envia a senha correta
+- **THEN** o sistema recusa a autenticação com a mesma resposta que devolve para senha
+  incorreta
+
 #### Scenario: E-mail ausente ou inválido
 
 - **WHEN** o cliente envia corpo sem e-mail, com e-mail vazio ou em formato inválido
@@ -70,9 +78,16 @@ Integrante desativado NÃO SHALL obter sessão.
 
 ### Requirement: Identidade de toda chamada vem do token
 
-Toda operação que depende de saber quem chama SHALL obter o integrante e a empresa a
-partir do token de sessão apresentado na requisição. O sistema NÃO SHALL aceitar o
-integrante ou a empresa informados pelo cliente no corpo, na URL ou em cabeçalho próprio.
+Toda operação que depende de saber quem chama SHALL obter o integrante, a empresa e o
+papel a partir do token de sessão apresentado na requisição. O sistema NÃO SHALL aceitar o
+integrante, a empresa ou o papel informados pelo cliente no corpo, na URL ou em cabeçalho
+próprio.
+
+Os papéis SHALL ser `INTEGRANTE`, `ADMIN` e `NATY`. Chamada autenticada sem o papel que a
+rota exige SHALL ser recusada com 403 e código `ACESSO_NEGADO`, no formato único de erro.
+
+Token de integrante desativado ou de empresa inativa SHALL ser recusado como token
+desconhecido.
 
 São públicas apenas a emissão de sessão, a verificação de saúde da aplicação e a
 documentação da API em desenvolvimento.
@@ -93,6 +108,21 @@ documentação da API em desenvolvimento.
 - **WHEN** o cliente apresenta um token que não corresponde a nenhuma sessão
 - **THEN** o sistema recusa a chamada e NÃO executa a operação
 
+#### Scenario: Papel insuficiente
+
+- **WHEN** o cliente apresenta um token válido numa rota que exige outro papel
+- **THEN** o sistema devolve 403 com código `ACESSO_NEGADO` e NÃO executa a operação
+
+#### Scenario: Integrante desativado com sessão aberta
+
+- **WHEN** o cliente apresenta o token de um integrante desativado depois da emissão
+- **THEN** o sistema recusa a chamada com 401
+
+#### Scenario: Empresa inativa com sessão aberta
+
+- **WHEN** o cliente apresenta o token de um integrante cuja empresa está inativa
+- **THEN** o sistema recusa a chamada com 401
+
 #### Scenario: Emissão de sessão é pública
 
 - **WHEN** o cliente chama a emissão de sessão sem apresentar token
@@ -103,6 +133,11 @@ documentação da API em desenvolvimento.
 A sessão SHALL ter um momento de expiração, e o sistema NÃO SHALL aceitar token expirado.
 O sistema SHALL oferecer a revogação da sessão em uso, e token revogado NÃO SHALL ser
 aceito na chamada seguinte.
+
+Redefinir a senha e desativar o integrante SHALL revogar todas as sessões dele. Desativar
+a empresa SHALL revogar todas as sessões dos integrantes dela. Reativar NÃO SHALL tornar
+válido token revogado. A revogação SHALL valer mesmo com chamadas concorrentes do token
+revogado, e o registro do último acesso NÃO SHALL desfazê-la.
 
 O tempo de expiração SHALL ser lido de configuração de ambiente, nunca de constante em
 código.
@@ -118,6 +153,11 @@ A sessão SHALL guardar o momento do último acesso do integrante.
 
 - **WHEN** o integrante revoga a sessão em uso
 - **THEN** a chamada seguinte com aquele token é recusada
+
+#### Scenario: Revogação pela redefinição de senha
+
+- **WHEN** quem administra redefine a senha de um integrante
+- **THEN** todos os tokens emitidos antes para aquele integrante são recusados
 
 #### Scenario: Último acesso registrado
 

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -39,8 +40,11 @@ public class TokenSessaoFiltro extends OncePerRequestFilter {
     private void autenticar(String token, HttpServletRequest requisicao) {
         try {
             IntegranteDaRequisicao integrante = sessaoService.resolverPorToken(token);
-            UsernamePasswordAuthenticationToken autenticacao =
-                    new UsernamePasswordAuthenticationToken(integrante, null, List.of());
+            UsernamePasswordAuthenticationToken autenticacao = new UsernamePasswordAuthenticationToken(
+                    integrante,
+                    null,
+                    List.of(new SimpleGrantedAuthority(
+                            "ROLE_" + integrante.papel().name())));
             SecurityContextHolder.getContext().setAuthentication(autenticacao);
         } catch (CredencialInvalidaException excecao) {
             SecurityContextHolder.clearContext();

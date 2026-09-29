@@ -1,12 +1,14 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:15-alpine
+    container_name: naty-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DATABASE_NAME:-natysync}
       POSTGRES_USER: ${DATABASE_USERNAME:-natysync}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-natysync}
     ports:
-      - "${DATABASE_PORT:-5432}:5432"
+      - "${DATABASE_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -17,9 +19,13 @@ services:
 
   app:
     build: .
+    container_name: naty-app
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       DATABASE_URL: jdbc:postgresql://postgres:5432/${DATABASE_NAME:-natysync}

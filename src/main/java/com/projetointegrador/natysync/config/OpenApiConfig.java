@@ -1,5 +1,6 @@
 package com.projetointegrador.natysync.config;
 
+import com.projetointegrador.natysync.usuario.IntegranteDaRequisicao;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -7,6 +8,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,6 +16,10 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
     private static final String ESQUEMA_BEARER = "sessao";
+
+    static {
+        SpringDocUtils.getConfig().addRequestWrapperToIgnore(IntegranteDaRequisicao.class);
+    }
 
     @Bean
     public OpenAPI documentacaoDaApi() {
@@ -23,7 +29,9 @@ public class OpenApiConfig {
                         .version("v1")
                         .description("Trilha de treinamento dos integrantes das empresas clientes da Naty."
                                 + " Toda rota exige Authorization: Bearer, com excecao da emissao de sessao,"
-                                + " da verificacao de saude e desta documentacao."))
+                                + " da verificacao de saude e desta documentacao."
+                                + " As rotas de /api/v1/painel exigem o papel ADMIN ou NATY e devolvem 403 ACESSO_NEGADO"
+                                + " sem ele."))
                 .servers(List.of(new Server().url("/").description("Servidor que atende esta documentacao")))
                 .components(new Components()
                         .addSecuritySchemes(

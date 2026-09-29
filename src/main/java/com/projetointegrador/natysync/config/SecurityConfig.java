@@ -1,6 +1,8 @@
 package com.projetointegrador.natysync.config;
 
+import com.projetointegrador.natysync.usuario.Papel;
 import com.projetointegrador.natysync.usuario.TokenSessaoFiltro;
+import jakarta.servlet.DispatcherType;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,18 +32,31 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain cadeiaDeSeguranca(
-            HttpSecurity http, TokenSessaoFiltro tokenSessaoFiltro, RecusaDeAcesso recusaDeAcesso) throws Exception {
+            HttpSecurity http,
+            TokenSessaoFiltro tokenSessaoFiltro,
+            RecusaDeAcesso recusaDeAcesso,
+            NegacaoDeAcesso negacaoDeAcesso)
+            throws Exception {
         return http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sessao -> sessao.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(rotas -> rotas.requestMatchers(HttpMethod.OPTIONS, "/**")
+                .authorizeHttpRequests(rotas -> rotas.dispatcherTypeMatchers(DispatcherType.ERROR)
+                        .permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/sessoes")
                         .permitAll()
                         .requestMatchers(ROTAS_PUBLICAS)
                         .permitAll()
+                        .requestMatchers("/api/v1/painel/empresas/**")
+                        .hasRole(Papel.NATY.name())
+                        .requestMatchers("/api/v1/painel/integrantes/**")
+                        .hasRole(Papel.ADMIN.name())
+                        .requestMatchers("/api/v1/painel/**")
+                        .denyAll()
                         .anyRequest()
                         .authenticated())
-                .exceptionHandling(erros -> erros.authenticationEntryPoint(recusaDeAcesso))
+                .exceptionHandling(
+                        erros -> erros.authenticationEntryPoint(recusaDeAcesso).accessDeniedHandler(negacaoDeAcesso))
                 .addFilterBefore(tokenSessaoFiltro, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
