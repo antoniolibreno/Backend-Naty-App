@@ -19,8 +19,12 @@ Nada desta lista vira card.
   `Authorization: Bearer`.
 - Entidades `Trilha`, `Modulo`, `Atividade`, `Quiz`, `Pergunta`, `Alternativa`,
   `Usuario`, `Empresa`, `Sessao` e `ProgressoAtividade`, com repositórios e mappers.
-- Migrations `V1` a `V6`, seed de desenvolvimento com credencial, tratamento global de
+- Migrations `V1` a `V7`, seed de desenvolvimento com credencial, tratamento global de
   erro em formato único e Docker Compose.
+- Painel administrativo sob `/api/v1/painel/**`: cadastro de empresa com fuso horário pelo
+  papel `NATY`, cadastro, senha, desativação e listagem paginada de integrante pelo `ADMIN`
+  da própria empresa e pelo `NATY` de qualquer empresa, e bootstrap da primeira conta
+  `NATY` por variável de ambiente.
 - Progresso na trilha: desbloqueio linear, `GET /api/v1/trilhas/{trilhaId}/progresso` e
   `POST /api/v1/atividades/{atividadeId}/video-assistido`, com o integrante resolvido a
   partir do token da sessão, coberto por testes de integração.
@@ -60,8 +64,7 @@ As arestas que fixam a ordem:
   papel à cadeia que nasce em 3.3.
 - 3.6 antes de 11.6 e 11.8, porque a empresa vem da identidade da requisição. Sem 3.6 a
   listagem nasceria com um contrato que muda depois.
-- 10.2 antes de 11.2, porque `Empresa` não gera id nem preenche carimbo, então persistir
-  empresa por código falha.
+- 10.2 antes de 11.2, porque persistir empresa por código exige id e carimbo gerados.
 - 5.9 antes de 6.3, porque 5.9 troca o gatilho de conclusão, e conceder ponto antes é
   escrever sobre um gatilho que muda no diff seguinte.
 - 11.2 antes de 6.4, porque a sequência de dias precisa do fuso horário da empresa.
@@ -156,45 +159,51 @@ O cadastro é nosso. As rotas de escrita de integrante nascem depois da autentic
 para o painel nunca passar por um estado aberto na internet.
 
 - [x] **11.2 Expor o CRUD de empresa com fuso horário**
-  A entidade `Empresa` não gera id nem preenche carimbo de data, então persistir por
-  código falha. A empresa nasce pelo painel, com o fuso horário que a sequência de dias
-  exige.
-  Toca: `empresa/Empresa.java`, tabela `empresa`, `/api/v1/empresas`
+  A empresa nasce pelo painel, só pelo papel `NATY`, com o fuso horário que a sequência de
+  dias exige.
+  Toca: `empresa/Empresa.java`, tabela `empresa`, `/api/v1/painel/empresas`
 
-- [ ] **11.3 Expor o cadastro de integrante vinculado à empresa**
+- [x] **11.3 Expor o cadastro de integrante vinculado à empresa**
   Cria o integrante no nosso banco, com nome, e-mail e empresa. O e-mail é único no
   sistema inteiro, porque é ele que resolve a empresa no login.
-  Toca: `/api/v1/integrantes`, tabela `usuario`
+  Toca: `/api/v1/painel/integrantes`, tabela `usuario`
 
-- [ ] **11.4 Definir e resetar a senha do integrante**
+- [x] **11.4 Definir e resetar a senha do integrante**
   Quem administra define a senha no cadastro e consegue resetá-la. A senha é guardada
   como hash e não volta em resposta nem aparece em log.
-  Toca: `/api/v1/integrantes/{integranteId}/senha`
+  Toca: `/api/v1/painel/integrantes/{integranteId}/senha`
 
-- [ ] **11.5 Desativar integrante sem apagar progresso**
+- [x] **11.5 Desativar integrante sem apagar progresso**
   Desativado some do ranking e não entra no sistema, e o progresso e a pontuação dele
-  continuam de pé, porque o histórico da empresa aponta para ele.
-  Toca: tabela `usuario`, `progresso`, `gamificacao`
+  continuam de pé, porque o histórico da empresa aponta para ele. O ranking de 6.7 exclui
+  quem tem `usuario.ativo` falso.
+  Toca: tabela `usuario`, `painel`
 
-- [ ] **11.6 Listar integrantes da empresa com busca e paginação**
+- [x] **11.6 Listar integrantes da empresa com busca e paginação**
   É a tela principal de quem administra. Sempre filtrada por empresa, nunca devolvendo
   lista inteira sem página.
-  Toca: `GET /api/v1/integrantes`
+  Toca: `GET /api/v1/painel/integrantes`
 
-- [ ] **11.7 Proteger todo o painel pelo papel administrativo**
+- [x] **11.7 Proteger todo o painel pelo papel administrativo**
   Nenhuma rota de cadastro responde para token de integrante comum. O papel vem da
   migration 0.1, e a coluna `usuario.perfil` não vale como permissão.
   Toca: `config/SecurityConfig.java`, `usuario`
 
-- [ ] **11.8 Testar que administrador de uma empresa não enxerga outra**
+- [x] **11.8 Testar que administrador de uma empresa não enxerga outra**
   Cria duas empresas com integrantes e prova que o cadastro, a listagem e o reset de
   senha de uma nunca alcançam a outra.
   Toca: `src/test/java/.../painel`
 
-- [ ] **11.9 Escrever `painel/CLAUDE.md`**
+- [x] **11.9 Escrever `painel/CLAUDE.md`**
   Registra que este pacote é o único que escreve em `usuario` e por que a credencial é
   nossa.
   Toca: `painel/CLAUDE.md`
+
+- [x] **11.10 Criar a primeira conta `NATY` por bootstrap**
+  Sem ela produção não tem quem cadastre a primeira empresa. A conta nasce de variável de
+  ambiente na subida, só quando não existe nenhum `NATY`, e produção recusa subir sem
+  nenhum.
+  Toca: `painel/BootstrapNaty.java`, `application-prod.yml`, `.env.example`
 
 ## Fase 3. MVP funcional
 
@@ -390,13 +399,12 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
 
 ## Fora do MVP. Acompanhamento
 
-Fora do MVP. Depende de decidir quem enxerga mais de uma empresa.
+Fora do MVP. Depende de decidir a definição de parado.
 
 Decisões que o épico carrega e que precisam sair antes do código:
 
-- **Quem enxerga mais de uma empresa:** o acompanhamento é o único lugar que atravessa
-  empresas. Falta decidir se existe um papel acima de `ADMIN` e como essa pessoa entra no
-  sistema.
+- **Quem enxerga mais de uma empresa:** o papel `NATY`, que nasce do bootstrap e já
+  administra o cadastro de empresas.
 - **Definição de parado:** quantos dias sem concluir atividade contam como parado. O
   número nasce como propriedade configurável, não como constante no código.
 
@@ -414,7 +422,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   clientes sem abrir integrante por integrante.
   Toca: `GET /api/v1/acompanhamento/empresas/{empresaId}/metricas`
 
-- [ ] **7.4 Restringir o acompanhamento ao papel administrativo**
+- [ ] **7.4 Restringir o acompanhamento ao papel `NATY`**
   É o único lugar que lê dado de mais de uma empresa.
   Toca: `acompanhamento`, `config/SecurityConfig.java`
 
@@ -450,7 +458,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   contrato do time do app.
   Toca: `config/OpenApiConfig.java`, `/v3/api-docs`
 
-- [ ] **10.2 Padronizar `Empresa` com id gerado e timestamps automáticos**
+- [x] **10.2 Padronizar `Empresa` com id gerado e timestamps automáticos**
   É a única entidade sem geração de id e sem os timestamps automáticos que as outras têm,
   então o id precisa ser preenchido à mão. Alinhar evita bug em quem criar empresa por
   código.

@@ -24,13 +24,27 @@ revoga e exigiria uma segunda tabela só para o último acesso.
 **O último acesso do integrante mora na tabela de sessão, nunca em `usuario`.** Só o
 painel escreve em `usuario`, e a regra não abre exceção para um carimbo de data.
 
-**Os papéis são `INTEGRANTE` e `ADMIN`, em coluna própria.** A coluna `usuario.perfil`,
-que guarda `admin`, `supervisor` e `user`, descreve o que a pessoa faz no WhatsApp e não
-vale como permissão no treinamento.
+**Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, em coluna própria.** `ADMIN` administra os
+integrantes da própria empresa. `NATY` é o time da Naty e administra empresas e os
+integrantes de qualquer uma. A coluna `usuario.perfil`, que guarda `admin`, `supervisor` e
+`user`, descreve o que a pessoa faz no WhatsApp e não vale como permissão no treinamento.
+
+**`NATY` nasce só do bootstrap ou do seed, nunca de endpoint.** Um papel que atravessa
+empresas atribuível pela API é escalada de privilégio a um `PUT` de distância. O primeiro
+`NATY` de produção vem de variável de ambiente, e produção recusa subir sem nenhum.
+
+**Ninguém altera o próprio papel nem se desativa.** Sem essa trava o último administrador
+tranca todos para fora.
 
 **Integrante desativado mantém o histórico.** O registro nunca é apagado, porque
 progresso e pontuação apontam para ele. Desativado não entra no sistema e some do
 ranking, e o progresso dele continua contando para o acompanhamento.
+
+**Empresa inativa tranca os integrantes dela.** Login recusado e sessão aberta recusada na
+chamada seguinte, com o histórico intacto. Empresa com integrante não é excluída, só
+desativada.
+
+**Trocar senha e desativar revogam as sessões.** Reativar não ressuscita token antigo.
 
 **O tempo de expiração da sessão e os parâmetros de hash de senha vivem em variável de
 ambiente.** A aplicação recusa subir em produção sem eles, para não existir valor padrão
@@ -43,8 +57,9 @@ assinatura.
 pontuação e ranking. A empresa vem da identidade da requisição, nunca do corpo nem da
 URL, onde o cliente poderia trocá-la.
 
-**O acompanhamento é o único lugar que atravessa empresas**, e só o papel administrativo
-entra nele.
+**O cadastro de empresas e o acompanhamento são os únicos lugares que atravessam
+empresas**, e só o papel `NATY` entra neles. O `ADMIN` recebe a empresa da identidade da
+requisição, e integrante de outra empresa responde como inexistente.
 
 **O conteúdo de treinamento é global.** Nenhuma tabela de conteúdo tem `empresa_id`,
 porque todas as empresas fazem o mesmo treinamento sobre o mesmo produto. Conteúdo
@@ -142,7 +157,7 @@ credencial nascem lá, e nenhum outro caminho cadastra pessoa no sistema.
 
 ## Escrita e schema
 
-**Só o pacote `painel` escreve em `usuario`.** Concentrar a escrita em um lugar é o que
+**Só o pacote `painel` escreve em `usuario` e em `empresa`.** Concentrar a escrita em um lugar é o que
 mantém a regra auditável.
 
 **O schema do banco é do Flyway.** `ddl-auto` fica em `validate`: adicionar campo em

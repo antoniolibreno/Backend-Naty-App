@@ -7,6 +7,7 @@ um painel administrativo, que é a fonte da verdade de quem existe.
 
 A API entrega a leitura do conteúdo da trilha, a resolução de qual integrante está usando
 o aplicativo e o progresso de cada um, com o estado de cada atividade numa chamada só. O
+painel cadastra empresas e integrantes sob `/api/v1/painel/**`. O
 alvo completo do produto está em `docs/regras.md`, e o que falta construir está em
 `docs/backlog.md`.
 

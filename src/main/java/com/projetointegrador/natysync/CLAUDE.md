@@ -12,7 +12,9 @@ negócio: cada funcionalidade mora no subpacote dela.
   `postgres:15-alpine` pelo Testcontainers e liga no datasource por `@ServiceConnection`.
 - `src/test/java/com/projetointegrador/natysync/IntegracaoTest`: base abstrata dos testes
   HTTP. Sobe em porta aleatória, cria empresa e integrante padrão sob demanda, autentica
-  em `POST /api/v1/sessoes` e remove os dois depois de cada teste.
+  em `POST /api/v1/sessoes` e, depois de cada teste, apaga toda empresa criada por
+  `criarEmpresa` ou registrada por `registrarEmpresaCriada`, junto com os integrantes
+  dela. `criarIntegrante` aceita o papel.
 - `src/test/java/com/projetointegrador/natysync/NatySyncApplicationTests`: prova que o
   contexto sobe contra o banco real.
 
@@ -37,6 +39,10 @@ uma versão e a aplicação roda em outra. `PostgresTestcontainerConfiguration` 
 Testcontainers exige o Docker rodando. Sem ele, `./mvnw -B verify` falha nos testes de
 integração, mesmo com o Postgres local de pé.
 
-O `@AfterEach` de `IntegracaoTest` limpa só a empresa e o integrante padrão. O que o teste
-cria com `criarEmpresa` e `criarIntegrante` fica no banco, e o banco é compartilhado entre
-as classes de teste que reaproveitam o mesmo contexto Spring.
+O `@AfterEach` de `IntegracaoTest` limpa só as empresas que ele conhece. Empresa criada
+pela API dentro do teste precisa passar por `registrarEmpresaCriada`, senão fica no banco,
+e o banco é compartilhado entre as classes de teste que reaproveitam o mesmo contexto
+Spring.
+
+`criarEmpresa` não preenche o identificador. `Empresa` gera o id, e salvar entidade nova
+com id preenchido é tratado como `merge` e falha.

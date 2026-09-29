@@ -2,8 +2,8 @@
 
 ## Responsabilidade
 
-Integrantes das empresas e a API REST que o app Flutter consome para lê-los. Este pacote só
-lê: quem escreve na tabela é o pacote `painel`.
+Integrantes das empresas, a autenticação e a sessão. Este pacote não escreve cadastro:
+quem escreve em `usuario` é o pacote `painel`.
 
 O usuário é o sujeito do treinamento. `progresso` e `gamificacao` apontam para ele, e ele
 não conhece nenhum dos dois.
@@ -11,22 +11,34 @@ não conhece nenhum dos dois.
 ## Contratos
 
 - `Usuario`: entidade JPA mapeada na tabela `usuario`, ligada a `Empresa`.
-- `UsuarioRepository`: busca por e-mail normalizado e busca por identificador com a
-  empresa.
+- `Usuario.podeEntrar()`: integrante ativo de empresa ativa. É a regra única de quem entra,
+  usada no login e em cada chamada autenticada.
+- `UsuarioRepository`: busca por e-mail normalizado, busca por identificador com a empresa,
+  busca por identificador dentro de uma empresa e `JpaSpecificationExecutor` para a
+  listagem do painel.
+- `Papel`: `INTEGRANTE`, `ADMIN` e `NATY`.
 - `UsuarioService`: resolução de integrante. Sem método de escrita exposto para o
   controller.
 - `SessaoController`: `POST /api/v1/sessoes`.
 - `dto/SessaoRequest` e `dto/SessaoResponse`.
-- `IntegranteDaRequisicao` e `IntegranteArgumentResolver`: injetam o integrante da chamada
-  nos controllers que precisam saber de quem é a operação. O registro do resolvedor fica em
-  `config/WebMvcResolverConfig`.
+- `IntegranteDaRequisicao` e `IntegranteArgumentResolver`: injetam o integrante, a empresa
+  e o papel da chamada nos controllers que precisam saber de quem é a operação. O registro
+  do resolvedor fica em `config/WebMvcResolverConfig`.
+- `TokenSessaoFiltro`: põe `ROLE_<papel>` como autoridade no contexto de segurança.
+- `SessaoService.revogarTodasDoIntegrante` e `revogarTodasDaEmpresa`: revogação em lote que
+  o `painel` chama na troca de senha e na desativação.
 
 ## Decisões
 
 A entidade se chama `Usuario`, sem sufixo `Entity`. O nome do domínio é o nome da classe.
 
-`UsuarioController` expõe apenas leitura. Criar, alterar ou apagar integrante é trabalho do
-`painel`, e concentrar a escrita num lugar só é o que mantém a regra auditável.
+Criar, alterar e desativar integrante é trabalho do `painel`. Concentrar a escrita num
+lugar só é o que mantém a regra auditável.
+
+A sessão confere `Usuario.podeEntrar()` a cada chamada. A busca da sessão já faz
+`join fetch` do usuário e da empresa, então a checagem não custa consulta, e desativar
+integrante ou empresa vale na chamada seguinte. A revogação em lote garante que reativar
+não ressuscita token antigo.
 
 Todo usuário pertence a uma empresa. `empresa_id` é obrigatório e nenhuma consulta de
 usuário roda sem filtro de empresa.
@@ -59,11 +71,16 @@ empresa. A mesma pessoa em duas empresas precisa de dois e-mails.
 padrão no banco. O padrão do banco não alcança quem persiste pela JPA, porque o insert
 carrega a coluna explicitamente.
 
-A senha de desenvolvimento das duas contas do seed é `123qweasd`.
+A senha de desenvolvimento das três contas do seed é `123qweasd`: `admin@admin.com`
+(`ADMIN`), `user@user.com` (`INTEGRANTE`) e `naty@naty.com` (`NATY`).
 
 O campo `perfil` (`admin`, `supervisor`, `user`) descreve o que a pessoa faz no WhatsApp e
 não muda nada no treinamento: todos fazem a mesma trilha. Não use esse campo como
-permissão. O papel administrativo é coluna própria, criada pelo painel.
+permissão. A permissão é `usuario.papel`, restrita por check constraint aos três valores de
+`Papel`.
+
+`IntegranteDaRequisicao` é construído só em `SessaoService`. Componente novo no record
+quebra quem o constrói, e não quem só lê `usuarioId` e `empresaId`.
 
 `ddl-auto` está em `validate`. Adicionar campo na entidade sem escrever a migration
 correspondente derruba a aplicação na subida, e isso é proposital.
@@ -71,9 +88,7 @@ correspondente derruba a aplicação na subida, e isso é proposital.
 ## Ausências deliberadas
 
 `UsuarioController` declara o caminho `/api/v1/usuarios` e não mapeia nenhum método.
-`UsuarioMapper`, `dto/UsuarioResponse` e `dto/UsuarioFiltro` não têm conteúdo. O caso de uso
-de listagem de integrante pertence ao painel.
-
-A tabela `usuario` é populada pelo seed de desenvolvimento.
+`UsuarioMapper`, `dto/UsuarioResponse` e `dto/UsuarioFiltro` não têm conteúdo. A listagem de
+integrante para quem administra mora no `painel`.
 
 A sessão não renova: quando o token expira, o app autentica de novo.

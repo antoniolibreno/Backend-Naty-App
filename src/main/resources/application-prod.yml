@@ -3,6 +3,8 @@ app:
     expiracao: ${APP_SESSAO_EXPIRACAO}
   senha:
     forca-hash: ${APP_SENHA_FORCA_HASH}
+  bootstrap:
+    obrigatorio: true
 
 spring:
   flyway:

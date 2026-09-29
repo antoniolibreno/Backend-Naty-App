@@ -97,10 +97,13 @@ qualquer agente que trabalhe aqui e está imposta em `.claude/settings.json`, co
 
 `config`: beans de infraestrutura, OpenAPI, CORS e resolvedor de argumento.
 
-`usuario`: integrantes das empresas e a resolução de identidade em
-`POST /api/v1/sessoes`. Só lê; a escrita pertence ao painel.
+`usuario`: integrantes das empresas, papel e a resolução de identidade em
+`POST /api/v1/sessoes`. Só lê o cadastro; a escrita pertence ao `painel`.
 
-`empresa`: cliente da Naty e raiz do isolamento de dados.
+`empresa`: cliente da Naty, com fuso horário, e raiz do isolamento de dados.
+
+`painel`: cadastro de empresa e de integrante sob `/api/v1/painel/**` e o bootstrap da
+primeira conta `NATY`. Único pacote que escreve em `usuario` e em `empresa`.
 
 `trilha`: conteúdo do treinamento e a leitura dele. Trilha, módulo, atividade, quiz,
 pergunta e alternativa. Conteúdo semeado por migration, sem CRUD.
@@ -108,7 +111,8 @@ pergunta e alternativa. Conteúdo semeado por migration, sem CRUD.
 `progresso`: estado de cada integrante na trilha, com desbloqueio linear e conclusão de
 atividade.
 
-`shared`: tratamento global de erro e utilitário transversal. Mantenha pequeno.
+`shared`: tratamento global de erro, corpo de página e utilitário transversal. Mantenha
+pequeno.
 
 Pacote novo nasce com sua própria proposta OpenSpec e com o seu `CLAUDE.md`.
 
@@ -138,13 +142,18 @@ rebaixada para caber no construído.
 
 ## Limites do sistema
 
-Não existe caminho para cadastrar empresa nem integrante. A tabela `usuario` é populada
-pelo seed de desenvolvimento, e a conta administrativa de produção depende do painel.
+Empresa e integrante nascem pelo painel. A primeira conta `NATY` nasce do seed em
+desenvolvimento e do bootstrap por variável de ambiente em produção, e produção recusa
+subir sem nenhuma das duas.
 
 A sessão não renova. Quando o token expira, o app autentica de novo.
 
-O papel `ADMIN` existe em `usuario.papel` e nenhuma rota o exige, porque nenhuma rota
-administrativa existe.
+Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`. Só as rotas de `/api/v1/painel/**` exigem
+papel. `ADMIN` alcança só a própria empresa, e `NATY` alcança todas. Conteúdo de
+treinamento não tem rota de escrita.
+
+Integrante e empresa nunca somem por desativação. Integrante não tem rota de exclusão, e
+empresa só é excluída sem integrante.
 
 Atividade conclui quando o vídeo é marcado como assistido, tenha ela quiz ou não. O quiz
 é apenas leitura: nenhuma tentativa é recebida, corrigida ou guardada, e `quiz.nota_minima`

@@ -155,4 +155,32 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
+
+    @Test
+    void integranteDeEmpresaInativaNaoAutenticaComAMesmaRecusa() {
+        Empresa inativa = criarEmpresa("Empresa Inativa");
+        criarIntegrante(inativa, "Integrante de Inativa", "de-inativa@teste.com.br");
+        inativa.setAtiva(false);
+        empresaRepository.save(inativa);
+
+        ResponseEntity<JsonNode> recusa = autenticarCom("de-inativa@teste.com.br", SENHA_DE_TESTE);
+        ResponseEntity<JsonNode> senhaErrada = autenticarCom("ativo@teste.com.br", "senha-errada");
+
+        assertThat(recusa.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(recusa.getBody().get("mensagem").asText())
+                .isEqualTo(senhaErrada.getBody().get("mensagem").asText());
+    }
+
+    @Test
+    void sessaoAbertaCaiQuandoAEmpresaFicaInativa() {
+        Empresa empresa = criarEmpresa("Empresa que Fica Inativa");
+        criarIntegrante(empresa, "Integrante", "fica-inativa@teste.com.br");
+        String token = autenticar("fica-inativa@teste.com.br", SENHA_DE_TESTE);
+        assertThat(lerTrilhaCom(token).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        empresa.setAtiva(false);
+        empresaRepository.save(empresa);
+
+        assertThat(lerTrilhaCom(token).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
 }

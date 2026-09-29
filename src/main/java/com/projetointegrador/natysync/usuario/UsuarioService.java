@@ -25,7 +25,7 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository
                 .buscarPorEmailNormalizado(emailNormalizado)
                 .orElseThrow(() -> new CredencialInvalidaException(RECUSA_UNICA));
-        if (!usuario.isAtivo() || !senhaConfere(senha, usuario.getSenhaHash())) {
+        if (!usuario.podeEntrar() || !senhaConfere(senha, usuario.getSenhaHash())) {
             throw new CredencialInvalidaException(RECUSA_UNICA);
         }
         return usuario;

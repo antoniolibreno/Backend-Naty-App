@@ -37,6 +37,13 @@ app:
     expiracao: ${APP_SESSAO_EXPIRACAO:7d}
   senha:
     forca-hash: ${APP_SENHA_FORCA_HASH:10}
+  bootstrap:
+    obrigatorio: false
+    naty:
+      nome: ${APP_BOOTSTRAP_NATY_NOME:}
+      email: ${APP_BOOTSTRAP_NATY_EMAIL:}
+      senha: ${APP_BOOTSTRAP_NATY_SENHA:}
+      empresa: ${APP_BOOTSTRAP_NATY_EMPRESA:Naty}
 
 management:
   endpoints:

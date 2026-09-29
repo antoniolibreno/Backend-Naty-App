@@ -1,5 +1,6 @@
 package com.projetointegrador.natysync.config;
 
+import com.projetointegrador.natysync.usuario.Papel;
 import com.projetointegrador.natysync.usuario.TokenSessaoFiltro;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,12 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(ROTAS_PUBLICAS)
                         .permitAll()
+                        .requestMatchers("/api/v1/painel/empresas/**")
+                        .hasRole(Papel.NATY.name())
+                        .requestMatchers("/api/v1/painel/integrantes/**")
+                        .hasRole(Papel.ADMIN.name())
+                        .requestMatchers("/api/v1/painel/**")
+                        .denyAll()
                         .anyRequest()
                         .authenticated())
                 .exceptionHandling(

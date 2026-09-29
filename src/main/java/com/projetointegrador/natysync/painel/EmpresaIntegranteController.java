@@ -1,0 +1,105 @@
+package com.projetointegrador.natysync.painel;
+
+import com.projetointegrador.natysync.painel.dto.AtivoRequest;
+import com.projetointegrador.natysync.painel.dto.IntegranteAlteracaoRequest;
+import com.projetointegrador.natysync.painel.dto.IntegranteCriacaoRequest;
+import com.projetointegrador.natysync.painel.dto.IntegranteFiltro;
+import com.projetointegrador.natysync.painel.dto.IntegranteResponse;
+import com.projetointegrador.natysync.painel.dto.SenhaRequest;
+import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
+import com.projetointegrador.natysync.usuario.IntegranteDaRequisicao;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.UUID;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/painel/empresas/{empresaId}/integrantes")
+@Tag(name = "Painel: integrantes por empresa", description = "Integrantes de qualquer empresa. Exige o papel NATY.")
+public class EmpresaIntegranteController {
+
+    private final IntegranteService integranteService;
+
+    public EmpresaIntegranteController(IntegranteService integranteService) {
+        this.integranteService = integranteService;
+    }
+
+    @GetMapping
+    @Operation(
+            summary = "Lista os integrantes da empresa",
+            description = "Paginada por pagina e tamanho, com tamanho maximo de 100. A ordem e sempre por nome,"
+                    + " e o parametro de ordenacao e ignorado. busca compara com nome e e-mail.")
+    public PaginaResponse<IntegranteResponse> listar(
+            @PathVariable UUID empresaId,
+            @RequestParam(required = false) String busca,
+            @RequestParam(required = false) Boolean ativo,
+            @ParameterObject Pageable pagina) {
+        return integranteService.listar(empresaId, new IntegranteFiltro(busca, ativo), pagina);
+    }
+
+    @GetMapping("/{integranteId}")
+    @Operation(summary = "Busca um integrante da empresa")
+    public IntegranteResponse buscar(@PathVariable UUID empresaId, @PathVariable UUID integranteId) {
+        return integranteService.buscar(empresaId, integranteId);
+    }
+
+    @PostMapping
+    @Operation(
+            summary = "Cadastra um integrante na empresa",
+            description = "O e-mail e unico no sistema inteiro. O papel e INTEGRANTE ou ADMIN. A senha tem de 8"
+                    + " caracteres a 72 bytes e nunca volta na resposta.")
+    public ResponseEntity<IntegranteResponse> criar(
+            @PathVariable UUID empresaId, @Valid @RequestBody IntegranteCriacaoRequest requisicao) {
+        IntegranteResponse resposta = integranteService.criar(empresaId, requisicao);
+        return ResponseEntity.created(
+                        URI.create("/api/v1/painel/empresas/" + empresaId + "/integrantes/" + resposta.id()))
+                .body(resposta);
+    }
+
+    @PutMapping("/{integranteId}")
+    @Operation(summary = "Altera nome, e-mail, papel e perfil do integrante")
+    public IntegranteResponse alterar(
+            @PathVariable UUID empresaId,
+            @PathVariable UUID integranteId,
+            @Valid @RequestBody IntegranteAlteracaoRequest requisicao,
+            IntegranteDaRequisicao quem) {
+        return integranteService.alterar(empresaId, integranteId, requisicao, quem);
+    }
+
+    @PutMapping("/{integranteId}/senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Define a senha do integrante", description = "Revoga todas as sessoes do integrante.")
+    public void definirSenha(
+            @PathVariable UUID empresaId,
+            @PathVariable UUID integranteId,
+            @Valid @RequestBody SenhaRequest requisicao) {
+        integranteService.definirSenha(empresaId, integranteId, requisicao.senha());
+    }
+
+    @PutMapping("/{integranteId}/ativo")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Ativa ou desativa o integrante",
+            description = "Desativar revoga as sessoes e preserva o progresso. Integrante nunca e apagado.")
+    public void definirAtivo(
+            @PathVariable UUID empresaId,
+            @PathVariable UUID integranteId,
+            @Valid @RequestBody AtivoRequest requisicao,
+            IntegranteDaRequisicao quem) {
+        integranteService.definirAtivo(empresaId, integranteId, requisicao.ativo(), quem);
+    }
+}
