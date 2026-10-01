@@ -213,51 +213,51 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
 
 ### Quiz: tentativa e correção
 
-- [ ] **5.1 Escrever a migration de `tentativa_quiz` e `resposta_tentativa`**
+- [x] **5.1 Escrever a migration de `tentativa_quiz` e `resposta_tentativa`**
   Cria as tabelas que guardam cada tentativa e a alternativa escolhida em cada pergunta,
   com a nota calculada.
   Toca: nova migration em `db/migration`
 
-- [ ] **5.2 Expor `POST /api/v1/atividades/{atividadeId}/quiz/tentativas`**
+- [x] **5.2 Expor `POST /api/v1/atividades/{atividadeId}/quiz/tentativas`**
   Recebe as respostas do integrante e devolve o resultado. É o fecho da aula.
   Toca: `POST /api/v1/atividades/{atividadeId}/quiz/tentativas`
 
-- [ ] **5.3 Corrigir a tentativa só no servidor**
+- [x] **5.3 Corrigir a tentativa só no servidor**
   A nota é calculada comparando as respostas com a coluna `alternativa.correta`, que nunca
   sai em DTO. Nota enviada pelo cliente não existe como campo de entrada.
   Toca: `progresso`, coluna `alternativa.correta`
 
-- [ ] **5.4 Aplicar a nota mínima do quiz**
+- [x] **5.4 Aplicar a nota mínima do quiz**
   Usa `quiz.nota_minima` para decidir aprovado ou reprovado, em vez de fixar o número no
   código.
   Toca: coluna `quiz.nota_minima`
 
-- [ ] **5.5 Implementar a política de retentativa**
+- [x] **5.5 Implementar a política de retentativa**
   Tentativa ilimitada valendo a melhor nota, conforme `regras.md`. O resultado guardado no
   progresso é o melhor, não o último.
   Toca: `progresso`
 
-- [ ] **5.6 Guardar o histórico de tentativas**
+- [x] **5.6 Guardar o histórico de tentativas**
   Mantém todas as tentativas, não só a melhor, porque o acompanhamento precisa saber quem
   está travado em uma atividade específica.
   Toca: tabela `tentativa_quiz`
 
-- [ ] **5.7 Devolver o resultado sem entregar o gabarito**
+- [x] **5.7 Devolver o resultado sem entregar o gabarito**
   Diz a nota, se aprovou e quais perguntas errou, e nunca qual era a alternativa correta.
   Toca: `POST /api/v1/atividades/{atividadeId}/quiz/tentativas`
 
-- [ ] **5.8 Recusar tentativa mal formada**
+- [x] **5.8 Recusar tentativa mal formada**
   Tentativa com pergunta de outro quiz, pergunta repetida, pergunta faltando ou
   alternativa que não pertence à pergunta volta como erro de validação, não como nota zero
   silenciosa.
   Toca: `progresso`, `shared/exception/ApiExceptionHandler.java`
 
-- [ ] **5.9 Trocar a regra de conclusão de atividade**
+- [x] **5.9 Trocar a regra de conclusão de atividade**
   Atividade com quiz conclui com aprovação no quiz, e atividade sem quiz conclui com o
   vídeo assistido. O registro de vídeo assistido não grava a conclusão sozinho.
   Toca: `progresso`, `CLAUDE.md` raiz, `progresso/CLAUDE.md`
 
-- [ ] **5.10 Testar que o gabarito não vaza na tentativa**
+- [x] **5.10 Testar que o gabarito não vaza na tentativa**
   Verifica que nenhum campo da resposta da tentativa, nem da leitura do quiz, revela a
   alternativa correta.
   Toca: `src/test/java/.../progresso`
@@ -544,3 +544,4 @@ Decisões que o épico carrega e que precisam sair antes do código:
   limpeza que falha deixa um e-mail fixo no banco e derruba as classes seguintes que usam o
   mesmo e-mail.
   Toca: `src/test/java`
+
