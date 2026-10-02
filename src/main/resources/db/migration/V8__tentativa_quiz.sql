@@ -15,7 +15,7 @@ create table resposta_tentativa (
     pergunta_id uuid not null references pergunta (id),
     alternativa_id uuid not null references alternativa (id),
     correta boolean not null,
-    constraint resposta_tentativa_pergunta_idx unique (tentativa_id, pergunta_id)
+    constraint resposta_tentativa_pergunta_uk unique (tentativa_id, pergunta_id)
 );
 
 create index resposta_tentativa_pergunta_idx on resposta_tentativa (pergunta_id);
