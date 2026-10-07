@@ -101,7 +101,7 @@ class ProgressoApiTest extends IntegracaoTest {
     }
 
     @Test
-    void cadaConclusaoLiberaASeguinteAteOFimDaTrilha() {
+    void atividadeComQuizSoConcluiComTentativaAprovada() {
         for (int posicao = 0; posicao < ATIVIDADES_EM_ORDEM.size(); posicao++) {
             List<String> antes = estadosEmOrdem(lerProgresso(token).getBody());
             assertThat(antes.get(posicao)).isEqualTo("DISPONIVEL");
@@ -109,9 +109,26 @@ class ProgressoApiTest extends IntegracaoTest {
                 assertThat(antes.get(posicao + 1)).isEqualTo("BLOQUEADO");
             }
 
-            ResponseEntity<JsonNode> conclusao = assistirVideo(token, ATIVIDADES_EM_ORDEM.get(posicao));
+            ResponseEntity<JsonNode> video = assistirVideo(token, ATIVIDADES_EM_ORDEM.get(posicao));
+            assertThat(video.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(video.getBody().get("estado").asText()).isEqualTo("DISPONIVEL");
+            assertThat(video.getBody().get("concluidoEm").isNull()).isTrue();
+
+            UUID atividadeId = ATIVIDADES_EM_ORDEM.get(posicao);
+            JsonNode quiz = cliente(token).get().uri("/api/v1/atividades/{id}/quiz", atividadeId)
+                    .retrieve().body(JsonNode.class);
+            List<java.util.Map<String, String>> respostas = new ArrayList<>();
+            for (JsonNode pergunta : quiz.get("perguntas")) {
+                respostas.add(java.util.Map.of(
+                        "perguntaId", pergunta.get("id").asText(),
+                        "alternativaId", pergunta.get("alternativas").get(0).get("id").asText()));
+            }
+            ResponseEntity<JsonNode> conclusao = cliente(token).post()
+                    .uri("/api/v1/atividades/{id}/quiz/tentativas", atividadeId)
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .body(java.util.Map.of("respostas", respostas)).retrieve().toEntity(JsonNode.class);
             assertThat(conclusao.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(conclusao.getBody().get("estado").asText()).isEqualTo("CONCLUIDO");
+            assertThat(conclusao.getBody().get("aprovado").asBoolean()).isTrue();
         }
 
         JsonNode fim = lerProgresso(token).getBody();
@@ -122,7 +139,7 @@ class ProgressoApiTest extends IntegracaoTest {
     }
 
     @Test
-    void videoAssistidoEmAtividadeBloqueadaDevolveConflitoENaoGravaProgresso() {
+    void tentativaDeVideoEmAtividadeBloqueadaDevolveConflitoENaoGravaProgresso() {
         ResponseEntity<JsonNode> resposta = assistirVideo(token, ATIVIDADES_EM_ORDEM.get(1));
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);

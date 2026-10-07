@@ -15,51 +15,43 @@ class QuizApiTest extends IntegracaoTest {
 
     @Test
     void quizTemQuatroPerguntasComQuatroAlternativas() {
-        ResponseEntity<JsonNode> resposta = cliente()
-                .get()
+        ResponseEntity<JsonNode> resposta = cliente().get()
                 .uri("/api/v1/atividades/" + ATIVIDADE_SEMEADA + "/quiz")
-                .retrieve()
-                .toEntity(JsonNode.class);
-
+                .retrieve().toEntity(JsonNode.class);
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody().get("notaMinima").asInt()).isEqualTo(70);
-
         JsonNode perguntas = resposta.getBody().get("perguntas");
         assertThat(perguntas).hasSize(4);
         assertThat(perguntas.get(0).get("alternativas")).hasSize(4);
     }
 
     @Test
-    void gabaritoNaoVazaNoPayload() {
-        ResponseEntity<String> resposta = cliente()
-                .get()
+    void leituraDoQuizNaoTemCampoDeGabarito() {
+        JsonNode quiz = cliente().get()
                 .uri("/api/v1/atividades/" + ATIVIDADE_SEMEADA + "/quiz")
-                .retrieve()
-                .toEntity(String.class);
-
-        assertThat(resposta.getBody()).doesNotContain("correta");
-        assertThat(resposta.getBody()).doesNotContain("true");
+                .retrieve().body(JsonNode.class);
+        assertThat(quiz.has("correta")).isFalse();
+        for (JsonNode pergunta : quiz.get("perguntas")) {
+            assertThat(pergunta.has("correta")).isFalse();
+            for (JsonNode alternativa : pergunta.get("alternativas")) {
+                assertThat(alternativa.has("correta")).isFalse();
+            }
+        }
     }
 
     @Test
     void atividadeSemQuizDevolveNaoEncontrado() {
-        ResponseEntity<JsonNode> resposta = cliente()
-                .get()
+        ResponseEntity<JsonNode> resposta = cliente().get()
                 .uri("/api/v1/atividades/" + UUID.randomUUID() + "/quiz")
-                .retrieve()
-                .toEntity(JsonNode.class);
-
+                .retrieve().toEntity(JsonNode.class);
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
     void atividadeSemVideoNaoEErro() {
-        ResponseEntity<JsonNode> resposta = cliente()
-                .get()
+        ResponseEntity<JsonNode> resposta = cliente().get()
                 .uri("/api/v1/atividades/" + ATIVIDADE_SEMEADA)
-                .retrieve()
-                .toEntity(JsonNode.class);
-
+                .retrieve().toEntity(JsonNode.class);
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody().get("imagemUrl").asText()).isNotBlank();
         assertThat(resposta.getBody().get("videoUrl").isNull()).isTrue();

@@ -2,85 +2,27 @@
 
 ## Responsabilidade
 
-Estado de cada integrante na trilha: o que ele assistiu, o que concluiu e o que não abriu.
-É o pacote que faz a trilha avançar nó a nó e a fonte de leitura da Home do app.
-
-Este pacote lê `trilha` e `usuario`. Nenhum dos dois o conhece, e essa seta não se inverte:
-`trilha` não sabe quem estuda e `usuario` não sabe o que foi estudado.
+Estado de cada integrante na trilha: vídeo assistido, aprovação do quiz e conclusão. O pacote corrige tentativas a partir do conteúdo de `trilha`, guarda seu histórico e determina a próxima atividade.
 
 ## Contratos
 
-- `ProgressoAtividade`: entidade mapeada em `progresso_atividade`, uma linha por par de
-  integrante e atividade.
-- `EstadoAtividade`: `BLOQUEADO`, `DISPONIVEL` e `CONCLUIDO`.
-- `ProgressoAtividadeRepository`: busca por integrante e por integrante mais atividade.
-- `SequenciaDaTrilha`: resultado do cálculo de estados, com a próxima atividade, o total e
-  o número de concluídas.
-- `TrilhaProgressoMontador`: achata a trilha em ordem, calcula os estados e monta os DTOs.
-- `ProgressoService`: aplica as regras. Lança `RecursoNaoEncontradoException` e
-  `AtividadeBloqueadaException`.
-- `ProgressoController`: `GET /api/v1/trilhas/{trilhaId}/progresso` e
-  `POST /api/v1/atividades/{atividadeId}/video-assistido`.
-- Migration `V4__progresso_atividade.sql`.
+- `ProgressoAtividade`: fatos de vídeo assistido e conclusão, únicos por integrante e atividade.
+- `TentativaQuiz` e `RespostaTentativa`: histórico completo da nota e escolhas feitas pelo integrante.
+- `ProgressoService`: valida atividade desbloqueada, corrige as respostas e aplica nota mínima do quiz.
+- `POST /api/v1/atividades/{atividadeId}/quiz/tentativas`: aceita uma resposta para cada pergunta; o cliente nunca envia nota.
+- `POST /api/v1/atividades/{atividadeId}/video-assistido`: grava o vídeo e só conclui atividade sem quiz.
+- Uma tentativa aprovada conclui a atividade; reprovação não altera conclusão prévia nem apaga histórico.
 
 ## Decisões
 
-Estado é calculado a cada leitura, não guardado. A tabela guarda fatos, quando o vídeo foi
-assistido e quando a atividade foi concluída. Guardar o estado criaria uma segunda verdade
-que precisa ser reescrita em todas as linhas seguintes a cada conclusão e que fica errada
-em silêncio quando o conteúdo for reordenado.
+A nota é a porcentagem de respostas corretas, arredondada para inteiro. Aprovação compara essa nota com `quiz.nota_minima`. Cada tentativa e suas respostas são persistidas na mesma transação.
 
-Os dois endpoints moram aqui, não em `TrilhaController`, apesar do caminho começar com
-`/trilhas`. Pacote é por funcionalidade, e colocá-los em `trilha` faria aquele pacote
-depender deste.
+A revisão retorna apenas nota, aprovação e identificadores de perguntas erradas. Não retorna a alternativa escolhida nem o gabarito. A leitura do quiz também usa `AlternativaResponse`, que não tem campo `correta`.
 
-Os DTOs são próprios deste pacote e repetem título, descrição e ordem que já existem em
-`trilha/dto`. A duplicação é o preço da direção da dependência: adicionar campo de estado a
-`AtividadeResumoResponse` inverteria a seta.
-
-Sem MapStruct. Estado, percentual e próxima atividade são calculados a partir da sequência
-inteira, não copiados campo a campo.
-
-A leitura da Home devolve total, concluídas, percentual e próxima atividade no mesmo
-resultado. O app desenha a tela inteira com uma chamada só.
-
-Os carimbos são gravados em UTC, para a mesma gravação não sair com offset local na
-resposta imediata e com `Z` depois de passar pelo banco.
-
-O integrante da requisição é o dono do token apresentado em `Authorization: Bearer`,
-resolvido em `usuario/IntegranteArgumentResolver` a partir do contexto de segurança.
+A validação exige todas as perguntas exatamente uma vez e uma alternativa pertencente à pergunta. Tentativa inválida retorna 400 e não grava histórico.
 
 ## Armadilhas
 
-Identificador de integrante informado pelo cliente é ignorado. O progresso é sempre do
-dono do token, e existe teste que prova isso.
+O integrante sempre vem da sessão. Não aceite identificador, nota, correção ou estado de progresso do cliente.
 
-Assistir o vídeo conclui a atividade, tenha ela quiz ou não. A regra tem gatilho único
-porque não existe tentativa de quiz: exigir aprovação sem ela travaria a trilha no primeiro
-nó, já que as seis atividades semeadas têm quiz.
-
-A chave estrangeira para `usuario` apaga em cascata, e isso não é enfeite. O seed de
-desenvolvimento `R__seed_empresa_exemplo.sql` executa `delete from usuario` antes de
-reinserir, e os testes de sessão criam e apagam integrantes. Sem a cascata, a restrição
-bloqueia esses deletes e a aplicação para de subir em desenvolvimento assim que existir um
-progresso gravado.
-
-A unicidade é o par `(usuario_id, atividade_id)`. Registrar vídeo assistido duas vezes
-atualiza a mesma linha e não move o momento da conclusão. Remover esse índice transforma
-repetição em linha duplicada e o percentual passa de cem.
-
-A tabela não tem `empresa_id`. O isolamento vem do integrante, que já pertence a uma
-empresa. A coluna denormalizada entra com a migration do acompanhamento, que é quem precisa
-varrer progresso por empresa.
-
-Progresso em atividade bloqueada é recusado com conflito, nunca aceito em silêncio. Sem
-essa recusa o app pula a trilha inteira.
-
-## Ausências deliberadas
-
-Não existe pontuação aqui. `atividade.xp` é devolvido na leitura porque a tela mostra o
-valor, e somar ponto, sequência de dias e ranking pertence ao pacote `gamificacao`.
-
-Nenhuma tentativa de quiz é recebida, corrigida ou guardada.
-
-`atividade.duracao_segundos` não é conferida no registro de vídeo assistido.
+O desbloqueio é linear e continua obrigatório para tentativa e registro de vídeo. Repetir quiz depois da aprovação não move o instante da conclusão.

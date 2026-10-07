@@ -1,7 +1,8 @@
 package com.projetointegrador.natysync.progresso;
 
-import com.projetointegrador.natysync.trilha.Atividade;
+import com.projetointegrador.natysync.trilha.Quiz;
 import com.projetointegrador.natysync.usuario.Usuario;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,21 +11,23 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
-@Table(name = "progresso_atividade")
+@Table(name = "tentativa_quiz")
 @Getter
 @Setter
 @NoArgsConstructor
-public class ProgressoAtividade {
+public class TentativaQuiz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -35,23 +38,19 @@ public class ProgressoAtividade {
     private Usuario usuario;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "atividade_id", nullable = false)
-    private Atividade atividade;
+    @JoinColumn(name = "quiz_id", nullable = false)
+    private Quiz quiz;
 
-    @Column(name = "video_assistido_em")
-    private OffsetDateTime videoAssistidoEm;
+    @Column(nullable = false)
+    private Integer nota;
 
-    @Column(name = "concluido_em")
-    private OffsetDateTime concluidoEm;
+    @Column(nullable = false)
+    private boolean aprovado;
 
-    @Column(name = "melhor_nota")
-    private Integer melhorNota;
+    @OneToMany(mappedBy = "tentativa", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RespostaTentativa> respostas = new ArrayList<>();
 
     @CreationTimestamp
-    @Column(name = "criado_em", nullable = false, updatable = false)
-    private OffsetDateTime criadoEm;
-
-    @UpdateTimestamp
-    @Column(name = "atualizado_em", nullable = false)
-    private OffsetDateTime atualizadoEm;
+    @Column(name = "criada_em", nullable = false, updatable = false)
+    private OffsetDateTime criadaEm;
 }

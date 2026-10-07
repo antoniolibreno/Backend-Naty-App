@@ -47,6 +47,17 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return erro(HttpStatus.CONFLICT, excecao.getCodigo(), excecao.getMessage(), requisicao);
     }
 
+    @ExceptionHandler(TentativaQuizInvalidaException.class)
+    public ResponseEntity<ErroResposta> tratarTentativaQuizInvalida(
+            TentativaQuizInvalidaException excecao, HttpServletRequest requisicao) {
+        return ResponseEntity.badRequest().body(corpo(
+                HttpStatus.BAD_REQUEST,
+                "TENTATIVA_QUIZ_INVALIDA",
+                excecao.getMessage(),
+                requisicao.getRequestURI(),
+                List.of(new ErroResposta.ErroCampo(excecao.getCampo(), excecao.getMessage()))));
+    }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException excecao,
