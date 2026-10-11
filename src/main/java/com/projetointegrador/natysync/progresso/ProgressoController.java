@@ -4,17 +4,18 @@ import com.projetointegrador.natysync.progresso.dto.TentativaQuizRequest;
 import com.projetointegrador.natysync.progresso.dto.TentativaQuizResponse;
 import com.projetointegrador.natysync.progresso.dto.TrilhaProgressoResponse;
 import com.projetointegrador.natysync.progresso.dto.VideoAssistidoResponse;
+import com.projetointegrador.natysync.progresso.dto.VideoIniciadoResponse;
 import com.projetointegrador.natysync.usuario.IntegranteDaRequisicao;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -38,6 +39,13 @@ public class ProgressoController {
     public VideoAssistidoResponse registrarVideoAssistido(
             @PathVariable UUID atividadeId, IntegranteDaRequisicao integrante) {
         return progressoService.registrarVideoAssistido(atividadeId, integrante);
+    }
+
+    @PostMapping("/atividades/{atividadeId}/video-iniciado")
+    @Operation(summary = "Registra o primeiro inicio do video para conferir a duracao da assistencia")
+    public VideoIniciadoResponse registrarVideoIniciado(
+            @PathVariable UUID atividadeId, IntegranteDaRequisicao integrante) {
+        return progressoService.registrarVideoIniciado(atividadeId, integrante);
     }
 
     @PostMapping("/atividades/{atividadeId}/quiz/tentativas")

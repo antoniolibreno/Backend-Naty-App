@@ -164,11 +164,14 @@ escrita, e quando tiver ela exige `NATY`, porque o conteúdo é global.
 Integrante e empresa nunca somem por desativação. Integrante não tem rota de exclusão, e
 empresa só é excluída sem integrante.
 
-Atividade conclui quando o vídeo é marcado como assistido, tenha ela quiz ou não. O quiz
-é apenas leitura: nenhuma tentativa é recebida, corrigida ou guardada, e `quiz.nota_minima`
-não é aplicada a nada.
+Atividade com quiz conclui por tentativa aprovada com a nota mínima do quiz. Atividade
+sem quiz conclui quando o vídeo é marcado como assistido. Vídeo configurado exige início
+registrado pela sessão e tempo decorrido igual ou superior a `atividade.duracao_segundos`.
 
 `atividade.video_url` é nulo em todo o conteúdo semeado. A atividade mostra só a imagem.
+URLs de vídeo configuradas exigem HTTPS do YouTube e duração positiva. O início em
+`POST /api/v1/atividades/{atividadeId}/video-iniciado` é idempotente por integrante e
+atividade. O tempo decorrido não comprova reprodução efetiva no player.
 
 Não existe pontuação, sequência de dias, conquista nem ranking. `atividade.xp` é
 devolvido na leitura porque a tela mostra o valor, e nada o soma.

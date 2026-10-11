@@ -1,22 +1,27 @@
 package com.projetointegrador.natysync.progresso;
 
-import com.projetointegrador.natysync.progresso.dto.TrilhaProgressoResponse;
-import com.projetointegrador.natysync.progresso.dto.VideoAssistidoResponse;
 import com.projetointegrador.natysync.progresso.dto.TentativaQuizRequest;
 import com.projetointegrador.natysync.progresso.dto.TentativaQuizResponse;
+import com.projetointegrador.natysync.progresso.dto.TrilhaProgressoResponse;
+import com.projetointegrador.natysync.progresso.dto.VideoAssistidoResponse;
+import com.projetointegrador.natysync.progresso.dto.VideoIniciadoResponse;
 import com.projetointegrador.natysync.shared.exception.AtividadeBloqueadaException;
+import com.projetointegrador.natysync.shared.exception.ConflitoException;
 import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
 import com.projetointegrador.natysync.shared.exception.TentativaQuizInvalidaException;
 import com.projetointegrador.natysync.trilha.Alternativa;
 import com.projetointegrador.natysync.trilha.Atividade;
 import com.projetointegrador.natysync.trilha.AtividadeRepository;
-import com.projetointegrador.natysync.trilha.Trilha;
-import com.projetointegrador.natysync.trilha.TrilhaRepository;
+import com.projetointegrador.natysync.trilha.Pergunta;
 import com.projetointegrador.natysync.trilha.Quiz;
 import com.projetointegrador.natysync.trilha.QuizRepository;
-import com.projetointegrador.natysync.trilha.Pergunta;
+import com.projetointegrador.natysync.trilha.Trilha;
+import com.projetointegrador.natysync.trilha.TrilhaRepository;
 import com.projetointegrador.natysync.usuario.IntegranteDaRequisicao;
+import com.projetointegrador.natysync.usuario.Usuario;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -26,7 +31,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,6 +73,7 @@ public class ProgressoService {
 
     @Transactional
     public VideoAssistidoResponse registrarVideoAssistido(UUID atividadeId, IntegranteDaRequisicao integrante) {
+        bloquearProgressoDoIntegrante(integrante);
         Atividade atividade = atividadeRepository
                 .findById(atividadeId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade nao encontrada: " + atividadeId));
@@ -85,6 +90,7 @@ public class ProgressoService {
             progresso = novoProgresso(atividade, integrante);
         }
         if (progresso.getVideoAssistidoEm() == null) {
+            validarTempoDeVideo(atividade, progresso);
             progresso.setVideoAssistidoEm(agora());
             progresso = progressoAtividadeRepository.save(progresso);
         }
@@ -106,12 +112,62 @@ public class ProgressoService {
     }
 
     @Transactional
+    public VideoIniciadoResponse registrarVideoIniciado(UUID atividadeId, IntegranteDaRequisicao integrante) {
+        bloquearProgressoDoIntegrante(integrante);
+        Atividade atividade = atividadeRepository
+                .findById(atividadeId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade nao encontrada: " + atividadeId));
+        Map<UUID, ProgressoAtividade> progressos = progressosDoIntegrante(integrante);
+        SequenciaDaTrilha sequencia = montador.sequenciar(atividade.getModulo().getTrilha(), progressos);
+        if (sequencia.estadoDe(atividadeId) == EstadoAtividade.BLOQUEADO) {
+            throw new AtividadeBloqueadaException("Atividade nao liberada para o integrante: " + atividadeId);
+        }
+        if (atividade.getVideoUrl() == null
+                || atividade.getDuracaoSegundos() == null
+                || atividade.getDuracaoSegundos() <= 0) {
+            throw new ConflitoException("VIDEO_NAO_CONFIGURADO", "Atividade sem video com duracao configurada");
+        }
+        ProgressoAtividade progresso = progressos.get(atividadeId);
+        if (progresso == null) {
+            progresso = novoProgresso(atividade, integrante);
+        }
+        if (progresso.getVideoIniciadoEm() == null) {
+            progresso.setVideoIniciadoEm(agora());
+            progressoAtividadeRepository.save(progresso);
+        }
+        return new VideoIniciadoResponse(atividadeId, progresso.getVideoIniciadoEm(), atividade.getDuracaoSegundos());
+    }
+
+    private void validarTempoDeVideo(Atividade atividade, ProgressoAtividade progresso) {
+        if (atividade.getVideoUrl() == null) {
+            return;
+        }
+        if (atividade.getDuracaoSegundos() == null || atividade.getDuracaoSegundos() <= 0) {
+            throw new ConflitoException("VIDEO_NAO_CONFIGURADO", "Video sem duracao configurada");
+        }
+        if (progresso.getVideoIniciadoEm() == null) {
+            throw new ConflitoException("VIDEO_NAO_INICIADO", "Registre o inicio do video antes da assistencia");
+        }
+        if (agora().isBefore(progresso.getVideoIniciadoEm().plusSeconds(atividade.getDuracaoSegundos()))) {
+            throw new ConflitoException("VIDEO_TEMPO_INSUFICIENTE", "Tempo de assistencia inferior a duracao do video");
+        }
+    }
+
+    private void bloquearProgressoDoIntegrante(IntegranteDaRequisicao integrante) {
+        entityManager.find(Usuario.class, integrante.usuarioId(), LockModeType.PESSIMISTIC_WRITE);
+    }
+
+    @Transactional
     public TentativaQuizResponse registrarTentativa(
             UUID atividadeId, TentativaQuizRequest requisicao, IntegranteDaRequisicao integrante) {
-        Atividade atividade = atividadeRepository.findById(atividadeId)
+        bloquearProgressoDoIntegrante(integrante);
+        Atividade atividade = atividadeRepository
+                .findById(atividadeId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade nao encontrada: " + atividadeId));
-        Quiz quiz = quizRepository.findByAtividadeId(atividadeId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Quiz nao encontrado para a atividade: " + atividadeId));
+        Quiz quiz = quizRepository
+                .findByAtividadeId(atividadeId)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException("Quiz nao encontrado para a atividade: " + atividadeId));
         Map<UUID, ProgressoAtividade> progressos = progressosDoIntegrante(integrante);
         Trilha trilha = atividade.getModulo().getTrilha();
         SequenciaDaTrilha sequencia = montador.sequenciar(trilha, progressos);
@@ -119,8 +175,8 @@ public class ProgressoService {
             throw new AtividadeBloqueadaException("Atividade nao liberada para o integrante: " + atividadeId);
         }
 
-        Map<UUID, Pergunta> perguntas = quiz.getPerguntas().stream()
-                .collect(Collectors.toMap(Pergunta::getId, Function.identity()));
+        Map<UUID, Pergunta> perguntas =
+                quiz.getPerguntas().stream().collect(Collectors.toMap(Pergunta::getId, Function.identity()));
         Map<UUID, TentativaQuizRequest.Resposta> respostasEnviadas = new HashMap<>();
         for (TentativaQuizRequest.Resposta resposta : requisicao.respostas()) {
             if (respostasEnviadas.putIfAbsent(resposta.perguntaId(), resposta) != null) {
@@ -130,7 +186,8 @@ public class ProgressoService {
                 throw tentativaInvalida("perguntaId", "A pergunta nao pertence ao quiz da atividade");
             }
         }
-        if (respostasEnviadas.size() != perguntas.size() || !respostasEnviadas.keySet().containsAll(perguntas.keySet())) {
+        if (respostasEnviadas.size() != perguntas.size()
+                || !respostasEnviadas.keySet().containsAll(perguntas.keySet())) {
             throw tentativaInvalida("respostas", "Todas as perguntas do quiz devem ser respondidas");
         }
 
@@ -179,9 +236,16 @@ public class ProgressoService {
         }
         sequencia = montador.sequenciar(trilha, progressos);
         return new TentativaQuizResponse(
-                tentativa.getId(), atividadeId, nota, aprovado, tentativa.getCriadaEm(),
-                perguntasErradas.stream().map(pergunta -> new TentativaQuizResponse.PerguntaErrada(pergunta.getId())).toList(),
-                progresso.getConcluidoEm(), sequencia.proximaAtividadeId());
+                tentativa.getId(),
+                atividadeId,
+                nota,
+                aprovado,
+                tentativa.getCriadaEm(),
+                perguntasErradas.stream()
+                        .map(pergunta -> new TentativaQuizResponse.PerguntaErrada(pergunta.getId()))
+                        .toList(),
+                progresso.getConcluidoEm(),
+                sequencia.proximaAtividadeId());
     }
 
     private ProgressoAtividade novoProgresso(

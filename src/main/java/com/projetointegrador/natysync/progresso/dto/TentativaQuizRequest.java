@@ -8,5 +8,6 @@ import java.util.UUID;
 
 public record TentativaQuizRequest(@NotEmpty List<@Valid Resposta> respostas) {
 
-    public record Resposta(@NotNull UUID perguntaId, @NotNull UUID alternativaId) {}
+    public record Resposta(
+            @NotNull UUID perguntaId, @NotNull UUID alternativaId) {}
 }

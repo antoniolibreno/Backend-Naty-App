@@ -41,6 +41,9 @@ public class ProgressoAtividade {
     @Column(name = "video_assistido_em")
     private OffsetDateTime videoAssistidoEm;
 
+    @Column(name = "video_iniciado_em")
+    private OffsetDateTime videoIniciadoEm;
+
     @Column(name = "concluido_em")
     private OffsetDateTime concluidoEm;
 

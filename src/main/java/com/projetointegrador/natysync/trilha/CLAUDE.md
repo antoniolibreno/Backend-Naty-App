@@ -17,6 +17,9 @@ pontuação são de outros pacotes.
 - `AtividadeController`: `GET /api/v1/atividades/{atividadeId}` e
   `GET /api/v1/atividades/{atividadeId}/quiz`.
 - `TrilhaMapper` e `QuizMapper`: MapStruct de entidade para DTO.
+- `UrlVideo`: valida URL HTTPS com identificador de vídeo nos domínios exatos
+  `youtube.com`, `www.youtube.com`, `m.youtube.com` e `youtu.be`. Aceita `watch?v=`,
+  `embed`, `shorts` e link curto, sem credencial ou porta na URL.
 
 ## Decisões
 
@@ -58,3 +61,6 @@ A leitura de conteúdo exige token. O conteúdo continua global e idêntico para
 empresas: o que a sessão decide é se o servidor responde, não o que ele responde.
 
 `Atividade.videoUrl` é nulo em todo o conteúdo semeado, e a atividade mostra só a imagem.
+
+Vídeo configurado exige duração positiva. A entidade valida URL na atribuição,
+leitura e persistência. O banco restringe domínio e duração por constraint.

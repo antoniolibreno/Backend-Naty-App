@@ -10,6 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -47,6 +49,25 @@ public class Atividade {
 
     @Column(name = "video_url", length = 500)
     private String videoUrl;
+
+    public void setVideoUrl(String videoUrl) {
+        UrlVideo.validar(videoUrl);
+        this.videoUrl = videoUrl;
+    }
+
+    public String getVideoUrl() {
+        UrlVideo.validar(videoUrl);
+        return videoUrl;
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void validarVideo() {
+        UrlVideo.validar(videoUrl);
+        if (videoUrl != null && (duracaoSegundos == null || duracaoSegundos <= 0)) {
+            throw new IllegalArgumentException("Video exige duracao positiva em segundos");
+        }
+    }
 
     @Column(name = "duracao_segundos")
     private Integer duracaoSegundos;
