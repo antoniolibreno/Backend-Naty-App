@@ -15,9 +15,11 @@ class QuizApiTest extends IntegracaoTest {
 
     @Test
     void quizTemQuatroPerguntasComQuatroAlternativas() {
-        ResponseEntity<JsonNode> resposta = cliente().get()
+        ResponseEntity<JsonNode> resposta = cliente()
+                .get()
                 .uri("/api/v1/atividades/" + ATIVIDADE_SEMEADA + "/quiz")
-                .retrieve().toEntity(JsonNode.class);
+                .retrieve()
+                .toEntity(JsonNode.class);
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody().get("notaMinima").asInt()).isEqualTo(70);
         JsonNode perguntas = resposta.getBody().get("perguntas");
@@ -27,9 +29,11 @@ class QuizApiTest extends IntegracaoTest {
 
     @Test
     void leituraDoQuizNaoTemCampoDeGabarito() {
-        JsonNode quiz = cliente().get()
+        JsonNode quiz = cliente()
+                .get()
                 .uri("/api/v1/atividades/" + ATIVIDADE_SEMEADA + "/quiz")
-                .retrieve().body(JsonNode.class);
+                .retrieve()
+                .body(JsonNode.class);
         assertThat(quiz.has("correta")).isFalse();
         for (JsonNode pergunta : quiz.get("perguntas")) {
             assertThat(pergunta.has("correta")).isFalse();
@@ -41,20 +45,33 @@ class QuizApiTest extends IntegracaoTest {
 
     @Test
     void atividadeSemQuizDevolveNaoEncontrado() {
-        ResponseEntity<JsonNode> resposta = cliente().get()
+        ResponseEntity<JsonNode> resposta = cliente()
+                .get()
                 .uri("/api/v1/atividades/" + UUID.randomUUID() + "/quiz")
-                .retrieve().toEntity(JsonNode.class);
+                .retrieve()
+                .toEntity(JsonNode.class);
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
     void atividadeSemVideoNaoEErro() {
-        ResponseEntity<JsonNode> resposta = cliente().get()
-                .uri("/api/v1/atividades/" + ATIVIDADE_SEMEADA)
-                .retrieve().toEntity(JsonNode.class);
-        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(resposta.getBody().get("imagemUrl").asText()).isNotBlank();
-        assertThat(resposta.getBody().get("videoUrl").isNull()).isTrue();
-        assertThat(resposta.getBody().get("possuiQuiz").asBoolean()).isTrue();
+        UUID atividadeSemVideo = UUID.randomUUID();
+        jdbc.update(
+                "insert into atividade (id, modulo_id, titulo, ordem, imagem_url) select ?, modulo_id, 'Atividade sem video', 99, imagem_url from atividade where id = ?",
+                atividadeSemVideo,
+                ATIVIDADE_SEMEADA);
+        try {
+            ResponseEntity<JsonNode> resposta = cliente()
+                    .get()
+                    .uri("/api/v1/atividades/" + atividadeSemVideo)
+                    .retrieve()
+                    .toEntity(JsonNode.class);
+            assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(resposta.getBody().get("imagemUrl").asText()).isNotBlank();
+            assertThat(resposta.getBody().get("videoUrl").isNull()).isTrue();
+            assertThat(resposta.getBody().get("possuiQuiz").asBoolean()).isFalse();
+        } finally {
+            jdbc.update("delete from atividade where id = ?", atividadeSemVideo);
+        }
     }
 }

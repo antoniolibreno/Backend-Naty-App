@@ -13,6 +13,19 @@ alvo completo do produto está em `docs/regras.md`, e o que falta construir est�
 
 Stack: Java 21, Spring Boot 4.1.1, Maven, PostgreSQL, Flyway, Docker Compose.
 
+## Assistência de vídeo
+
+Para atividade com `videoUrl`, o app chama
+`POST /api/v1/atividades/{atividadeId}/video-iniciado` ao iniciar a reprodução, com
+`Authorization: Bearer`, sem corpo. A resposta contém `atividadeId`, `videoIniciadoEm`
+e `duracaoSegundos`. Chamadas repetidas preservam o início.
+
+O término usa `POST /api/v1/atividades/{atividadeId}/video-assistido`, com a mesma
+sessão e sem corpo. O servidor exige tempo decorrido igual ou superior à duração.
+Sem início responde 409 `VIDEO_NAO_INICIADO`; antes da duração responde 409
+`VIDEO_TEMPO_INSUFICIENTE`. Assistência repetida preserva os instantes. Atividade
+com quiz conclui por aprovação; atividade sem quiz conclui pela assistência.
+
 ## Rodar
 
 ```bash

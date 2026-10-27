@@ -115,18 +115,25 @@ class ProgressoApiTest extends IntegracaoTest {
             assertThat(video.getBody().get("concluidoEm").isNull()).isTrue();
 
             UUID atividadeId = ATIVIDADES_EM_ORDEM.get(posicao);
-            JsonNode quiz = cliente(token).get().uri("/api/v1/atividades/{id}/quiz", atividadeId)
-                    .retrieve().body(JsonNode.class);
+            JsonNode quiz = cliente(token)
+                    .get()
+                    .uri("/api/v1/atividades/{id}/quiz", atividadeId)
+                    .retrieve()
+                    .body(JsonNode.class);
             List<java.util.Map<String, String>> respostas = new ArrayList<>();
             for (JsonNode pergunta : quiz.get("perguntas")) {
                 respostas.add(java.util.Map.of(
                         "perguntaId", pergunta.get("id").asText(),
-                        "alternativaId", pergunta.get("alternativas").get(0).get("id").asText()));
+                        "alternativaId",
+                                pergunta.get("alternativas").get(0).get("id").asText()));
             }
-            ResponseEntity<JsonNode> conclusao = cliente(token).post()
+            ResponseEntity<JsonNode> conclusao = cliente(token)
+                    .post()
                     .uri("/api/v1/atividades/{id}/quiz/tentativas", atividadeId)
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                    .body(java.util.Map.of("respostas", respostas)).retrieve().toEntity(JsonNode.class);
+                    .body(java.util.Map.of("respostas", respostas))
+                    .retrieve()
+                    .toEntity(JsonNode.class);
             assertThat(conclusao.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(conclusao.getBody().get("aprovado").asBoolean()).isTrue();
         }
@@ -153,17 +160,18 @@ class ProgressoApiTest extends IntegracaoTest {
         JsonNode primeira = assistirVideo(token, ATIVIDADES_EM_ORDEM.getFirst()).getBody();
         JsonNode segunda = assistirVideo(token, ATIVIDADES_EM_ORDEM.getFirst()).getBody();
 
-        assertThat(instante(segunda, "concluidoEm")).isEqualTo(instante(primeira, "concluidoEm"));
+        assertThat(primeira.get("concluidoEm").isNull()).isTrue();
+        assertThat(segunda.get("concluidoEm").isNull()).isTrue();
         assertThat(instante(segunda, "videoAssistidoEm")).isEqualTo(instante(primeira, "videoAssistidoEm"));
         assertThat(progressoAtividadeRepository.findByUsuarioId(integranteId)).hasSize(1);
     }
 
     @Test
-    void conclusaoLiberaAProximaAtividadeNaResposta() {
+    void videoComQuizMantemAAtividadeAtualComoProxima() {
         JsonNode resposta = assistirVideo(token, ATIVIDADES_EM_ORDEM.getFirst()).getBody();
 
         assertThat(resposta.get("proximaAtividadeId").asText())
-                .isEqualTo(ATIVIDADES_EM_ORDEM.get(1).toString());
+                .isEqualTo(ATIVIDADES_EM_ORDEM.getFirst().toString());
     }
 
     @Test

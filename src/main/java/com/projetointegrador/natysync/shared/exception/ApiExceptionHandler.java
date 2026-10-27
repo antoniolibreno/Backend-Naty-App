@@ -50,12 +50,13 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(TentativaQuizInvalidaException.class)
     public ResponseEntity<ErroResposta> tratarTentativaQuizInvalida(
             TentativaQuizInvalidaException excecao, HttpServletRequest requisicao) {
-        return ResponseEntity.badRequest().body(corpo(
-                HttpStatus.BAD_REQUEST,
-                "TENTATIVA_QUIZ_INVALIDA",
-                excecao.getMessage(),
-                requisicao.getRequestURI(),
-                List.of(new ErroResposta.ErroCampo(excecao.getCampo(), excecao.getMessage()))));
+        return ResponseEntity.badRequest()
+                .body(corpo(
+                        HttpStatus.BAD_REQUEST,
+                        "TENTATIVA_QUIZ_INVALIDA",
+                        excecao.getMessage(),
+                        requisicao.getRequestURI(),
+                        List.of(new ErroResposta.ErroCampo(excecao.getCampo(), excecao.getMessage()))));
     }
 
     @Override

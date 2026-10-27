@@ -87,7 +87,22 @@ class IsolamentoPorEmpresaTest extends IntegracaoTest {
                 .toEntity(JsonNode.class);
         assertThat(conclusao.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        assertThat(progressoCom(tokenA).get("atividadesConcluidas").asInt()).isEqualTo(1);
+        assertThat(progressoCom(tokenA)
+                        .get("modulos")
+                        .get(0)
+                        .get("atividades")
+                        .get(0)
+                        .get("videoAssistidoEm")
+                        .isNull())
+                .isFalse();
+        assertThat(progressoCom(tokenB)
+                        .get("modulos")
+                        .get(0)
+                        .get("atividades")
+                        .get(0)
+                        .get("videoAssistidoEm")
+                        .isNull())
+                .isTrue();
         assertThat(progressoCom(tokenB).get("atividadesConcluidas").asInt()).isZero();
     }
 

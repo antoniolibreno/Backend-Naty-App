@@ -268,18 +268,19 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   Os vídeos entram em migration nova, hospedados no YouTube como não listado. `V3` não
   pode ser editada, porque o Flyway valida o checksum do que já rodou.
   Toca: nova migration em `db/migration`, coluna `atividade.video_url`
+  A carga exige os links reais de cada atividade e suas durações em segundos.
 
-- [ ] **8.2 Validar a URL do vídeo**
+- [x] **8.2 Validar a URL do vídeo**
   Recusa URL fora do domínio de hospedagem, para o app não receber link quebrado ou de
   origem inesperada.
   Toca: `trilha`
 
-- [ ] **8.3 Usar `duracao_segundos` na regra de vídeo assistido**
+- [x] **8.3 Usar `duracao_segundos` na regra de vídeo assistido**
   A coluna existe e serve para o backend recusar um "assisti" que chegou antes de ser
   plausível assistir.
   Toca: coluna `atividade.duracao_segundos`, `progresso`
 
-- [ ] **8.4 Ajustar o teste que presume vídeo nulo**
+- [x] **8.4 Ajustar o teste que presume vídeo nulo**
   O teste que garante que atividade sem vídeo não é erro afirma que o campo de vídeo vem
   nulo no conteúdo semeado. Preencher vídeo no seed quebra esse teste, então ele muda no
   mesmo diff.
