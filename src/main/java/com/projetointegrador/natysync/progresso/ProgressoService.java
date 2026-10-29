@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +46,7 @@ public class ProgressoService {
     private final TrilhaProgressoMontador montador;
     private final QuizRepository quizRepository;
     private final EntityManager entityManager;
+    private final ApplicationEventPublisher eventos;
 
     public ProgressoService(
             TrilhaRepository trilhaRepository,
@@ -53,7 +55,8 @@ public class ProgressoService {
             ProgressoAtividadeRepository progressoAtividadeRepository,
             TrilhaProgressoMontador montador,
             QuizRepository quizRepository,
-            EntityManager entityManager) {
+            EntityManager entityManager,
+            ApplicationEventPublisher eventos) {
         this.trilhaRepository = trilhaRepository;
         this.atividadeRepository = atividadeRepository;
         this.usuarioRepository = usuarioRepository;
@@ -61,6 +64,7 @@ public class ProgressoService {
         this.montador = montador;
         this.quizRepository = quizRepository;
         this.entityManager = entityManager;
+        this.eventos = eventos;
     }
 
     public TrilhaProgressoResponse buscarTrilhaComProgresso(UUID trilhaId, IntegranteDaRequisicao integrante) {
@@ -89,14 +93,22 @@ public class ProgressoService {
         if (progresso == null) {
             progresso = novoProgresso(atividade, integrante);
         }
+        OffsetDateTime agora = agora();
+        boolean videoRegistrado = false;
+        boolean atividadeConcluida = false;
         if (progresso.getVideoAssistidoEm() == null) {
             validarTempoDeVideo(atividade, progresso);
-            progresso.setVideoAssistidoEm(agora());
+            progresso.setVideoAssistidoEm(agora);
             progresso = progressoAtividadeRepository.save(progresso);
+            videoRegistrado = true;
         }
         if (atividade.getQuiz() == null && progresso.getConcluidoEm() == null) {
-            progresso.setConcluidoEm(agora());
+            progresso.setConcluidoEm(agora);
             progresso = progressoAtividadeRepository.save(progresso);
+            atividadeConcluida = true;
+        }
+        if (videoRegistrado || atividadeConcluida) {
+            publicarEstudo(integrante, atividadeId, agora, atividadeConcluida);
         }
         if (progresso.getConcluidoEm() != null) {
             progressos.put(atividadeId, progresso);
@@ -227,10 +239,13 @@ public class ProgressoService {
         if (progresso.getMelhorNota() == null || nota > progresso.getMelhorNota()) {
             progresso.setMelhorNota(nota);
         }
-        if (aprovado && progresso.getConcluidoEm() == null) {
-            progresso.setConcluidoEm(agora());
+        OffsetDateTime agora = agora();
+        boolean atividadeConcluida = aprovado && progresso.getConcluidoEm() == null;
+        if (atividadeConcluida) {
+            progresso.setConcluidoEm(agora);
         }
         progresso = progressoAtividadeRepository.save(progresso);
+        publicarEstudo(integrante, atividadeId, agora, atividadeConcluida);
         if (progresso.getConcluidoEm() != null) {
             progressos.put(atividadeId, progresso);
         }
@@ -261,6 +276,15 @@ public class ProgressoService {
 
     private ProgressoAtividade novoProgresso(Atividade atividade, IntegranteDaRequisicao integrante) {
         return novoProgresso(atividade, integrante, null);
+    }
+
+    private void publicarEstudo(
+            IntegranteDaRequisicao integrante,
+            UUID atividadeId,
+            OffsetDateTime ocorridoEm,
+            boolean atividadeConcluida) {
+        eventos.publishEvent(new EstudoRegistrado(
+                integrante.usuarioId(), integrante.empresaId(), atividadeId, ocorridoEm, atividadeConcluida));
     }
 
     private OffsetDateTime agora() {

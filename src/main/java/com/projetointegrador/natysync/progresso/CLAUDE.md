@@ -13,6 +13,11 @@ Estado de cada integrante na trilha: vídeo assistido, aprovação do quiz e con
 - `POST /api/v1/atividades/{atividadeId}/video-assistido`: grava o vídeo e só conclui atividade sem quiz.
 - `POST /api/v1/atividades/{atividadeId}/video-iniciado`: registra o primeiro início do vídeo, com `videoIniciadoEm` e `duracaoSegundos` na resposta.
 - Uma tentativa aprovada conclui a atividade; reprovação não altera conclusão prévia nem apaga histórico.
+- `EstudoRegistrado`: fato publicado no máximo uma vez por chamada, em toda tentativa e no
+  primeiro registro de vídeo assistido ou de conclusão. `atividadeConcluida` é verdadeiro
+  só na primeira conclusão. Início de vídeo e chamada repetida sem fato novo não publicam.
+- `ProgressoAtividadeRepository` conta atividades, módulos e trilhas concluídos, e
+  `TentativaQuizRepository` devolve a maior nota. Módulo ou trilha sem atividade não conta.
 
 ## Decisões
 
@@ -21,6 +26,9 @@ A nota é a porcentagem de respostas corretas, arredondada para inteiro. Aprova�
 A revisão retorna apenas nota, aprovação e identificadores de perguntas erradas. Não retorna a alternativa escolhida nem o gabarito. A leitura do quiz também usa `AlternativaResponse`, que não tem campo `correta`.
 
 A validação exige todas as perguntas exatamente uma vez e uma alternativa pertencente à pergunta. Tentativa inválida retorna 400 e não grava histórico.
+
+Este pacote não conhece `gamificacao`. Ele só publica `EstudoRegistrado`, e quem pontua
+escuta o fato.
 
 ## Armadilhas
 
@@ -38,3 +46,10 @@ Vídeo já assistido dispensa a conferência temporal.
 As escritas de progresso travam a linha do integrante na mesma transação, inclusive
 tentativas, para serializar a criação e atualização do registro único por atividade.
 O servidor confere tempo decorrido, sem verificar reprodução efetiva no player.
+
+O ouvinte de `EstudoRegistrado` roda síncrono dentro da transação da escrita de progresso.
+Erro na gamificação desfaz a tentativa ou o registro de vídeo da mesma chamada. Publicar o
+fato fora de transação falha, porque o ouvinte exige transação aberta.
+
+Teste que cria e apaga conteúdo próprio apaga `ponto_concedido` da atividade antes da
+atividade, porque a FK de ponto para atividade não tem cascade.

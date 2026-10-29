@@ -115,7 +115,10 @@ primeira conta `NATY`. Único pacote que escreve em `usuario` e em `empresa`.
 pergunta e alternativa. Conteúdo semeado por migration, sem CRUD.
 
 `progresso`: estado de cada integrante na trilha, com desbloqueio linear e conclusão de
-atividade.
+atividade. Publica o fato de estudo que a gamificação escuta.
+
+`gamificacao`: pontos, sequência de dias, conquistas e ranking por empresa, calculados a
+partir dos fatos de estudo do `progresso`.
 
 `shared`: tratamento global de erro, corpo de página e utilitário transversal. Mantenha
 pequeno.
@@ -173,5 +176,10 @@ URLs de vídeo configuradas exigem HTTPS do YouTube e duração positiva. O iní
 `POST /api/v1/atividades/{atividadeId}/video-iniciado` é idempotente por integrante e
 atividade. O tempo decorrido não comprova reprodução efetiva no player.
 
-Não existe pontuação, sequência de dias, conquista nem ranking. `atividade.xp` é
-devolvido na leitura porque a tela mostra o valor, e nada o soma.
+A primeira conclusão de cada atividade concede `atividade.xp` uma única vez, com o valor
+congelado na concessão. Tentativa de quiz, primeiro vídeo assistido e primeira conclusão
+marcam o dia de estudo no fuso da empresa. As conquistas são catálogo global semeado por
+migration, sem rota de escrita, e saem uma única vez por integrante. O ranking classifica
+as contas ativas da empresa de quem chama, de qualquer papel, e não existe ranking entre
+empresas. O perfil de gamificação é lido para a própria conta e para colega ativo da mesma
+empresa. Erro na gamificação desfaz a escrita de progresso da mesma chamada.

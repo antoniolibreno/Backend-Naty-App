@@ -85,7 +85,3 @@ O 401 sai por dois caminhos: `CredencialInvalidaException` quando um serviço re
 `config/RecusaDeAcesso` quando a cadeia de segurança barra antes do controller. Os dois
 devolvem `ErroResposta` com o mesmo código, senão o app teria dois formatos para o mesmo
 caso.
-
-## Ausências deliberadas
-
-`util/DataUtil` é uma classe utilitária sem método e sem consumidor.

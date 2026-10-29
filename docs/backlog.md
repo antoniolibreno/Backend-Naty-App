@@ -19,7 +19,7 @@ Nada desta lista vira card.
   `Authorization: Bearer`.
 - Entidades `Trilha`, `Modulo`, `Atividade`, `Quiz`, `Pergunta`, `Alternativa`,
   `Usuario`, `Empresa`, `Sessao` e `ProgressoAtividade`, com repositórios e mappers.
-- Migrations `V1` a `V7`, seed de desenvolvimento com credencial, tratamento global de
+- Migrations `V1` a `V11`, seed de desenvolvimento com credencial, tratamento global de
   erro em formato único e Docker Compose.
 - Painel administrativo sob `/api/v1/painel/**`: cadastro de empresa com fuso horário pelo
   papel `NATY`, cadastro, senha, desativação e listagem paginada de integrante pelo `ADMIN`
@@ -28,6 +28,9 @@ Nada desta lista vira card.
 - Progresso na trilha: desbloqueio linear, `GET /api/v1/trilhas/{trilhaId}/progresso` e
   `POST /api/v1/atividades/{atividadeId}/video-assistido`, com o integrante resolvido a
   partir do token da sessão, coberto por testes de integração.
+- Gamificação: ponto da atividade na primeira conclusão, sequência de dias no fuso da
+  empresa, catálogo global de conquistas, `GET /api/v1/ranking` e
+  `GET /api/v1/integrantes/{integranteId}/gamificacao`.
 
 Ganchos que já estão no banco e que o backlog aproveita em vez de recriar:
 `atividade.xp` com valor 10, `quiz.nota_minima` com valor 70, `atividade.duracao_segundos`
@@ -288,50 +291,50 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
 
 ### Gamificação
 
-- [ ] **6.1 Escrever a migration de pontuação, sequência e conquista**
+- [x] **6.1 Escrever a migration de pontuação, sequência e conquista**
   Cria as tabelas de pontos do integrante, sequência de dias e conquistas obtidas, sempre
   ligadas à empresa.
   Toca: nova migration em `db/migration`
 
-- [ ] **6.2 Criar o pacote `gamificacao` com entidades e repositórios**
+- [x] **6.2 Criar o pacote `gamificacao` com entidades e repositórios**
   Nasce com o seu próprio `CLAUDE.md`.
   Toca: `gamificacao`
 
-- [ ] **6.3 Conceder o XP da atividade na conclusão**
+- [x] **6.3 Conceder o XP da atividade na conclusão**
   Usa a coluna `atividade.xp` para somar pontos quando a atividade conclui. Não inventa
   outra fonte de pontuação.
   Toca: `gamificacao`, coluna `atividade.xp`
 
-- [ ] **6.4 Calcular a sequência de dias no fuso da empresa**
+- [x] **6.4 Calcular a sequência de dias no fuso da empresa**
   Os carimbos são gravados em UTC, e a virada do dia acontece no fuso do cliente. Depende
   da coluna de fuso criada em 11.2.
   Toca: `gamificacao`
 
-- [ ] **6.5 Semear o catálogo de conquistas por migration**
+- [x] **6.5 Semear o catálogo de conquistas por migration**
   As conquistas são conteúdo global, iguais para todas as empresas, e entram por migration
   como o resto do conteúdo.
   Toca: nova migration em `db/migration`
 
-- [ ] **6.6 Implementar a concessão de conquista**
+- [x] **6.6 Implementar a concessão de conquista**
   Avalia as regras quando algo muda no progresso e concede a conquista uma única vez por
   integrante.
   Toca: `gamificacao`
 
-- [ ] **6.7 Expor `GET /api/v1/ranking`**
+- [x] **6.7 Expor `GET /api/v1/ranking`**
   Devolve a classificação dos integrantes dentro da empresa de quem chamou, com desempate
   por quem chegou primeiro à pontuação e paginação obrigatória.
   Toca: `GET /api/v1/ranking`
 
-- [ ] **6.8 Expor `GET /api/v1/integrantes/{integranteId}/gamificacao`**
+- [x] **6.8 Expor `GET /api/v1/integrantes/{integranteId}/gamificacao`**
   Devolve pontos, sequência atual e conquistas do integrante, para o app montar o perfil.
   Toca: `GET /api/v1/integrantes/{integranteId}/gamificacao`
 
-- [ ] **6.9 Testar que ponto não é concedido duas vezes pela mesma atividade**
+- [x] **6.9 Testar que ponto não é concedido duas vezes pela mesma atividade**
   Concluir de novo, ou refazer o quiz já aprovado, não soma XP de novo, senão o ranking
   vira farsa.
   Toca: `src/test/java/.../gamificacao`
 
-- [ ] **6.10 Escrever `gamificacao/CLAUDE.md`**
+- [x] **6.10 Escrever `gamificacao/CLAUDE.md`**
   Registra onde mora a sequência, em que fuso, como o ranking é calculado e por que ponto
   é idempotente.
   Toca: `gamificacao/CLAUDE.md`
@@ -475,7 +478,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   perfil de teste próprio deixa explícito o que roda no teste.
   Toca: `src/test/resources/application-test.yml`
 
-- [ ] **10.6 Decidir o destino de `DataUtil`**
+- [x] **10.6 Decidir o destino de `DataUtil`**
   É uma classe utilitária vazia em `shared`. Ou ganha o cálculo de data que a sequência de
   dias precisa, ou sai do projeto.
   Toca: `shared/util/DataUtil.java`
