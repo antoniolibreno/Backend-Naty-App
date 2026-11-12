@@ -2,8 +2,9 @@
 
 ## Responsabilidade
 
-Escrita do conteúdo de treinamento: trilha, módulo e atividade, a ordem entre irmãos, a
-ativação da trilha, a proteção do histórico e o registro de quem alterou o quê. É o único
+Escrita do conteúdo de treinamento: trilha, módulo, atividade e quiz com suas perguntas e
+alternativas, a ordem entre irmãos, a ativação da trilha, a proteção do histórico, a integridade
+do gabarito e o registro de quem alterou o quê. É o único
 pacote que escreve nas entidades de `trilha`, no mesmo desenho em que `painel` é o único que
 escreve em `usuario`. A leitura do conteúdo continua em `trilha`, que não conhece este pacote.
 
@@ -14,6 +15,10 @@ escreve em `usuario`. A leitura do conteúdo continua em `trilha`, que não conh
 - `ModuloConteudoController`: `/api/v1/modulos` e `PUT /api/v1/modulos/{id}/atividades/ordem`.
 - `AtividadeConteudoController`: `POST /api/v1/atividades`, `PUT` e `DELETE
   /api/v1/atividades/{id}`.
+- `QuizConteudoController`: `/api/v1/quizzes`, com `GET /{id}` como leitura administrativa.
+  `PerguntaConteudoController`: `/api/v1/perguntas`. `AlternativaConteudoController`:
+  `/api/v1/alternativas`.
+- `QuizConteudoService`: escrita de quiz, pergunta e alternativa e a integridade do gabarito.
 - `AlteracaoDeConteudoController`: `GET /api/v1/alteracoes-de-conteudo`, paginado, do mais
   recente para o mais antigo, com filtro opcional `entidadeId`.
 - `TrilhaConteudoService`, `ModuloConteudoService`, `AtividadeConteudoService` e
@@ -24,8 +29,10 @@ escreve em `usuario`. A leitura do conteúdo continua em `trilha`, que não conh
   `REORDENACAO`.
 - `ProtecaoDeHistorico`: recusa a remoção quando alguma atividade atingida tem progresso,
   ponto ou tentativa de quiz.
-- `dto/`: requests de entrada e `TrilhaAdminResponse`. Módulo e atividade reaproveitam
-  `ModuloResponse` e `AtividadeDetalheResponse` de `trilha`.
+- `dto/`: requests de entrada, `TrilhaAdminResponse` e as respostas administrativas de quiz
+  (`QuizAdminResponse`, `PerguntaAdminResponse` e `AlternativaAdminResponse`, a única com o
+  campo `correta`). Módulo e atividade reaproveitam `ModuloResponse` e
+  `AtividadeDetalheResponse` de `trilha`.
 
 ## Decisões
 
@@ -56,6 +63,35 @@ tabela. Alteração recusada reverte a transação e o registro junto.
 
 Reordenar módulos registra `REORDENACAO` na trilha, e reordenar atividades registra no módulo.
 
+## Gabarito
+
+`GET /api/v1/quizzes/{id}` é o único canal que devolve `correta`. A alternativa tem três tipos
+separados, nunca um com o campo anulado: `AlternativaResponse` em `trilha` (leitura do
+integrante, sem o campo), `AlternativaRequest` (escrita) e `AlternativaAdminResponse`
+(leitura administrativa). Nenhuma classe fora de `conteudo` depende de `conteudo.dto`.
+
+Toda pergunta tem exatamente uma alternativa correta e ao menos duas alternativas, na entrada
+e em toda transição. Criar pergunta com zero ou mais de uma correta sai como
+`FALHA_DE_VALIDACAO`. Marcar `correta` em `POST` ou `PUT` de alternativa move a marca na mesma
+transação. Desmarcar a única correta, remover a correta e remover uma alternativa que deixe menos
+de duas respondem 409 `GABARITO_INVALIDO`. Remover a última pergunta responde 409
+`QUIZ_SEM_PERGUNTA`, porque quiz sem pergunta quebra a nota percentual.
+
+A pergunta é travada por `PESSIMISTIC_WRITE` antes de qualquer escrita de alternativa. A trava
+serializa duas escritas do mesmo gabarito, e um teste dispara marcações concorrentes e confirma
+uma única correta no fim.
+
+Mover a marca grava dois registros `ALTERACAO`, um por alternativa. Criar um quiz grava um
+registro de criação para o quiz, para cada pergunta e para cada alternativa.
+
+Remover quiz usa o histórico da atividade inteira, porque a atividade com quiz conclui por
+aprovação e a sem quiz conclui por vídeo. Remover pergunta e alternativa consulta
+`resposta_tentativa`. A nota gravada em tentativa antiga não é recalculada quando o gabarito
+muda, e o registro de alterações explica a diferença. Criar quiz em atividade que integrantes
+já estudaram muda a regra de conclusão dela para quem não a concluiu.
+
+Ordem de pergunta e de alternativa não tem rota de reordenação: a criação acrescenta ao fim.
+
 ## Armadilhas
 
 `Atividade.setVideoUrl` valida o vídeo e lança `IllegalArgumentException`, que o handler global
@@ -69,8 +105,11 @@ A reordenação usa `update` em lote com `clearAutomatically`. Entidade carregad
 desatualizada, então o serviço não lê entidade de ordem depois de reordenar.
 
 `RegrasDeDependenciaTest` reprova qualquer classe fora de `conteudo` que chame setter de
-entidade de conteúdo ou escreva nos repositórios de `trilha`, e qualquer `*Response` fora de
-`conteudo` com campo `correta`.
+entidade de conteúdo ou escreva nos repositórios de `trilha`, qualquer `*Response` fora de
+`conteudo` com campo `correta`, e qualquer dependência de fora de `conteudo` em `conteudo.dto`.
+
+Remover alternativa exige tirá-la também da coleção da pergunta carregada. O `cascade` sem
+`orphanRemoval` faz o flush recriar a alternativa removida que ainda está na coleção.
 
 O conteúdo semeado por migration usa UUID fixo, e os testes de `conteudo` criam as próprias
 trilhas e as apagam por SQL, nunca alteram o conteúdo semeado.

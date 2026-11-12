@@ -356,18 +356,18 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   Mesma ideia, um nível abaixo, incluindo os campos de imagem, vídeo, duração e XP.
   Toca: `/api/v1/modulos`, `/api/v1/atividades`
 
-- [ ] **9.4 Expor o CRUD de quiz, pergunta e alternativa**
+- [x] **9.4 Expor o CRUD de quiz, pergunta e alternativa**
   É o único lugar onde o gabarito entra e sai da API, e só para quem administra. A leitura
   do quiz pelo integrante continua sem `correta`.
   Toca: `/api/v1/quizzes`, `/api/v1/perguntas`, `/api/v1/alternativas`
 
-- [ ] **9.5 Separar o DTO de escrita do DTO de leitura da alternativa**
+- [x] **9.5 Separar o DTO de escrita do DTO de leitura da alternativa**
   A escrita precisa do campo de alternativa correta e a leitura não pode nem ter o campo.
   Dois records distintos, nunca um só com o campo anulado, que é o jeito de vazar gabarito
   por esquecimento.
   Toca: `trilha/dto`
 
-- [ ] **9.6 Validar exatamente uma alternativa correta por pergunta**
+- [x] **9.6 Validar exatamente uma alternativa correta por pergunta**
   Pergunta com zero ou duas corretas quebra a correção do quiz. A regra vale na escrita,
   não só no conteúdo semeado.
   Toca: `trilha`
@@ -382,7 +382,7 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   para pontuação e acompanhamento.
   Toca: coluna `trilha.ativa`, `progresso`
 
-- [ ] **9.9 Impedir remoção de conteúdo com progresso registrado**
+- [x] **9.9 Impedir remoção de conteúdo com progresso registrado**
   Apagar atividade que tem progresso ou tentativa joga fora o histórico de quem estudou.
   Oferece desativação em vez de remoção.
   Toca: `trilha`, `progresso`
@@ -392,7 +392,7 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   quando as notas caírem de repente.
   Toca: nova migration em `db/migration`, `trilha`
 
-- [ ] **9.11 Testar que o CRUD exige papel administrativo**
+- [x] **9.11 Testar que o CRUD exige papel administrativo**
   Prova que token de integrante comum recebe negação em toda escrita de conteúdo.
   Toca: `src/test/java/.../trilha`
 

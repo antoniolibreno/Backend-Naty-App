@@ -2,17 +2,21 @@ package com.projetointegrador.natysync;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.projetointegrador.natysync.trilha.Alternativa;
+import com.projetointegrador.natysync.trilha.AlternativaRepository;
 import com.projetointegrador.natysync.trilha.Atividade;
 import com.projetointegrador.natysync.trilha.AtividadeRepository;
 import com.projetointegrador.natysync.trilha.Modulo;
 import com.projetointegrador.natysync.trilha.ModuloRepository;
 import com.projetointegrador.natysync.trilha.Pergunta;
+import com.projetointegrador.natysync.trilha.PerguntaRepository;
 import com.projetointegrador.natysync.trilha.Quiz;
 import com.projetointegrador.natysync.trilha.QuizRepository;
 import com.projetointegrador.natysync.trilha.Trilha;
 import com.projetointegrador.natysync.trilha.TrilhaRepository;
+import com.projetointegrador.natysync.trilha.dto.AlternativaResponse;
 import com.projetointegrador.natysync.usuario.Usuario;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -66,6 +70,24 @@ class RegrasDeDependenciaTest {
     }
 
     @Test
+    void nadaForaDeConteudoDependeDosDtosDeGabarito() {
+        noClasses()
+                .that()
+                .resideOutsideOfPackage(RAIZ + ".conteudo..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage(RAIZ + ".conteudo.dto..")
+                .check(classesDeProducao);
+    }
+
+    @Test
+    void alternativaDeLeituraDoIntegranteNaoTemOCampoCorreta() {
+        assertThat(AlternativaResponse.class.getRecordComponents())
+                .extracting(componente -> componente.getName())
+                .doesNotContain("correta");
+    }
+
+    @Test
     void respostaDeLeituraForaDeConteudoNaoTemCampoDeGabarito() {
         fields().that()
                 .areDeclaredInClassesThat()
@@ -80,8 +102,13 @@ class RegrasDeDependenciaTest {
 
     private static final List<Class<?>> ENTIDADES_DE_CONTEUDO =
             List.of(Trilha.class, Modulo.class, Atividade.class, Quiz.class, Pergunta.class, Alternativa.class);
-    private static final List<Class<?>> REPOSITORIOS_DE_CONTEUDO =
-            List.of(TrilhaRepository.class, ModuloRepository.class, AtividadeRepository.class, QuizRepository.class);
+    private static final List<Class<?>> REPOSITORIOS_DE_CONTEUDO = List.of(
+            TrilhaRepository.class,
+            ModuloRepository.class,
+            AtividadeRepository.class,
+            QuizRepository.class,
+            PerguntaRepository.class,
+            AlternativaRepository.class);
 
     private static ArchCondition<com.tngtech.archunit.core.domain.JavaClass> chamarEscritaDeConteudo() {
         return new ArchCondition<>("escrever em conteudo de trilha") {

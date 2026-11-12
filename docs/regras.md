@@ -108,6 +108,14 @@ conteúdo. É ele que responde quem trocou um gabarito quando as notas mudam de 
 **Duração de vídeo só existe com vídeo**, e vídeo exige URL HTTPS do YouTube e duração
 positiva.
 
+**Toda pergunta tem exatamente uma alternativa correta e ao menos duas alternativas.** A regra
+vale na entrada e em toda transição do estado gravado: marcar uma correta move a marca, e
+desmarcar a única correta, remover a correta ou deixar menos de duas alternativas é recusado. Quiz
+sem pergunta quebra a correção, então a última pergunta não é removida.
+
+**O gabarito sai por um único canal, a leitura administrativa do quiz.** Ela exige `NATY`. A
+leitura do quiz pelo integrante e a resposta de tentativa não têm o campo `correta`.
+
 **O gabarito não sai em leitura.** O DTO de alternativa não tem o campo de resposta
 correta: um campo que não existe no record não vaza, enquanto uma anotação de ocultação
 esquecida em campo novo vaza em silêncio. O DTO de escrita, que carrega o gabarito, é um

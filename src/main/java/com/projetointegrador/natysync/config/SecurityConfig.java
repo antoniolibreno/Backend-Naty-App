@@ -57,7 +57,12 @@ public class SecurityConfig {
                         .hasRole(Papel.NATY.name())
                         .requestMatchers(HttpMethod.PUT, "/api/v1/trilhas/*/ativa", "/api/v1/trilhas/*/modulos/ordem")
                         .hasRole(Papel.NATY.name())
-                        .requestMatchers("/api/v1/modulos/**", "/api/v1/alteracoes-de-conteudo/**")
+                        .requestMatchers(
+                                "/api/v1/modulos/**",
+                                "/api/v1/alteracoes-de-conteudo/**",
+                                "/api/v1/quizzes/**",
+                                "/api/v1/perguntas/**",
+                                "/api/v1/alternativas/**")
                         .hasRole(Papel.NATY.name())
                         .requestMatchers("/api/v1/painel/empresas/**")
                         .hasRole(Papel.NATY.name())

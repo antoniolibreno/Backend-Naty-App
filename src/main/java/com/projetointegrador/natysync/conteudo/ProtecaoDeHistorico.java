@@ -16,7 +16,13 @@ public class ProtecaoDeHistorico {
     }
 
     public void exigirSemHistorico(Collection<UUID> atividadeIds) {
-        if (!atividadeIds.isEmpty() && atividadeRepository.temHistoricoDeEstudo(atividadeIds)) {
+        if (!atividadeIds.isEmpty()) {
+            recusarSe(atividadeRepository.temHistoricoDeEstudo(atividadeIds));
+        }
+    }
+
+    public void recusarSe(boolean temHistorico) {
+        if (temHistorico) {
             throw new ConflitoException(
                     "CONTEUDO_COM_PROGRESSO",
                     "Conteudo com progresso, tentativa ou ponto registrado nao e removido. Desative a trilha.");
