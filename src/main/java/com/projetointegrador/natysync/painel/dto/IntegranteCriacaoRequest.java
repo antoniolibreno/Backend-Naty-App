@@ -1,6 +1,7 @@
 package com.projetointegrador.natysync.painel.dto;
 
 import com.projetointegrador.natysync.usuario.Papel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -9,11 +10,39 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Locale;
 
+@Schema(description = "Dados de cadastro de um integrante. O corpo nunca devolve a senha")
 public record IntegranteCriacaoRequest(
+        @Schema(
+                description = "Nome do integrante",
+                example = "Ana Souza",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                maxLength = 255)
         @NotBlank @Size(max = 255) String nome,
+
+        @Schema(
+                description = "E-mail da conta, unico no sistema inteiro. Normalizado em minusculas",
+                example = "ana.souza@acme.com.br",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                maxLength = 255)
         @NotBlank @Email @Size(max = 255) String email,
+
+        @Schema(
+                description = "Senha inicial, de 8 caracteres a 72 bytes em UTF-8",
+                example = "senha-exemplo-123",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                minLength = 8)
         @NotBlank @Size(min = SenhaRequest.TAMANHO_MINIMO) String senha,
+
+        @Schema(
+                description = "Papel da conta. O painel atribui INTEGRANTE ou ADMIN, e NATY e recusado",
+                example = "INTEGRANTE",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull Papel papel,
+
+        @Schema(
+                description = "Funcao da pessoa no WhatsApp, sem efeito de permissao. Ausente assume user",
+                example = "user",
+                allowableValues = {"admin", "supervisor", "user"})
         @Pattern(regexp = IntegranteAlteracaoRequest.PERFIS) String perfil) {
 
     public IntegranteCriacaoRequest {
@@ -28,10 +57,12 @@ public record IntegranteCriacaoRequest(
         }
     }
 
+    @Schema(hidden = true)
     @AssertTrue(message = "papel NATY nao e atribuido pelo painel") public boolean isPapelAtribuivel() {
         return papel != Papel.NATY;
     }
 
+    @Schema(hidden = true)
     @AssertTrue(message = "senha acima de 72 bytes") public boolean isSenhaDentroDoLimite() {
         return SenhaRequest.cabeNoBcrypt(senha);
     }

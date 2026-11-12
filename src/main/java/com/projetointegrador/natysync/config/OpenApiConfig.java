@@ -1,13 +1,21 @@
 package com.projetointegrador.natysync.config;
 
+import com.projetointegrador.natysync.shared.exception.ErroResposta;
 import com.projetointegrador.natysync.usuario.IntegranteDaRequisicao;
+import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +27,30 @@ public class OpenApiConfig {
 
     static {
         SpringDocUtils.getConfig().addRequestWrapperToIgnore(IntegranteDaRequisicao.class);
+    }
+
+    @Bean
+    public OpenApiCustomizer respostaDeNaoAutenticado() {
+        return openApi -> {
+            ModelConverters.getInstance().readAll(ErroResposta.class).forEach(openApi.getComponents()::addSchemas);
+            openApi.getPaths().values().stream()
+                    .flatMap(item -> item.readOperations().stream())
+                    .filter(OpenApiConfig::exigeSessao)
+                    .forEach(operacao -> operacao.getResponses().addApiResponse("401", naoAutenticado()));
+        };
+    }
+
+    private static boolean exigeSessao(Operation operacao) {
+        boolean semSeguranca =
+                operacao.getSecurity() != null && operacao.getSecurity().isEmpty();
+        return !semSeguranca && !operacao.getResponses().containsKey("401");
+    }
+
+    private static ApiResponse naoAutenticado() {
+        Schema<?> erro = new Schema<>().$ref("#/components/schemas/ErroResposta");
+        return new ApiResponse()
+                .description("Token ausente, invalido, expirado ou revogado. Codigo CREDENCIAL_INVALIDA")
+                .content(new Content().addMediaType("application/json", new MediaType().schema(erro)));
     }
 
     @Bean
