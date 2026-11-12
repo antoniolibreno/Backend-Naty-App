@@ -89,6 +89,7 @@ public class SessaoService {
                 usuario.getEmpresa().getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
+                usuario.getPapel(),
                 token,
                 sessao.getExpiraEm());
     }

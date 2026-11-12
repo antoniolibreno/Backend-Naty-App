@@ -106,7 +106,7 @@ qualquer agente que trabalhe aqui e está imposta em `.claude/settings.json`, co
 `usuario`: integrantes das empresas, papel e a resolução de identidade em
 `POST /api/v1/sessoes`. Só lê o cadastro; a escrita pertence ao `painel`.
 
-`empresa`: cliente da Naty, com fuso horário, e raiz do isolamento de dados.
+`empresa`: cliente da Naty, com fuso horário, CNPJ e razão social, e raiz do isolamento de dados.
 
 `painel`: cadastro de empresa e de integrante sob `/api/v1/painel/**` e o bootstrap da
 primeira conta `NATY`. Único pacote que escreve em `usuario` e em `empresa`.

@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 final class ViolacaoDeConstraint {
 
     static final String EMAIL_UNICO = "usuario_email_idx";
+    static final String CNPJ_UNICO = "empresa_cnpj_idx";
 
     private ViolacaoDeConstraint() {}
 

@@ -86,6 +86,7 @@ class RenovacaoDeSessaoApiTest extends IntegracaoTest {
         assertThat(OffsetDateTime.parse(resposta.getBody().get("expiraEm").asText()))
                 .isAfter(OffsetDateTime.now());
         assertThat(resposta.getBody().get("usuarioId").asText()).isEqualTo(integranteId.toString());
+        assertThat(resposta.getBody().get("papel").asText()).isEqualTo("INTEGRANTE");
         assertThat(statusDeUmaChamada(novo)).isEqualTo(200);
     }
 

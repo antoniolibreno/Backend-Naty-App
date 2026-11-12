@@ -2,6 +2,7 @@ package com.projetointegrador.natysync.painel;
 
 import com.projetointegrador.natysync.empresa.Empresa;
 import com.projetointegrador.natysync.empresa.EmpresaRepository;
+import com.projetointegrador.natysync.painel.dto.EmpresaCriacaoRequest;
 import com.projetointegrador.natysync.painel.dto.EmpresaRequest;
 import com.projetointegrador.natysync.painel.dto.EmpresaResponse;
 import com.projetointegrador.natysync.shared.exception.ConflitoException;
@@ -10,6 +11,7 @@ import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
 import com.projetointegrador.natysync.usuario.Papel;
 import com.projetointegrador.natysync.usuario.SessaoService;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -28,21 +30,34 @@ public class EmpresaService {
     private final UsuarioRepository usuarioRepository;
     private final SessaoService sessaoService;
     private final EmpresaMapper empresaMapper;
+    private final IntegranteService integranteService;
 
     public EmpresaService(
             EmpresaRepository empresaRepository,
             UsuarioRepository usuarioRepository,
             SessaoService sessaoService,
-            EmpresaMapper empresaMapper) {
+            EmpresaMapper empresaMapper,
+            IntegranteService integranteService) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.sessaoService = sessaoService;
         this.empresaMapper = empresaMapper;
+        this.integranteService = integranteService;
     }
 
-    public PaginaResponse<EmpresaResponse> listar(Pageable pagina) {
+    public PaginaResponse<EmpresaResponse> listar(Pageable pagina, String busca) {
         PageRequest pedido = PageRequest.of(pagina.getPageNumber(), pagina.getPageSize(), ORDEM_DA_LISTAGEM);
-        return PaginaResponse.de(empresaRepository.findAll(pedido), empresaMapper::paraResposta);
+        if (busca == null || busca.isBlank()) {
+            return PaginaResponse.de(empresaRepository.findAll(pedido), empresaMapper::paraResposta);
+        }
+        String texto = "%" + escaparCuringas(busca.trim().toLowerCase(Locale.ROOT)) + "%";
+        String cnpjNormalizado = Cnpj.normalizar(busca);
+        String cnpjParcial = cnpjNormalizado.isEmpty() ? null : "%" + escaparCuringas(cnpjNormalizado) + "%";
+        return PaginaResponse.de(empresaRepository.buscar(texto, cnpjParcial, pedido), empresaMapper::paraResposta);
+    }
+
+    private static String escaparCuringas(String texto) {
+        return texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     public EmpresaResponse buscarPorId(UUID empresaId) {
@@ -50,10 +65,12 @@ public class EmpresaService {
     }
 
     @Transactional
-    public EmpresaResponse criar(EmpresaRequest requisicao) {
+    public EmpresaResponse criar(EmpresaCriacaoRequest requisicao) {
         Empresa empresa = new Empresa();
-        preencher(empresa, requisicao);
-        return empresaMapper.paraResposta(empresaRepository.saveAndFlush(empresa));
+        preencher(empresa, requisicao.paraEmpresa());
+        Empresa salva = salvar(empresa);
+        integranteService.criar(salva.getId(), requisicao.administrador().comoIntegrante());
+        return empresaMapper.paraResposta(salva);
     }
 
     @Transactional
@@ -65,7 +82,7 @@ public class EmpresaService {
             usuarioRepository.travarTodosDaEmpresa(empresaId);
         }
         preencher(empresa, requisicao);
-        Empresa salva = empresaRepository.saveAndFlush(empresa);
+        Empresa salva = salvar(empresa);
         if (desativando) {
             sessaoService.revogarTodasDaEmpresa(empresaId);
         }
@@ -91,6 +108,19 @@ public class EmpresaService {
         empresa.setNome(requisicao.nome());
         empresa.setAtiva(requisicao.ativa());
         empresa.setFusoHorario(requisicao.fuso());
+        empresa.setCnpj(requisicao.cnpj());
+        empresa.setRazaoSocial(requisicao.razaoSocial());
+    }
+
+    private Empresa salvar(Empresa empresa) {
+        try {
+            return empresaRepository.saveAndFlush(empresa);
+        } catch (DataIntegrityViolationException excecao) {
+            if (ViolacaoDeConstraint.foi(excecao, ViolacaoDeConstraint.CNPJ_UNICO)) {
+                throw new ConflitoException(CodigoDeConflito.CNPJ_JA_CADASTRADO, "CNPJ ja cadastrado.");
+            }
+            throw excecao;
+        }
     }
 
     private void recusarSeTiverContaNaty(UUID empresaId) {

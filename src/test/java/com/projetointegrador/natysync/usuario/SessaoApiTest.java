@@ -58,6 +58,21 @@ class SessaoApiTest extends IntegracaoTest {
     }
 
     @Test
+    void devolveOPapelDeCadaTipoDeConta() {
+        Empresa empresa = criarEmpresa("Empresa dos Papeis");
+        for (Papel papel : Papel.values()) {
+            String email = emailUnico(papel.name().toLowerCase());
+            criarIntegrante(empresa, "Conta " + papel, email, papel);
+
+            ResponseEntity<JsonNode> resposta =
+                    criarSessao(Map.of("email", email, "senha", SENHA_DE_TESTE), JsonNode.class);
+
+            assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(resposta.getBody().get("papel").asText()).isEqualTo(papel.name());
+        }
+    }
+
+    @Test
     void resolveComMaiusculasEEspacos() {
         ResponseEntity<JsonNode> resposta = criarSessao(
                 Map.of("email", "  " + emailIntegrante.toUpperCase() + "  ", "senha", SENHA_DE_TESTE), JsonNode.class);

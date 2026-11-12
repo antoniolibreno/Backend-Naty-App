@@ -3,8 +3,13 @@ package com.projetointegrador.natysync.acompanhamento;
 import com.projetointegrador.natysync.acompanhamento.dto.FunilDeAtividadeResponse;
 import com.projetointegrador.natysync.acompanhamento.dto.IntegranteAcompanhadoResponse;
 import com.projetointegrador.natysync.acompanhamento.dto.MetricasDaEmpresaResponse;
+import com.projetointegrador.natysync.shared.exception.ErroResposta;
 import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -23,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/acompanhamento")
-@Tag(name = "Acompanhamento", description = "Leitura do progresso das empresas, restrita a conta NATY")
+@Tag(name = "Acompanhamento", description = "Progresso dos integrantes de qualquer empresa. Exige a conta NATY.")
 public class AcompanhamentoController {
 
     private static final MediaType TEXT_CSV = new MediaType("text", "csv", StandardCharsets.UTF_8);
@@ -36,33 +41,83 @@ public class AcompanhamentoController {
 
     @GetMapping("/empresas/{empresaId}/integrantes")
     @Operation(
-            summary = "Lista os integrantes da empresa com a situacao de cada um",
-            description = "Situacoes PARADO, SEM_INICIO, AVANCANDO e CONCLUIU, nessa ordem, com mais dias sem concluir"
-                    + " primeiro. O filtro situacao restringe a uma delas. Paginada por pagina e tamanho, com tamanho"
-                    + " maximo de 100. Parado e o integrante que passou app.acompanhamento.dias-parado dias de calendario,"
-                    + " no fuso da empresa, sem concluir atividade.")
+            summary = "Listar os integrantes da empresa",
+            description = "Devolve a situação de cada integrante ativo, com filtro opcional por situação. Parado é"
+                    + " quem passou o prazo de dias sem concluir atividade. Paginada, com até 100 itens.")
+    @ApiResponse(responseCode = "200", description = "Página de integrantes")
+    @ApiResponse(
+            responseCode = "400",
+            description = "Situação desconhecida ou identificador malformado",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    @ApiResponse(
+            responseCode = "403",
+            description = "Apenas a conta NATY acessa",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    @ApiResponse(
+            responseCode = "404",
+            description = "Empresa não encontrada",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     public PaginaResponse<IntegranteAcompanhadoResponse> listar(
-            @PathVariable UUID empresaId,
-            @RequestParam(required = false) SituacaoDeAcompanhamento situacao,
+            @Parameter(description = "Identificador da empresa", example = "3f6c1a52-8d4e-4b7a-9c21-5e0b7d4a1f10")
+                    @PathVariable
+                    UUID empresaId,
+            @Parameter(description = "Filtra por situação", example = "PARADO") @RequestParam(required = false)
+                    SituacaoDeAcompanhamento situacao,
             @ParameterObject Pageable pagina) {
         return service.listar(empresaId, situacao, pagina);
     }
 
     @GetMapping("/empresas/{empresaId}/metricas")
     @Operation(
-            summary = "Devolve adesao, percentual medio de conclusao e a contagem por situacao",
-            description = "As contagens coincidem com as situacoes da listagem de integrantes.")
-    public MetricasDaEmpresaResponse metricas(@PathVariable UUID empresaId) {
+            summary = "Buscar as métricas da empresa",
+            description = "Devolve adesão, percentual médio de conclusão e a contagem de integrantes por situação.")
+    @ApiResponse(responseCode = "200", description = "Métricas da empresa")
+    @ApiResponse(
+            responseCode = "400",
+            description = "Identificador malformado",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    @ApiResponse(
+            responseCode = "403",
+            description = "Apenas a conta NATY acessa",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    @ApiResponse(
+            responseCode = "404",
+            description = "Empresa não encontrada",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    public MetricasDaEmpresaResponse metricas(
+            @Parameter(description = "Identificador da empresa", example = "3f6c1a52-8d4e-4b7a-9c21-5e0b7d4a1f10")
+                    @PathVariable
+                    UUID empresaId) {
         return service.metricas(empresaId);
     }
 
     @GetMapping("/empresas/{empresaId}/integrantes.csv")
     @Operation(
-            summary = "Exporta a lista de integrantes em CSV",
-            description = "Mesma ordem e mesmo filtro situacao da listagem, sem paginacao. UTF-8 com BOM, separador"
-                    + " virgula, e celula de texto que comeca com =, +, - ou @ vai com apostrofo no inicio.")
+            summary = "Exportar os integrantes em CSV",
+            description = "Devolve a lista de integrantes da empresa como arquivo CSV, sem paginação, com o mesmo"
+                    + " filtro de situação da listagem.")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Arquivo CSV",
+            content = @Content(mediaType = "text/csv", schema = @Schema(type = "string")))
+    @ApiResponse(
+            responseCode = "400",
+            description = "Situação desconhecida ou identificador malformado",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    @ApiResponse(
+            responseCode = "403",
+            description = "Apenas a conta NATY acessa",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    @ApiResponse(
+            responseCode = "404",
+            description = "Empresa não encontrada",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     public ResponseEntity<String> exportar(
-            @PathVariable UUID empresaId, @RequestParam(required = false) SituacaoDeAcompanhamento situacao) {
+            @Parameter(description = "Identificador da empresa", example = "3f6c1a52-8d4e-4b7a-9c21-5e0b7d4a1f10")
+                    @PathVariable
+                    UUID empresaId,
+            @Parameter(description = "Filtra por situação", example = "PARADO") @RequestParam(required = false)
+                    SituacaoDeAcompanhamento situacao) {
         String csv = CsvDeAcompanhamento.gerar(service.todos(empresaId, situacao));
         return ResponseEntity.ok()
                 .contentType(TEXT_CSV)
@@ -77,10 +132,28 @@ public class AcompanhamentoController {
 
     @GetMapping("/atividades")
     @Operation(
-            summary = "Mostra quantos chegaram e quantos passaram em cada atividade",
-            description = "Chegaram sao os integrantes para quem a atividade esta liberada, passaram sao os que a"
-                    + " concluiram. O filtro empresaId restringe a uma empresa, e sem ele soma todas.")
-    public List<FunilDeAtividadeResponse> funil(@RequestParam(required = false) UUID empresaId) {
+            summary = "Listar o funil por atividade",
+            description = "Devolve quantos integrantes chegaram e quantos concluíram cada atividade ativa."
+                    + " Sem filtro de empresa, soma todas.")
+    @ApiResponse(responseCode = "200", description = "Funil das atividades")
+    @ApiResponse(
+            responseCode = "400",
+            description = "Identificador malformado",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    @ApiResponse(
+            responseCode = "403",
+            description = "Apenas a conta NATY acessa",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    @ApiResponse(
+            responseCode = "404",
+            description = "Empresa do filtro não encontrada",
+            content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    public List<FunilDeAtividadeResponse> funil(
+            @Parameter(
+                            description = "Filtra por empresa. Sem filtro, soma todas",
+                            example = "3f6c1a52-8d4e-4b7a-9c21-5e0b7d4a1f10")
+                    @RequestParam(required = false)
+                    UUID empresaId) {
         return service.funil(empresaId);
     }
 }

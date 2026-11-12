@@ -549,3 +549,16 @@ Decisões que o épico carrega e que precisam sair antes do código:
   mesmo e-mail.
   Toca: `src/test/java`
 
+
+- [ ] **10.19 Convite por e-mail com definição de senha pelo ADMIN e pelo INTEGRANTE**
+  A senha inicial do administrador e a de cada integrante são informadas por quem cadastra.
+  O convite por e-mail, com link para a própria pessoa definir a senha, exige provedor de
+  e-mail, e o sistema não depende de serviço externo para subir. Pendência vira item de
+  `docs/backlog.md`: decidir o provedor antes do código.
+  Toca: `painel`, `usuario`
+
+- [ ] **10.20 Acompanhamento da equipe pelo ADMIN da empresa**
+  O `ADMIN` é o responsável pela empresa e precisa ver o desempenho da própria equipe, mas o
+  pacote `acompanhamento` só aceita `NATY` e atravessa empresas de propósito. Falta expor
+  leitura restrita à empresa do `ADMIN` que chama.
+  Toca: `acompanhamento`, `config/SecurityConfig.java`

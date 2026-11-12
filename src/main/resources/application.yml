@@ -56,6 +56,8 @@ app:
       email: ${APP_BOOTSTRAP_NATY_EMAIL:}
       senha: ${APP_BOOTSTRAP_NATY_SENHA:}
       empresa: ${APP_BOOTSTRAP_NATY_EMPRESA:Naty}
+      cnpj: ${APP_BOOTSTRAP_NATY_CNPJ:}
+      razao-social: ${APP_BOOTSTRAP_NATY_RAZAO_SOCIAL:}
 
 management:
   endpoints:
@@ -70,5 +72,8 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+    doc-expansion: none
+    tags-sorter: alpha
+    validator-url: ""
   api-docs:
     path: /v3/api-docs

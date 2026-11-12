@@ -329,4 +329,74 @@ class IntegrantePainelApiTest extends PainelTest {
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("CONTA_NATY_FORA_DO_PAINEL");
     }
+
+    private Map<String, Object> integranteComTelefone(String telefone) {
+        Map<String, Object> corpo = new java.util.HashMap<>(novoIntegrante(emailNovo(), Papel.INTEGRANTE));
+        corpo.put("telefone", telefone);
+        return corpo;
+    }
+
+    @Test
+    void cadastroSemTelefoneDevolveTelefoneNulo() {
+        ResponseEntity<JsonNode> resposta = cadastrar(emailNovo(), Papel.INTEGRANTE);
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(resposta.getBody().get("telefone").isNull()).isTrue();
+    }
+
+    @Test
+    void cadastroComTelefoneMascaradoGuardaSoOsDigitos() {
+        ResponseEntity<JsonNode> resposta =
+                chamar(admin.token(), HttpMethod.POST, INTEGRANTES, integranteComTelefone("(11) 98765-4321"));
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(resposta.getBody().get("telefone").asText()).isEqualTo("11987654321");
+        assertThat(jdbc.queryForObject(
+                        "select telefone from usuario where id = ?",
+                        String.class,
+                        UUID.fromString(resposta.getBody().get("id").asText())))
+                .isEqualTo("11987654321");
+    }
+
+    @Test
+    void telefoneComNoveOuCatorzeDigitosEhRecusado() {
+        for (String telefone : new String[] {"119876543", "11987654321012"}) {
+            ResponseEntity<JsonNode> resposta =
+                    chamar(admin.token(), HttpMethod.POST, INTEGRANTES, integranteComTelefone(telefone));
+
+            assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("FALHA_DE_VALIDACAO");
+        }
+    }
+
+    @Test
+    void alterarSemTelefoneMantemOAtualEComTelefoneTroca() {
+        String id = chamar(admin.token(), HttpMethod.POST, INTEGRANTES, integranteComTelefone("11987654321"))
+                .getBody()
+                .get("id")
+                .asText();
+
+        JsonNode mantido = chamar(
+                        admin.token(),
+                        HttpMethod.PUT,
+                        INTEGRANTES + "/" + id,
+                        Map.of("nome", "Mesmo Telefone", "email", emailNovo(), "papel", "INTEGRANTE"))
+                .getBody();
+        JsonNode trocado = chamar(
+                        admin.token(),
+                        HttpMethod.PUT,
+                        INTEGRANTES + "/" + id,
+                        Map.of(
+                                "nome", "Outro Telefone",
+                                "email", emailNovo(),
+                                "papel", "INTEGRANTE",
+                                "telefone", "(21) 91234-5678"))
+                .getBody();
+        JsonNode lido =
+                chamar(admin.token(), HttpMethod.GET, INTEGRANTES + "/" + id).getBody();
+
+        assertThat(mantido.get("telefone").asText()).isEqualTo("11987654321");
+        assertThat(trocado.get("telefone").asText()).isEqualTo("21912345678");
+        assertThat(lido.get("telefone").asText()).isEqualTo("21912345678");
+    }
 }

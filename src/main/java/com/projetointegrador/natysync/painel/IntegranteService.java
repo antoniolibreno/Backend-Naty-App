@@ -73,6 +73,7 @@ public class IntegranteService {
         usuario.setEmail(requisicao.email());
         usuario.setPapel(requisicao.papel());
         usuario.setPerfil(requisicao.perfil());
+        usuario.setTelefone(requisicao.telefone());
         usuario.setStatus(STATUS_INICIAL);
         usuario.setSenhaHash(codificadorDeSenha.encode(requisicao.senha()));
         return integranteMapper.paraResposta(salvar(usuario));
@@ -83,12 +84,18 @@ public class IntegranteService {
             UUID empresaId, UUID integranteId, IntegranteAlteracaoRequest requisicao, IntegranteDaRequisicao quem) {
         Usuario usuario = travarIntegranteAdministravel(empresaId, integranteId, quem);
         recusarEmailRepetido(usuarioRepository.existeEmailNormalizadoEmOutro(requisicao.email(), integranteId));
+        if (requisicao.papel() != Papel.ADMIN) {
+            recusarSeForOUltimoAdminAtivo(usuario);
+        }
 
         usuario.setNome(requisicao.nome());
         usuario.setEmail(requisicao.email());
         usuario.setPapel(requisicao.papel());
         if (requisicao.perfil() != null) {
             usuario.setPerfil(requisicao.perfil());
+        }
+        if (requisicao.telefone() != null) {
+            usuario.setTelefone(requisicao.telefone());
         }
         return integranteMapper.paraResposta(salvar(usuario));
     }
@@ -104,6 +111,9 @@ public class IntegranteService {
     @Transactional
     public void definirAtivo(UUID empresaId, UUID integranteId, boolean ativo, IntegranteDaRequisicao quem) {
         Usuario usuario = travarIntegranteAdministravel(empresaId, integranteId, quem);
+        if (!ativo) {
+            recusarSeForOUltimoAdminAtivo(usuario);
+        }
         usuario.setAtivo(ativo);
         salvar(usuario);
         if (!ativo) {
@@ -125,6 +135,18 @@ public class IntegranteService {
     private void recusarEmailRepetido(boolean emailExiste) {
         if (emailExiste) {
             throw new ConflitoException(CodigoDeConflito.EMAIL_JA_CADASTRADO, "E-mail ja cadastrado.");
+        }
+    }
+
+    private void recusarSeForOUltimoAdminAtivo(Usuario usuario) {
+        if (usuario.getPapel() != Papel.ADMIN || !usuario.isAtivo()) {
+            return;
+        }
+        UUID empresaId = usuario.getEmpresa().getId();
+        empresaRepository.travarPorId(empresaId);
+        if (!usuarioRepository.existsByEmpresaIdAndPapelAndAtivoTrueAndIdNot(empresaId, Papel.ADMIN, usuario.getId())) {
+            throw new ConflitoException(
+                    CodigoDeConflito.ULTIMO_ADMINISTRADOR, "A empresa precisa de ao menos um ADMIN ativo.");
         }
     }
 

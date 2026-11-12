@@ -3,8 +3,14 @@ package com.projetointegrador.natysync.conteudo;
 import com.projetointegrador.natysync.conteudo.dto.AlternativaAdminResponse;
 import com.projetointegrador.natysync.conteudo.dto.AlternativaCriacaoRequest;
 import com.projetointegrador.natysync.conteudo.dto.AlternativaRequest;
+import com.projetointegrador.natysync.shared.exception.ErroResposta;
 import com.projetointegrador.natysync.usuario.IntegranteDaRequisicao;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -20,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/alternativas")
-@Tag(name = "Conteudo", description = "Escrita do conteudo de treinamento, restrita a conta NATY")
+@Tag(name = "Conteúdo", description = "Escrita do conteúdo global de treinamento. Exige conta NATY.")
 public class AlternativaConteudoController {
 
     private final QuizConteudoService quizService;
@@ -32,8 +38,24 @@ public class AlternativaConteudoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
-            summary = "Cria uma alternativa no fim da pergunta",
-            description = "Com correta verdadeiro, a marca de correta se move da alternativa anterior para a nova.")
+            summary = "Criar uma alternativa",
+            description =
+                    "Cria a alternativa no fim da pergunta. Marcada como correta, toma a marca da anterior. Exige conta NATY.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Alternativa criada"),
+        @ApiResponse(
+                responseCode = "400",
+                description = "Pergunta, texto ou campo correta inválidos",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
+        @ApiResponse(
+                responseCode = "403",
+                description = "Papel NATY exigido",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
+        @ApiResponse(
+                responseCode = "404",
+                description = "Pergunta não encontrada",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    })
     public AlternativaAdminResponse criar(
             @Valid @RequestBody AlternativaCriacaoRequest requisicao, IntegranteDaRequisicao quem) {
         return quizService.criarAlternativa(requisicao, quem.usuarioId());
@@ -41,11 +63,31 @@ public class AlternativaConteudoController {
 
     @PutMapping("/{alternativaId}")
     @Operation(
-            summary = "Altera o texto e a marca de correta da alternativa",
-            description = "Com correta verdadeiro, a marca se move. Desmarcar a unica correta responde 409"
-                    + " GABARITO_INVALIDO.")
+            summary = "Alterar uma alternativa",
+            description = "Marcada como correta, toma a marca da anterior. Desmarcar a única correta é recusado.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Alternativa alterada"),
+        @ApiResponse(
+                responseCode = "400",
+                description = "Texto em branco ou campo correta ausente",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
+        @ApiResponse(
+                responseCode = "403",
+                description = "Papel NATY exigido",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
+        @ApiResponse(
+                responseCode = "404",
+                description = "Alternativa não encontrada",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
+        @ApiResponse(
+                responseCode = "409",
+                description = "Pergunta ficaria sem alternativa correta",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    })
     public AlternativaAdminResponse alterar(
-            @PathVariable UUID alternativaId,
+            @Parameter(description = "Identificador da alternativa", example = "6e0b3d95-8a21-4c7f-9d14-2f5a8c1e7b40")
+                    @PathVariable
+                    UUID alternativaId,
             @Valid @RequestBody AlternativaRequest requisicao,
             IntegranteDaRequisicao quem) {
         return quizService.alterarAlternativa(alternativaId, requisicao, quem.usuarioId());
@@ -54,10 +96,29 @@ public class AlternativaConteudoController {
     @DeleteMapping("/{alternativaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Remove a alternativa",
-            description = "Responde 409 GABARITO_INVALIDO para a correta ou quando restariam menos de duas, e 409"
-                    + " CONTEUDO_COM_PROGRESSO quando alguma tentativa a escolheu.")
-    public void remover(@PathVariable UUID alternativaId, IntegranteDaRequisicao quem) {
+            summary = "Remover uma alternativa",
+            description =
+                    "Recusada para a alternativa correta, a que deixaria menos de duas ou a já escolhida em tentativa.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Alternativa removida"),
+        @ApiResponse(
+                responseCode = "403",
+                description = "Papel NATY exigido",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
+        @ApiResponse(
+                responseCode = "404",
+                description = "Alternativa não encontrada",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
+        @ApiResponse(
+                responseCode = "409",
+                description = "Correta, mínimo de duas ou já escolhida",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    })
+    public void remover(
+            @Parameter(description = "Identificador da alternativa", example = "6e0b3d95-8a21-4c7f-9d14-2f5a8c1e7b40")
+                    @PathVariable
+                    UUID alternativaId,
+            IntegranteDaRequisicao quem) {
         quizService.removerAlternativa(alternativaId, quem.usuarioId());
     }
 }

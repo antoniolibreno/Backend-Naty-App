@@ -11,9 +11,9 @@ e o progresso, e o que o servidor verifica antes de responder qualquer coisa.
 
 O sistema SHALL aceitar um e-mail e uma senha, verificar a senha contra a credencial
 guardada e, quando a verificação passar, devolver o identificador do integrante, o
-identificador da empresa dele, o nome e um token de sessão com o momento em que ele
-expira. A comparação de e-mail SHALL ignorar diferença entre maiúsculas e minúsculas e
-espaços nas pontas.
+identificador da empresa dele, o nome, o papel da conta e um token de sessão com o momento
+em que ele expira. A comparação de e-mail SHALL ignorar diferença entre maiúsculas e
+minúsculas e espaços nas pontas.
 
 A senha SHALL ser guardada apenas como hash. O sistema NÃO SHALL guardar a senha em
 texto, NÃO SHALL devolvê-la em resposta e NÃO SHALL registrá-la em log ou em mensagem de
@@ -30,8 +30,15 @@ hash, para o tempo de resposta não revelar quais e-mails existem.
 
 - **WHEN** o cliente envia um e-mail que pertence a um integrante ativo, com a senha
   correta
-- **THEN** o sistema devolve o identificador do integrante, o da empresa, o nome, um
-  token de sessão e o momento de expiração dele
+- **THEN** o sistema devolve o identificador do integrante, o da empresa, o nome, o papel,
+  um token de sessão e o momento de expiração dele
+
+#### Scenario: Papel na resposta
+
+- **WHEN** uma conta `NATY`, uma conta `ADMIN` e uma conta `INTEGRANTE` autenticam com a
+  senha correta
+- **THEN** cada resposta traz o campo `papel` com `NATY`, `ADMIN` e `INTEGRANTE`,
+  respectivamente
 
 #### Scenario: E-mail com maiúsculas e espaços
 
@@ -205,17 +212,17 @@ A remoção de sessão NÃO SHALL apagar progresso, tentativa de quiz nem ponto 
 `POST /api/v1/sessoes/atual/renovacao` SHALL exigir token de sessão válido e SHALL emitir
 um token novo com expiração de `app.sessao.expiracao` a partir do momento da renovação,
 limitada pela duração máxima da sessão. A resposta SHALL ter o mesmo corpo da emissão de
-sessão, com o token novo e o novo momento de expiração. O token apresentado SHALL ser
-revogado na mesma operação e NÃO SHALL ser aceito na chamada seguinte. Token expirado,
-revogado, inexistente ou de integrante que não pode mais entrar SHALL responder 401
-`CREDENCIAL_INVALIDA`. Renovações concorrentes do mesmo token SHALL emitir no máximo um
-token novo.
+sessão, com o token novo, o novo momento de expiração e o papel atual da conta. O token
+apresentado SHALL ser revogado na mesma operação e NÃO SHALL ser aceito na chamada seguinte.
+Token expirado, revogado, inexistente ou de integrante que não pode mais entrar SHALL
+responder 401 `CREDENCIAL_INVALIDA`. Renovações concorrentes do mesmo token SHALL emitir no
+máximo um token novo.
 
 #### Scenario: Renovação com token válido
 
 - **WHEN** o integrante renova a sessão com um token válido
-- **THEN** o sistema devolve um token novo com expiração futura, e o token novo é aceito
-  nas chamadas seguintes
+- **THEN** o sistema devolve um token novo com expiração futura e o papel da conta, e o
+  token novo é aceito nas chamadas seguintes
 
 #### Scenario: Token antigo recusado
 

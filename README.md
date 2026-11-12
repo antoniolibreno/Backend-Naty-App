@@ -41,6 +41,21 @@ o catálogo de conquistas com o instante de obtenção, para a própria conta e 
 ativo da mesma empresa. O app lê o perfil depois de uma conclusão para celebrar ponto e
 conquista novos.
 
+## Empresas e acesso
+
+O painel cadastra a empresa com CNPJ (numérico ou alfanumérico, com ou sem máscara) e razão
+social, e cria junto o primeiro `ADMIN`, que é o responsável pelo contrato, com nome, e-mail,
+senha e telefone. `GET /api/v1/painel/empresas` aceita `busca` por nome, razão social ou CNPJ.
+Uma empresa nunca fica sem `ADMIN` ativo: desativar ou rebaixar o último responde 409
+`ULTIMO_ADMINISTRADOR`.
+
+`POST /api/v1/sessoes` e a renovação devolvem o `papel` da conta (`INTEGRANTE`, `ADMIN` ou
+`NATY`), para o cliente escolher entre o painel da Naty, o painel do contratante e o app.
+
+A primeira conta `NATY` nasce do bootstrap por variável de ambiente, e a empresa interna da Naty
+recebe `APP_BOOTSTRAP_NATY_CNPJ` e `APP_BOOTSTRAP_NATY_RAZAO_SOCIAL`, obrigatórias onde o
+bootstrap é obrigatório.
+
 ## Rodar
 
 ```bash

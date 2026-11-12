@@ -8,8 +8,8 @@ trilha.
 
 ## Contratos
 
-- `Empresa`: entidade JPA da tabela `empresa`, com nome, indicador de ativa, fuso horário
-  e carimbos de data. Identificador e carimbos são gerados.
+- `Empresa`: entidade JPA da tabela `empresa`, com nome, indicador de ativa, fuso horário,
+  CNPJ, razão social e carimbos de data. Identificador e carimbos são gerados.
 - `Empresa.getFusoHorario()`: `ZoneId`, sempre preenchido. A virada do dia de qualquer
   regra por data acontece nesse fuso.
 - `ZoneIdConverter`: grava o fuso como identificador de região em `empresa.fuso_horario`.
@@ -28,6 +28,12 @@ Empresa inativa bloqueia o login e as sessões abertas dos integrantes dela. A c
 mora em `Usuario.podeEntrar`.
 
 ## Armadilhas
+
+`cnpj` e `razaoSocial` são nulos no banco e obrigatórios na API do painel. A obrigatoriedade
+mora no Bean Validation do `painel`, porque a limpeza dos testes e o seed inserem por SQL e
+um índice único não admite default. O CNPJ é guardado normalizado, com 14 caracteres em
+maiúsculas, e `empresa_cnpj_idx` garante a unicidade. Postgres aceita vários nulos nesse
+índice.
 
 `Empresa.ativa` e `Empresa.fusoHorario` nascem com valor no próprio campo. O padrão do
 banco não alcança quem persiste pela JPA, porque o insert carrega a coluna explicitamente.
