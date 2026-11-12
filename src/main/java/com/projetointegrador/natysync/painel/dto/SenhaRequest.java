@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 @Schema(description = "Nova senha do integrante")
 public record SenhaRequest(
         @Schema(
-                description = "Nova senha, de 8 caracteres a 72 bytes em UTF-8",
+                description = "De 8 caracteres a 72 bytes",
                 example = "senha-exemplo-123",
                 requiredMode = Schema.RequiredMode.REQUIRED,
                 minLength = 8)

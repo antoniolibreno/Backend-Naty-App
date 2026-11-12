@@ -26,12 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/alternativas")
-@Tag(
-        name = "Conteudo",
-        description =
-                "Escrita do conteudo global de treinamento: trilha, modulo, atividade, quiz, pergunta e alternativa."
-                        + " Toda rota de escrita exige conta NATY. A ordem de criacao acrescenta ao fim, e conteudo com historico nao e removido."
-                        + " Cada alteracao grava um registro de auditoria.")
+@Tag(name = "Conteúdo", description = "Escrita do conteúdo global de treinamento. Exige conta NATY.")
 public class AlternativaConteudoController {
 
     private final QuizConteudoService quizService;
@@ -43,23 +38,22 @@ public class AlternativaConteudoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
-            summary = "Cria uma alternativa no fim da pergunta",
-            description = "Com correta verdadeiro, a marca de correta se move da alternativa anterior "
-                    + "para a nova na mesma transacao e grava dois registros ALTERACAO. Exige conta "
-                    + "NATY e vale para todas as empresas.")
+            summary = "Criar uma alternativa",
+            description =
+                    "Cria a alternativa no fim da pergunta. Marcada como correta, toma a marca da anterior. Exige conta NATY.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Alternativa criada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Pergunta, texto ou campo correta inválidos",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Pergunta nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Pergunta não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public AlternativaAdminResponse criar(
@@ -69,28 +63,25 @@ public class AlternativaConteudoController {
 
     @PutMapping("/{alternativaId}")
     @Operation(
-            summary = "Altera o texto e a marca de correta da alternativa",
-            description = "Com correta verdadeiro, a marca se move da alternativa anterior para esta. "
-                    + "Desmarcar a unica correta e recusado, porque toda pergunta tem exatamente uma "
-                    + "correta. Exige conta NATY e vale para todas as empresas.")
+            summary = "Alterar uma alternativa",
+            description = "Marcada como correta, toma a marca da anterior. Desmarcar a única correta é recusado.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Alternativa alterada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Texto em branco ou campo correta ausente",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Alternativa nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Alternativa não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "Desmarcar a unica alternativa correta deixaria a pergunta sem gabarito. Codigo "
-                        + "GABARITO_INVALIDO",
+                description = "Pergunta ficaria sem alternativa correta",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public AlternativaAdminResponse alterar(
@@ -105,27 +96,22 @@ public class AlternativaConteudoController {
     @DeleteMapping("/{alternativaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Remove a alternativa",
-            description = "Recusa a alternativa correta e a remocao que deixaria a pergunta com menos de "
-                    + "duas alternativas, e recusa alternativa que alguma tentativa escolheu. Exige "
-                    + "conta NATY e vale para todas as empresas.")
+            summary = "Remover uma alternativa",
+            description =
+                    "Recusada para a alternativa correta, a que deixaria menos de duas ou a já escolhida em tentativa.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Alternativa removida"),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Alternativa nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Alternativa não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "A alternativa e a correta ou restariam menos de duas. Codigo GABARITO_INVALIDO",
-                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
-        @ApiResponse(
-                responseCode = "409",
-                description = "Alguma tentativa escolheu a alternativa. Codigo CONTEUDO_COM_PROGRESSO",
+                description = "Correta, mínimo de duas ou já escolhida",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void remover(

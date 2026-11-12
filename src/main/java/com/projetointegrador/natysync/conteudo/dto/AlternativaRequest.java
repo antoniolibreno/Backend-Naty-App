@@ -4,17 +4,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-@Schema(description = "Alternativa de uma pergunta, na criacao do quiz, da pergunta ou na alteracao da alternativa")
+@Schema(description = "Dados de uma alternativa")
 public record AlternativaRequest(
         @Schema(
-                description = "Texto da alternativa, sem espacos nas pontas",
-                example = "Reunir a equipe em um unico canal",
+                description = "Texto exibido",
+                example = "Reunir a equipe em um único canal",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank String texto,
 
         @Schema(
-                description =
-                        "Marca de gabarito. Marcar verdadeiro move a marca da alternativa anterior na mesma transacao. Desmarcar a unica correta responde 409 GABARITO_INVALIDO",
+                description = "Verdadeiro move a marca da alternativa anterior",
                 example = "true",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull Boolean correta) {

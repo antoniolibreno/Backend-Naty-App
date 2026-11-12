@@ -22,10 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/sessoes")
-@Tag(
-        name = "Sessoes",
-        description =
-                "Abertura, renovacao e encerramento da sessao do integrante. A abertura e publica, e as demais rotas exigem o token da sessao em Authorization: Bearer")
+@Tag(name = "Sessões", description = "Abertura, renovação e encerramento da sessão. Só a abertura é pública.")
 public class SessaoController {
 
     private final SessaoService sessaoService;
@@ -37,21 +34,18 @@ public class SessaoController {
     @PostMapping
     @SecurityRequirements
     @Operation(
-            summary = "Autentica o integrante e emite a sessao",
-            description = "Verifica a senha contra a credencial guardada e devolve um token opaco com a"
-                    + " expiracao dele. E-mail nao cadastrado e senha incorreta devolvem a mesma recusa,"
-                    + " para a resposta nao revelar quais e-mails existem. Integrante desativado e integrante de"
-                    + " empresa inativa nao obtem sessao. O token viaja nas demais chamadas em Authorization: Bearer.")
+            summary = "Abrir uma sessão",
+            description =
+                    "Devolve um token opaco e a expiração, para uso em Authorization: Bearer. E-mail desconhecido e senha incorreta recebem a mesma recusa. Conta ou empresa inativa não obtém sessão.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Sessao emitida com o token e a expiracao"),
+        @ApiResponse(responseCode = "200", description = "Sessão emitida"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "E-mail ou senha ausente ou inválido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "401",
-                description =
-                        "E-mail inexistente, senha incorreta, conta inativa ou empresa inativa, todos com a mesma recusa. Codigo CREDENCIAL_INVALIDA",
+                description = "Credencial inválida ou conta inativa",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public SessaoResponse autenticar(@Valid @RequestBody SessaoRequest requisicao) {
@@ -60,12 +54,10 @@ public class SessaoController {
 
     @PostMapping("/atual/renovacao")
     @Operation(
-            summary = "Renova a sessao em uso",
-            description = "Com token valido, emite um token novo com o mesmo corpo da emissao e revoga o token"
-                    + " apresentado. A expiracao nunca passa da duracao maxima contada do login. Token expirado,"
-                    + " revogado ou de integrante que nao pode mais entrar devolve 401.")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Sessao nova emitida e token apresentado revogado")
-    })
+            summary = "Renovar a sessão",
+            description =
+                    "Emite um token novo e revoga o apresentado. A expiração respeita a duração máxima contada do login.")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Sessão renovada")})
     public SessaoResponse renovar(@RequestHeader(TokenSessaoFiltro.CABECALHO_AUTORIZACAO) String autorizacao) {
         return sessaoService.renovar(
                 autorizacao.substring(TokenSessaoFiltro.PREFIXO_BEARER.length()).trim());
@@ -73,10 +65,8 @@ public class SessaoController {
 
     @DeleteMapping("/atual")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(
-            summary = "Revoga a sessao em uso",
-            description = "O token apresentado deixa de ser aceito na chamada seguinte.")
-    @ApiResponses({@ApiResponse(responseCode = "204", description = "Sessao revogada, sem corpo")})
+    @Operation(summary = "Encerrar a sessão", description = "O token apresentado deixa de ser aceito.")
+    @ApiResponses({@ApiResponse(responseCode = "204", description = "Sessão revogada")})
     public void revogar(@RequestHeader(TokenSessaoFiltro.CABECALHO_AUTORIZACAO) String autorizacao) {
         sessaoService.revogar(
                 autorizacao.substring(TokenSessaoFiltro.PREFIXO_BEARER.length()).trim());

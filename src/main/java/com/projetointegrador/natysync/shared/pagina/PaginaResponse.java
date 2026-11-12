@@ -5,21 +5,20 @@ import java.util.List;
 import java.util.function.Function;
 import org.springframework.data.domain.Page;
 
-@Schema(description = "Corpo unico de listagem paginada")
+@Schema(description = "Listagem paginada")
 public record PaginaResponse<T>(
-        @Schema(description = "Itens da pagina pedida, na ordem da listagem")
-        List<T> itens,
+        @Schema(description = "Itens da página") List<T> itens,
 
-        @Schema(description = "Numero da pagina devolvida, a primeira e 0", example = "0")
+        @Schema(description = "Página, a primeira é 0", example = "0")
         int pagina,
 
-        @Schema(description = "Quantidade maxima de itens da pagina. Padrao 20, maximo 100", example = "20")
+        @Schema(description = "Itens por página. Padrão 20, máximo 100", example = "20")
         int tamanho,
 
-        @Schema(description = "Total de itens em todas as paginas", example = "42")
+        @Schema(description = "Total de itens", example = "42")
         long totalItens,
 
-        @Schema(description = "Total de paginas para o tamanho usado", example = "3")
+        @Schema(description = "Total de páginas", example = "3")
         int totalPaginas) {
 
     public static <E, T> PaginaResponse<T> de(Page<E> pagina, Function<E, T> conversor) {

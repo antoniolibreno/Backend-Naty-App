@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Locale;
 
-@Schema(description = "Novos dados cadastrais do integrante. A senha e a ativacao tem rotas proprias")
+@Schema(description = "Novos dados cadastrais. Senha e ativação têm rota própria")
 public record IntegranteAlteracaoRequest(
         @Schema(
                 description = "Nome do integrante",
@@ -20,20 +20,20 @@ public record IntegranteAlteracaoRequest(
         @NotBlank @Size(max = 255) String nome,
 
         @Schema(
-                description = "E-mail da conta, unico no sistema inteiro. Normalizado em minusculas",
+                description = "E-mail único no sistema, em minúsculas",
                 example = "ana.souza@acme.com.br",
                 requiredMode = Schema.RequiredMode.REQUIRED,
                 maxLength = 255)
         @NotBlank @Email @Size(max = 255) String email,
 
         @Schema(
-                description = "Papel da conta. O painel atribui INTEGRANTE ou ADMIN, e NATY e recusado",
+                description = "INTEGRANTE ou ADMIN. NATY é recusado",
                 example = "INTEGRANTE",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull Papel papel,
 
         @Schema(
-                description = "Funcao da pessoa no WhatsApp, sem efeito de permissao. Ausente mantem o perfil atual",
+                description = "Função no WhatsApp. Ausente mantém o atual",
                 example = "user",
                 allowableValues = {"admin", "supervisor", "user"})
         @Pattern(regexp = PERFIS) String perfil) {

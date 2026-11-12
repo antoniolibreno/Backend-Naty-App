@@ -26,12 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/perguntas")
-@Tag(
-        name = "Conteudo",
-        description =
-                "Escrita do conteudo global de treinamento: trilha, modulo, atividade, quiz, pergunta e alternativa."
-                        + " Toda rota de escrita exige conta NATY. A ordem de criacao acrescenta ao fim, e conteudo com historico nao e removido."
-                        + " Cada alteracao grava um registro de auditoria.")
+@Tag(name = "Conteúdo", description = "Escrita do conteúdo global de treinamento. Exige conta NATY.")
 public class PerguntaConteudoController {
 
     private final QuizConteudoService quizService;
@@ -43,24 +38,22 @@ public class PerguntaConteudoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
-            summary = "Cria uma pergunta no fim do quiz",
-            description = "Cria a pergunta com suas alternativas e ordem igual ao maior valor atual do "
-                    + "quiz mais 1. Exige ao menos duas alternativas e exatamente uma correta. Exige "
-                    + "conta NATY e vale para todas as empresas.")
+            summary = "Criar uma pergunta",
+            description =
+                    "Cria a pergunta no fim do quiz, com ao menos duas alternativas e exatamente uma correta. Exige conta NATY.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Pergunta criada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido, menos de duas alternativas ou sem exatamente uma correta. "
-                        + "Codigo FALHA_DE_VALIDACAO",
+                description = "Quiz, enunciado ou alternativas inválidos",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Quiz nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Quiz não encontrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public PerguntaAdminResponse criar(
@@ -70,22 +63,21 @@ public class PerguntaConteudoController {
 
     @PutMapping("/{perguntaId}")
     @Operation(
-            summary = "Altera o enunciado da pergunta",
-            description = "As alternativas mudam pelas rotas de alternativa. Exige conta NATY e vale para "
-                    + "todas as empresas.")
+            summary = "Alterar uma pergunta",
+            description = "Substitui o enunciado. As alternativas mudam pelas rotas de alternativa.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Pergunta alterada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Enunciado ausente ou em branco",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Pergunta nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Pergunta não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public PerguntaAdminResponse alterar(
@@ -100,27 +92,22 @@ public class PerguntaConteudoController {
     @DeleteMapping("/{perguntaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Remove a pergunta com suas alternativas",
-            description = "Recusa a ultima pergunta do quiz, porque o quiz sem pergunta quebra a nota "
-                    + "percentual, e recusa pergunta que alguma tentativa respondeu. Exige conta NATY "
-                    + "e vale para todas as empresas.")
+            summary = "Remover uma pergunta",
+            description =
+                    "Remove a pergunta com suas alternativas. Recusada para a última do quiz ou se já foi respondida.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Pergunta removida"),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Pergunta nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Pergunta não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "E a ultima pergunta do quiz. Codigo QUIZ_SEM_PERGUNTA",
-                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
-        @ApiResponse(
-                responseCode = "409",
-                description = "Alguma tentativa respondeu a pergunta. Codigo CONTEUDO_COM_PROGRESSO",
+                description = "Última do quiz ou já respondida",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void remover(

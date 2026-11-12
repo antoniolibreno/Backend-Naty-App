@@ -49,7 +49,7 @@ public class OpenApiConfig {
     private static ApiResponse naoAutenticado() {
         Schema<?> erro = new Schema<>().$ref("#/components/schemas/ErroResposta");
         return new ApiResponse()
-                .description("Token ausente, invalido, expirado ou revogado. Codigo CREDENCIAL_INVALIDA")
+                .description("Token ausente, inválido ou expirado")
                 .content(new Content().addMediaType("application/json", new MediaType().schema(erro)));
     }
 
@@ -59,19 +59,17 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("Naty Sync")
                         .version("v1")
-                        .description("Trilha de treinamento dos integrantes das empresas clientes da Naty."
-                                + " Toda rota exige Authorization: Bearer, com excecao da emissao de sessao,"
-                                + " da verificacao de saude e desta documentacao."
-                                + " As rotas de /api/v1/painel exigem o papel ADMIN ou NATY e devolvem 403 ACESSO_NEGADO"
-                                + " sem ele."))
-                .servers(List.of(new Server().url("/").description("Servidor que atende esta documentacao")))
+                        .description("Trilha de treinamento das empresas clientes da Naty."
+                                + " Toda rota exige Authorization: Bearer, exceto a emissão de sessão, o health e esta documentação."
+                                + " As rotas de /api/v1/painel exigem papel ADMIN ou NATY."))
+                .servers(List.of(new Server().url("/").description("Servidor que atende esta documentação")))
                 .components(new Components()
                         .addSecuritySchemes(
                                 ESQUEMA_BEARER,
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
-                                        .description("Token opaco devolvido por POST /api/v1/sessoes")))
+                                        .description("Token de POST /api/v1/sessoes, em Authorization: Bearer")))
                 .addSecurityItem(new SecurityRequirement().addList(ESQUEMA_BEARER));
     }
 }

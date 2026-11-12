@@ -9,24 +9,21 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.UUID;
 
-@Schema(description = "Criacao de pergunta com suas alternativas. Entra no fim do quiz")
+@Schema(description = "Dados da nova pergunta")
 public record PerguntaCriacaoRequest(
         @Schema(
-                description = "Quiz que recebe a pergunta",
+                description = "Quiz dono",
                 example = "3b8e2d71-9c40-4a65-b1f8-7d5e0a2c4f93",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull UUID quizId,
 
         @Schema(
-                description = "Enunciado da pergunta, sem espacos nas pontas",
-                example = "Qual e a melhor forma de organizar o atendimento?",
+                description = "Enunciado",
+                example = "Qual é a melhor forma de organizar o atendimento?",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank String enunciado,
 
-        @Schema(
-                description =
-                        "Alternativas da pergunta. Ao menos duas e exatamente uma com correta verdadeiro, senao responde 400 FALHA_DE_VALIDACAO")
-        @Size(min = 2) List<@Valid AlternativaRequest> alternativas) {
+        @Schema(description = "Ao menos duas, exatamente uma correta") @Size(min = 2) List<@Valid AlternativaRequest> alternativas) {
 
     public PerguntaCriacaoRequest {
         if (enunciado != null) {

@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/atividades")
-@Tag(
-        name = "Atividades",
-        description =
-                "Leitura de atividade e do quiz dela. O quiz nunca traz a alternativa correta, e a correcao acontece em POST /api/v1/atividades/{atividadeId}/quiz/tentativas")
+@Tag(name = "Atividades", description = "Atividade e quiz dela, sem a alternativa correta")
 public class AtividadeController {
 
     private final TrilhaService trilhaService;
@@ -31,13 +28,12 @@ public class AtividadeController {
 
     @GetMapping("/{atividadeId}")
     @Operation(
-            summary = "Detalha uma atividade",
-            description = "Devolve imagem, video, duracao, pontos e se a atividade tem quiz. Nao informa o estado de"
-                    + " desbloqueio do integrante. Atividade sem video tem videoUrl nulo.")
+            summary = "Consultar uma atividade",
+            description = "Devolve imagem, vídeo, duração, pontos e se há quiz. Sem vídeo, videoUrl é nulo.")
     @ApiResponse(responseCode = "200", description = "Atividade encontrada")
     @ApiResponse(
             responseCode = "404",
-            description = "Atividade nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+            description = "Atividade não encontrada",
             content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     public AtividadeDetalheResponse detalhar(
             @Parameter(description = "Identificador da atividade", example = "e2b96c04-5a18-4d7f-b3c2-8d0a4f1e9b55")
@@ -48,13 +44,12 @@ public class AtividadeController {
 
     @GetMapping("/{atividadeId}/quiz")
     @Operation(
-            summary = "Devolve o quiz da atividade, sem a indicacao de alternativa correta",
-            description = "Devolve a nota minima, as perguntas e as alternativas em ordem crescente. O gabarito nao"
-                    + " faz parte da resposta: a correcao e feita no servidor ao registrar a tentativa.")
-    @ApiResponse(responseCode = "200", description = "Quiz da atividade")
+            summary = "Consultar o quiz da atividade",
+            description = "Devolve a nota mínima, as perguntas e as alternativas, sem gabarito.")
+    @ApiResponse(responseCode = "200", description = "Quiz sem gabarito")
     @ApiResponse(
             responseCode = "404",
-            description = "Atividade nao encontrada ou atividade sem quiz. Codigo RECURSO_NAO_ENCONTRADO",
+            description = "Atividade ou quiz não encontrado",
             content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     public QuizResponse buscarQuiz(
             @Parameter(description = "Identificador da atividade", example = "e2b96c04-5a18-4d7f-b3c2-8d0a4f1e9b55")

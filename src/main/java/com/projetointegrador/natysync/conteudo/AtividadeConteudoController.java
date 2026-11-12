@@ -26,12 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/atividades")
-@Tag(
-        name = "Conteudo",
-        description =
-                "Escrita do conteudo global de treinamento: trilha, modulo, atividade, quiz, pergunta e alternativa."
-                        + " Toda rota de escrita exige conta NATY. A ordem de criacao acrescenta ao fim, e conteudo com historico nao e removido."
-                        + " Cada alteracao grava um registro de auditoria.")
+@Tag(name = "Conteúdo", description = "Escrita do conteúdo global de treinamento. Exige conta NATY.")
 public class AtividadeConteudoController {
 
     private final AtividadeConteudoService atividadeService;
@@ -43,26 +38,22 @@ public class AtividadeConteudoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
-            summary = "Cria uma atividade no fim do modulo",
-            description = "Cria a atividade com ordem igual ao maior valor atual do modulo mais 1. Video "
-                    + "deve ser URL HTTPS do YouTube com duracao positiva em segundos, e a duracao so "
-                    + "existe com video. O XP vale 10 quando omitido. Sem quiz, a atividade conclui "
-                    + "quando o video e marcado como assistido. Exige conta NATY e vale para todas as "
-                    + "empresas.")
+            summary = "Criar uma atividade",
+            description =
+                    "Cria a atividade no fim do módulo. Vídeo, se houver, é HTTPS do YouTube com duração positiva. XP padrão 10. Exige conta NATY.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Atividade criada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido, video fora do padrao HTTPS do YouTube ou duracao incoerente "
-                        + "com o video. Codigo FALHA_DE_VALIDACAO",
+                description = "Módulo, título, vídeo ou duração inválidos",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Modulo nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Módulo não encontrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public AtividadeDetalheResponse criar(
@@ -72,25 +63,22 @@ public class AtividadeConteudoController {
 
     @PutMapping("/{atividadeId}")
     @Operation(
-            summary = "Altera os dados da atividade",
-            description = "Substitui titulo, descricao, imagem, video, duracao e XP. Video deve ser URL "
-                    + "HTTPS do YouTube com duracao positiva em segundos, e a duracao so existe com "
-                    + "video. O XP vale 10 quando omitido. O XP ja concedido fica congelado. Exige "
-                    + "conta NATY e vale para todas as empresas.")
+            summary = "Alterar uma atividade",
+            description =
+                    "Substitui os dados da atividade. Vídeo, se houver, é HTTPS do YouTube com duração positiva. O XP já concedido não muda.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Atividade alterada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido, video fora do padrao HTTPS do YouTube ou duracao incoerente "
-                        + "com o video. Codigo FALHA_DE_VALIDACAO",
+                description = "Título, vídeo ou duração inválidos",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Atividade nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Atividade não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public AtividadeDetalheResponse alterar(
@@ -105,23 +93,22 @@ public class AtividadeConteudoController {
     @DeleteMapping("/{atividadeId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Remove a atividade sem historico",
-            description = "Remove a atividade com o quiz, as perguntas e as alternativas. Recusa quando a "
-                    + "atividade tem progresso, tentativa ou ponto registrado. Exige conta NATY e "
-                    + "vale para todas as empresas.")
+            summary = "Remover uma atividade",
+            description =
+                    "Remove a atividade com seu quiz. Recusada se houver progresso, tentativa ou ponto registrado.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Atividade removida"),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Atividade nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Atividade não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "A atividade tem historico. Codigo CONTEUDO_COM_PROGRESSO",
+                description = "Atividade com progresso registrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void remover(

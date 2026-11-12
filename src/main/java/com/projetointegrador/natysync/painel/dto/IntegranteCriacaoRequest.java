@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Locale;
 
-@Schema(description = "Dados de cadastro de um integrante. O corpo nunca devolve a senha")
+@Schema(description = "Dados de cadastro do integrante")
 public record IntegranteCriacaoRequest(
         @Schema(
                 description = "Nome do integrante",
@@ -20,27 +20,27 @@ public record IntegranteCriacaoRequest(
         @NotBlank @Size(max = 255) String nome,
 
         @Schema(
-                description = "E-mail da conta, unico no sistema inteiro. Normalizado em minusculas",
+                description = "E-mail único no sistema, em minúsculas",
                 example = "ana.souza@acme.com.br",
                 requiredMode = Schema.RequiredMode.REQUIRED,
                 maxLength = 255)
         @NotBlank @Email @Size(max = 255) String email,
 
         @Schema(
-                description = "Senha inicial, de 8 caracteres a 72 bytes em UTF-8",
+                description = "De 8 caracteres a 72 bytes",
                 example = "senha-exemplo-123",
                 requiredMode = Schema.RequiredMode.REQUIRED,
                 minLength = 8)
         @NotBlank @Size(min = SenhaRequest.TAMANHO_MINIMO) String senha,
 
         @Schema(
-                description = "Papel da conta. O painel atribui INTEGRANTE ou ADMIN, e NATY e recusado",
+                description = "INTEGRANTE ou ADMIN. NATY é recusado",
                 example = "INTEGRANTE",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull Papel papel,
 
         @Schema(
-                description = "Funcao da pessoa no WhatsApp, sem efeito de permissao. Ausente assume user",
+                description = "Função no WhatsApp. Ausente assume user",
                 example = "user",
                 allowableValues = {"admin", "supervisor", "user"})
         @Pattern(regexp = IntegranteAlteracaoRequest.PERFIS) String perfil) {

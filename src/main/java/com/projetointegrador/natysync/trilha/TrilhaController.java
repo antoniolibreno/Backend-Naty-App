@@ -18,10 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/trilhas")
-@Tag(
-        name = "Trilhas",
-        description =
-                "Leitura do conteudo do treinamento. O conteudo e global e igual para todas as empresas, e a leitura exige sessao")
+@Tag(name = "Trilhas", description = "Conteúdo do treinamento, igual para todas as empresas")
 public class TrilhaController {
 
     private final TrilhaService trilhaService;
@@ -32,23 +29,21 @@ public class TrilhaController {
 
     @GetMapping
     @Operation(
-            summary = "Lista as trilhas ativas em ordem crescente",
-            description = "Devolve so as trilhas ativas, sem modulos. Trilha desativada nao aparece na listagem.")
-    @ApiResponse(responseCode = "200", description = "Trilhas ativas, vazia quando nao ha nenhuma")
+            summary = "Listar as trilhas ativas",
+            description = "Devolve as trilhas ativas em ordem crescente, sem módulos.")
+    @ApiResponse(responseCode = "200", description = "Trilhas ativas")
     public List<TrilhaResumoResponse> listar() {
         return trilhaService.listarAtivas();
     }
 
     @GetMapping("/{trilhaId}")
     @Operation(
-            summary = "Detalha uma trilha com seus modulos e atividades",
-            description =
-                    "Devolve modulos e atividades em ordem crescente, sem estado de progresso e sem gabarito de quiz."
-                            + " O estado do integrante fica em GET /api/v1/trilhas/{trilhaId}/progresso.")
-    @ApiResponse(responseCode = "200", description = "Trilha com modulos e atividades")
+            summary = "Consultar uma trilha",
+            description = "Devolve os módulos e as atividades em ordem crescente, sem progresso do integrante.")
+    @ApiResponse(responseCode = "200", description = "Trilha com módulos")
     @ApiResponse(
             responseCode = "404",
-            description = "Trilha nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+            description = "Trilha não encontrada",
             content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     public TrilhaDetalheResponse detalhar(
             @Parameter(description = "Identificador da trilha", example = "c7a4e910-2b3d-4e56-8f01-6a9d3c5b7e22")

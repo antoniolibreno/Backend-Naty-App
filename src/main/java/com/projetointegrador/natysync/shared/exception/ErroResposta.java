@@ -4,33 +4,30 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-@Schema(description = "Corpo unico de erro da API. O app ramifica pelo campo codigo, nunca pela mensagem.")
+@Schema(description = "Corpo de erro. Ramifique pelo codigo")
 public record ErroResposta(
-        @Schema(description = "Instante em que o erro foi gerado", example = "2026-11-11T14:32:10.123-03:00")
+        @Schema(description = "Instante do erro", example = "2026-11-11T14:32:10.123-03:00")
         OffsetDateTime momento,
 
-        @Schema(description = "Status HTTP da resposta", example = "409")
+        @Schema(description = "Status HTTP", example = "409")
         int status,
 
-        @Schema(description = "Codigo estavel do erro, em maiusculas com sublinhado", example = "EMAIL_JA_CADASTRADO")
+        @Schema(description = "Código estável do erro", example = "EMAIL_JA_CADASTRADO")
         String codigo,
 
-        @Schema(
-                description = "Mensagem para leitura humana. Pode mudar de texto, o codigo nao muda",
-                example = "Ja existe uma conta com este e-mail")
+        @Schema(description = "Mensagem legível, pode variar", example = "Já existe uma conta com este e-mail")
         String mensagem,
 
-        @Schema(description = "Caminho da requisicao que gerou o erro", example = "/api/v1/painel/integrantes")
+        @Schema(description = "Caminho da requisição", example = "/api/v1/painel/integrantes")
         String caminho,
 
-        @Schema(description = "Erros por campo. Vem preenchida so em FALHA_DE_VALIDACAO e vazia nos demais codigos")
-        List<ErroCampo> campos) {
+        @Schema(description = "Só em FALHA_DE_VALIDACAO") List<ErroCampo> campos) {
 
-    @Schema(description = "Violacao de validacao de um campo da requisicao")
+    @Schema(description = "Erro de validação de um campo")
     public record ErroCampo(
-            @Schema(description = "Nome do campo invalido", example = "email")
+            @Schema(description = "Campo inválido", example = "email")
             String campo,
 
-            @Schema(description = "Motivo da recusa", example = "deve ser um endereco de e-mail valido")
+            @Schema(description = "Motivo da recusa", example = "deve ser um endereço de e-mail válido")
             String mensagem) {}
 }

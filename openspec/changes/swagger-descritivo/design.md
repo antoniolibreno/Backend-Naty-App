@@ -5,9 +5,20 @@
 **Anotação direta no record.** `@Schema` entra nos componentes do record, sem classe auxiliar
 nem arquivo de exemplos. Um exemplo mora ao lado do campo que descreve, e some junto com ele.
 
-**Texto em ASCII.** O Swagger existente não usa acento nas descrições. O texto novo segue o
-mesmo padrão, sem travessão, sem verbo de mudança e sem marcador de tempo, conforme o
-`CLAUDE.md` raiz.
+**Português com acento.** Todo texto do Swagger (descrição, resumo, exemplo em linguagem natural)
+é escrito em português correto, com acento. Identificador, código de erro, URL, valor de enum e
+UUID ficam como no código. O texto não usa travessão, verbo de mudança nem marcador de tempo,
+conforme o `CLAUDE.md` raiz.
+
+**Interface.** O Swagger UI abre com as tags recolhidas (`doc-expansion: none`), em ordem
+alfabética (`tags-sorter: alpha`) e sem validador externo (`validator-url` vazio). O servidor e
+cada tag carregam descrição.
+
+**Texto breve.** A descrição diz o que a rota faz e a regra que o cliente precisa saber, em uma ou
+duas frases. Operação: até cerca de 220 caracteres e resumo de até 35. Tag: até cerca de 100.
+Campo e schema: até cerca de 60. Resposta: até cerca de 50, com o motivo e sem repetir o status.
+Detalhe de implementação (formato interno de arquivo, nome de propriedade de configuração,
+critério de desempate) fica fora do Swagger e mora no `CLAUDE.md` do pacote.
 
 **Exemplos coerentes entre si.** Os mesmos valores aparecem em todo DTO que referencia a
 mesma entidade: um UUID fixo por entidade, a empresa `Acme Treinamentos`, o fuso
@@ -17,10 +28,11 @@ requisição correspondente.
 **Exemplo de senha é fictício e fraco de propósito.** Nenhum exemplo usa valor que se pareça
 com credencial real, nem a senha do seed.
 
-**Erros por constante.** Cada controller declara os erros que a rota devolve com
-`@ApiResponse` apontando para `ErroResposta`. O `codigo` estável aparece na `description` da
-resposta. A fonte dos códigos é o código existente (`CodigoDeConflito`, exceções de `shared`),
-não texto inventado.
+**Erros por rota.** Cada controller declara os erros que a rota devolve com `@ApiResponse`
+apontando para `ErroResposta`. A `description` de cada resposta diz o motivo específico da
+recusa, como "Papel ausente ou inválido" ou "A troca deixaria o escritório sem administrador".
+O `codigo` estável é documentado no schema de `ErroResposta`. A fonte dos motivos é o código
+existente, não texto inventado.
 
 **401 e 403 globais.** `OpenApiConfig` registra um `OpenApiCustomizer` que acrescenta 401 em
 toda operação protegida. O 403 `ACESSO_NEGADO` entra por operação, só nas rotas de papel, pois a

@@ -27,12 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/modulos")
-@Tag(
-        name = "Conteudo",
-        description =
-                "Escrita do conteudo global de treinamento: trilha, modulo, atividade, quiz, pergunta e alternativa."
-                        + " Toda rota de escrita exige conta NATY. A ordem de criacao acrescenta ao fim, e conteudo com historico nao e removido."
-                        + " Cada alteracao grava um registro de auditoria.")
+@Tag(name = "Conteúdo", description = "Escrita do conteúdo global de treinamento. Exige conta NATY.")
 public class ModuloConteudoController {
 
     private final ModuloConteudoService moduloService;
@@ -45,23 +40,20 @@ public class ModuloConteudoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(
-            summary = "Cria um modulo no fim da trilha",
-            description = "Cria o modulo com ordem igual ao maior valor atual da trilha mais 1. Exige "
-                    + "conta NATY e vale para todas as empresas.")
+    @Operation(summary = "Criar um módulo", description = "Cria o módulo no fim da trilha. Exige conta NATY.")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Modulo criado"),
+        @ApiResponse(responseCode = "201", description = "Módulo criado"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Trilha ausente, ou título inválido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Trilha nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Trilha não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public ModuloResponse criar(@Valid @RequestBody ModuloCriacaoRequest requisicao, IntegranteDaRequisicao quem) {
@@ -69,27 +61,24 @@ public class ModuloConteudoController {
     }
 
     @PutMapping("/{moduloId}")
-    @Operation(
-            summary = "Altera titulo e descricao do modulo",
-            description = "Substitui titulo e descricao. A ordem nao muda. Exige conta NATY e vale para "
-                    + "todas as empresas.")
+    @Operation(summary = "Alterar um módulo", description = "Substitui título e descrição. A ordem não muda.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Modulo alterado"),
+        @ApiResponse(responseCode = "200", description = "Módulo alterado"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Título ausente, em branco ou acima de 255",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Modulo nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Módulo não encontrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public ModuloResponse alterar(
-            @Parameter(description = "Identificador do modulo", example = "5d1f8a63-7e2c-4b90-a4d5-1f3b9c6e8a07")
+            @Parameter(description = "Identificador do módulo", example = "5d1f8a63-7e2c-4b90-a4d5-1f3b9c6e8a07")
                     @PathVariable
                     UUID moduloId,
             @Valid @RequestBody ModuloAlteracaoRequest requisicao,
@@ -100,27 +89,26 @@ public class ModuloConteudoController {
     @DeleteMapping("/{moduloId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Remove o modulo sem historico",
-            description = "Remove o modulo com suas atividades, quiz, perguntas e alternativas. Recusa "
-                    + "quando alguma atividade dele tem progresso, tentativa ou ponto registrado. "
-                    + "Exige conta NATY e vale para todas as empresas.")
+            summary = "Remover um módulo",
+            description =
+                    "Remove o módulo com tudo que ele contém. Recusada se houver progresso, tentativa ou ponto registrado.")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Modulo removido"),
+        @ApiResponse(responseCode = "204", description = "Módulo removido"),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Modulo nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Módulo não encontrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "Alguma atividade do modulo tem historico. Codigo CONTEUDO_COM_PROGRESSO",
+                description = "Módulo com progresso registrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void remover(
-            @Parameter(description = "Identificador do modulo", example = "5d1f8a63-7e2c-4b90-a4d5-1f3b9c6e8a07")
+            @Parameter(description = "Identificador do módulo", example = "5d1f8a63-7e2c-4b90-a4d5-1f3b9c6e8a07")
                     @PathVariable
                     UUID moduloId,
             IntegranteDaRequisicao quem) {
@@ -130,33 +118,29 @@ public class ModuloConteudoController {
     @PutMapping("/{moduloId}/atividades/ordem")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Reordena as atividades do modulo",
-            description = "Recebe todos os identificadores das atividades do modulo na ordem desejada e "
-                    + "renumera de 1 a n. Lista diferente das atividades atuais, ou com repeticao, e "
-                    + "recusada. Registra REORDENACAO no modulo. Exige conta NATY e vale para todas "
-                    + "as empresas.")
+            summary = "Reordenar as atividades",
+            description = "Recebe todas as atividades do módulo na ordem desejada, sem repetição. Exige conta NATY.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Atividades reordenadas"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Lista de identificadores ausente ou vazia",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Modulo nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Módulo não encontrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description =
-                        "A lista nao contem exatamente as atividades atuais do modulo. Codigo " + "ORDEM_INVALIDA",
+                description = "Ordem incompleta, repetida ou com item alheio",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void reordenarAtividades(
-            @Parameter(description = "Identificador do modulo", example = "5d1f8a63-7e2c-4b90-a4d5-1f3b9c6e8a07")
+            @Parameter(description = "Identificador do módulo", example = "5d1f8a63-7e2c-4b90-a4d5-1f3b9c6e8a07")
                     @PathVariable
                     UUID moduloId,
             @Valid @RequestBody OrdemRequest requisicao,

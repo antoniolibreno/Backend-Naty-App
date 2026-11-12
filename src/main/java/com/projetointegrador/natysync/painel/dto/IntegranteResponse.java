@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Schema(description = "Integrante de uma empresa, com dados de cadastro. Nunca carrega a senha")
+@Schema(description = "Integrante com dados de cadastro, sem senha")
 public record IntegranteResponse(
         @Schema(description = "Identificador do integrante", example = "9b2d7e41-3c5a-4f68-a1d9-7c0e5b8f2a34")
         UUID id,
@@ -25,7 +25,7 @@ public record IntegranteResponse(
         Papel papel,
 
         @Schema(
-                description = "Funcao da pessoa no WhatsApp, sem efeito de permissao",
+                description = "Função no WhatsApp, sem efeito de permissão",
                 example = "user",
                 allowableValues = {"admin", "supervisor", "user"})
         String perfil,
@@ -33,8 +33,8 @@ public record IntegranteResponse(
         @Schema(description = "Indica se a conta pode entrar", example = "true")
         boolean ativo,
 
-        @Schema(description = "Instante de criacao", example = "2026-11-11T14:32:10.123-03:00")
+        @Schema(description = "Instante de criação", example = "2026-11-11T14:32:10.123-03:00")
         OffsetDateTime criadoEm,
 
-        @Schema(description = "Instante da ultima alteracao", example = "2026-11-11T15:10:00.000-03:00")
+        @Schema(description = "Instante da última alteração", example = "2026-11-11T15:10:00.000-03:00")
         OffsetDateTime atualizadoEm) {}

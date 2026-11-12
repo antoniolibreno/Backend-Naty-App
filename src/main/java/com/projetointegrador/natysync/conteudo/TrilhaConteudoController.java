@@ -27,12 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/trilhas")
-@Tag(
-        name = "Conteudo",
-        description =
-                "Escrita do conteudo global de treinamento: trilha, modulo, atividade, quiz, pergunta e alternativa."
-                        + " Toda rota de escrita exige conta NATY. A ordem de criacao acrescenta ao fim, e conteudo com historico nao e removido."
-                        + " Cada alteracao grava um registro de auditoria.")
+@Tag(name = "Conteúdo", description = "Escrita do conteúdo global de treinamento. Exige conta NATY.")
 public class TrilhaConteudoController {
 
     private final TrilhaConteudoService trilhaService;
@@ -45,19 +40,16 @@ public class TrilhaConteudoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(
-            summary = "Cria uma trilha ativa no fim da ordem",
-            description = "Cria a trilha ativa com ordem igual ao maior valor atual mais 1. Exige conta "
-                    + "NATY e vale para todas as empresas.")
+    @Operation(summary = "Criar uma trilha", description = "Cria a trilha ativa no fim da ordem. Exige conta NATY.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Trilha criada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Título ausente, em branco ou acima de 255",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public TrilhaAdminResponse criar(@Valid @RequestBody TrilhaRequest requisicao, IntegranteDaRequisicao quem) {
@@ -66,22 +58,21 @@ public class TrilhaConteudoController {
 
     @PutMapping("/{trilhaId}")
     @Operation(
-            summary = "Altera titulo e descricao da trilha",
-            description = "Substitui titulo e descricao. A ordem e a ativacao nao mudam. Exige conta NATY "
-                    + "e vale para todas as empresas.")
+            summary = "Alterar uma trilha",
+            description = "Substitui título e descrição. Ordem e ativação não mudam.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Trilha alterada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Título ausente, em branco ou acima de 255",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Trilha nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Trilha não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public TrilhaAdminResponse alterar(
@@ -95,23 +86,22 @@ public class TrilhaConteudoController {
 
     @PutMapping("/{trilhaId}/ativa")
     @Operation(
-            summary = "Ativa ou desativa a trilha",
-            description = "Trilha inativa sai da listagem, mas continua legivel por identificador e "
-                    + "mantem o progresso, a tentativa e o ponto de quem a estudou. E a alternativa a "
-                    + "remover trilha com historico. Exige conta NATY e vale para todas as empresas.")
+            summary = "Ativar ou desativar uma trilha",
+            description =
+                    "Trilha inativa sai da listagem e mantém o histórico. Use no lugar de remover trilha com histórico.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Ativacao gravada"),
+        @ApiResponse(responseCode = "200", description = "Ativação gravada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Campo ativa ausente",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Trilha nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Trilha não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public TrilhaAdminResponse definirAtivacao(
@@ -126,24 +116,22 @@ public class TrilhaConteudoController {
     @DeleteMapping("/{trilhaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Remove a trilha sem historico",
-            description = "Remove a trilha com seus modulos, atividades, quiz, perguntas e alternativas. "
-                    + "Recusa quando alguma atividade tem progresso, tentativa ou ponto registrado, e "
-                    + "a alternativa e desativar a trilha. Exige conta NATY e vale para todas as "
-                    + "empresas.")
+            summary = "Remover uma trilha",
+            description =
+                    "Remove a trilha com tudo que ela contém. Recusada se houver progresso, tentativa ou ponto registrado.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Trilha removida"),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Trilha nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Trilha não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "Alguma atividade da trilha tem historico. Codigo CONTEUDO_COM_PROGRESSO",
+                description = "Trilha com progresso registrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void remover(
@@ -157,28 +145,25 @@ public class TrilhaConteudoController {
     @PutMapping("/{trilhaId}/modulos/ordem")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Reordena os modulos da trilha",
-            description = "Recebe todos os identificadores dos modulos da trilha na ordem desejada e "
-                    + "renumera de 1 a n. Lista diferente dos modulos atuais, ou com repeticao, e "
-                    + "recusada. Registra REORDENACAO na trilha. Exige conta NATY e vale para todas "
-                    + "as empresas.")
+            summary = "Reordenar os módulos",
+            description = "Recebe todos os módulos da trilha na ordem desejada, sem repetição. Exige conta NATY.")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Modulos reordenados"),
+        @ApiResponse(responseCode = "204", description = "Módulos reordenados"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Lista de identificadores ausente ou vazia",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Trilha nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Trilha não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "A lista nao contem exatamente os modulos atuais da trilha. Codigo " + "ORDEM_INVALIDA",
+                description = "Ordem incompleta, repetida ou com item alheio",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void reordenarModulos(

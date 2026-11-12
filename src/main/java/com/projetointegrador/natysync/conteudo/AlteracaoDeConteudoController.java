@@ -20,12 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/alteracoes-de-conteudo")
-@Tag(
-        name = "Conteudo",
-        description =
-                "Escrita do conteudo global de treinamento: trilha, modulo, atividade, quiz, pergunta e alternativa."
-                        + " Toda rota de escrita exige conta NATY. A ordem de criacao acrescenta ao fim, e conteudo com historico nao e removido."
-                        + " Cada alteracao grava um registro de auditoria.")
+@Tag(name = "Conteúdo", description = "Escrita do conteúdo global de treinamento. Exige conta NATY.")
 public class AlteracaoDeConteudoController {
 
     private final AlteracaoDeConteudoService service;
@@ -36,22 +31,17 @@ public class AlteracaoDeConteudoController {
 
     @GetMapping
     @Operation(
-            summary = "Lista quem alterou o conteudo e quando",
-            description = "Registro de auditoria paginado, do mais recente para o mais antigo, com pagina "
-                    + "e tamanho. O filtro entidadeId restringe a um item e continua valido depois da "
-                    + "remocao dele. O parametro de ordenacao e ignorado. Exige conta NATY e vale "
-                    + "para todas as empresas.")
+            summary = "Listar alterações de conteúdo",
+            description = "Auditoria paginada, da mais recente para a mais antiga. Exige conta NATY.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Pagina de registros de alteracao"),
+        @ApiResponse(responseCode = "200", description = "Página de alterações"),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public PaginaResponse<AlteracaoDeConteudoResponse> listar(
-            @Parameter(
-                            description = "Restringe aos registros do item com este identificador, de qualquer tipo",
-                            example = "c7a4e910-2b3d-4e56-8f01-6a9d3c5b7e22")
+            @Parameter(description = "Filtra pelo item alterado", example = "c7a4e910-2b3d-4e56-8f01-6a9d3c5b7e22")
                     @RequestParam(required = false)
                     UUID entidadeId,
             @ParameterObject Pageable pagina) {

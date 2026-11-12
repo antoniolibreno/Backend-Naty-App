@@ -70,5 +70,8 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+    doc-expansion: none
+    tags-sorter: alpha
+    validator-url: ""
   api-docs:
     path: /v3/api-docs

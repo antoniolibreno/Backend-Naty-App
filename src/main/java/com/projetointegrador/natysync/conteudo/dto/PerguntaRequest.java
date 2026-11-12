@@ -7,18 +7,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 
-@Schema(description = "Pergunta enviada na criacao do quiz, com suas alternativas")
+@Schema(description = "Pergunta do novo quiz")
 public record PerguntaRequest(
         @Schema(
-                description = "Enunciado da pergunta, sem espacos nas pontas",
-                example = "Qual e a melhor forma de organizar o atendimento?",
+                description = "Enunciado",
+                example = "Qual é a melhor forma de organizar o atendimento?",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank String enunciado,
 
-        @Schema(
-                description =
-                        "Alternativas da pergunta. Ao menos duas e exatamente uma com correta verdadeiro, senao responde 400 FALHA_DE_VALIDACAO")
-        @Size(min = 2) List<@Valid AlternativaRequest> alternativas) {
+        @Schema(description = "Ao menos duas, exatamente uma correta") @Size(min = 2) List<@Valid AlternativaRequest> alternativas) {
 
     public PerguntaRequest {
         if (enunciado != null) {

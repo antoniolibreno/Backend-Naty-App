@@ -6,9 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Schema(
-        description = "Integrante com a situacao de progresso, calculada sobre as trilhas ativas."
-                + " Conclusao de atividade de trilha inativa nao entra na conta")
+@Schema(description = "Integrante com a situação de progresso")
 public record IntegranteAcompanhadoResponse(
         @Schema(description = "Identificador do integrante", example = "9b2d7e41-3c5a-4f68-a1d9-7c0e5b8f2a34")
         UUID integranteId,
@@ -22,39 +20,26 @@ public record IntegranteAcompanhadoResponse(
         @Schema(description = "Papel do integrante na empresa", example = "INTEGRANTE")
         Papel papel,
 
-        @Schema(
-                description = "Situacao do integrante. CONCLUIU quando concluiu todas as atividades ativas."
-                        + " PARADO quando os dias sem concluir alcancam o prazo configurado em"
-                        + " app.acompanhamento.dias-parado (padrao 3). SEM_INICIO para conta nova sem conclusao."
-                        + " AVANCANDO nos demais casos. Quem concluiu tudo nunca esta parado",
-                example = "AVANCANDO")
+        @Schema(description = "Situação: CONCLUIU, PARADO, SEM_INICIO ou AVANCANDO", example = "AVANCANDO")
         SituacaoDeAcompanhamento situacao,
 
-        @Schema(description = "Atividades ativas concluidas", example = "6")
+        @Schema(description = "Atividades concluídas", example = "6")
         int atividadesConcluidas,
 
         @Schema(description = "Total de atividades das trilhas ativas", example = "20")
         int totalAtividades,
 
-        @Schema(
-                description = "Concluidas sobre total, em percentual inteiro arredondado para baixo."
-                        + " Zero quando nao ha atividade",
-                example = "30")
+        @Schema(description = "Percentual de atividades concluídas", example = "30")
         int percentualConcluido,
 
-        @Schema(
-                description = "Primeira atividade ativa nao concluida. Nulo quando o integrante concluiu tudo",
-                nullable = true)
+        @Schema(description = "Próxima atividade. Nulo se concluiu tudo", nullable = true)
         AtividadeAtualResponse atividadeAtual,
 
         @Schema(
-                description = "Instante da conclusao mais recente em atividade ativa. Nulo sem conclusao",
+                description = "Instante da última conclusão. Nulo sem conclusão",
                 example = "2026-11-10T19:45:00-03:00",
                 nullable = true)
         OffsetDateTime ultimaConclusaoEm,
 
-        @Schema(
-                description = "Dias de calendario no fuso da empresa desde a ultima conclusao ou,"
-                        + " sem conclusao, desde a criacao da conta",
-                example = "1")
+        @Schema(description = "Dias desde a última conclusão", example = "1")
         long diasSemConcluir) {}

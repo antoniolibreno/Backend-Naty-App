@@ -7,11 +7,9 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
 
-@Schema(description = "Respostas de uma tentativa de quiz. A nota e calculada pelo servidor")
+@Schema(description = "Respostas de uma tentativa de quiz")
 public record TentativaQuizRequest(
-        @Schema(
-                description = "Uma resposta para cada pergunta do quiz, sem repetir pergunta",
-                requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "Uma resposta por pergunta do quiz", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotEmpty List<@Valid Resposta> respostas) {
 
     @Schema(description = "Alternativa escolhida para uma pergunta")
@@ -23,7 +21,7 @@ public record TentativaQuizRequest(
             @NotNull UUID perguntaId,
 
             @Schema(
-                    description = "Alternativa escolhida, que precisa pertencer a pergunta",
+                    description = "Alternativa da pergunta",
                     example = "1e7b9c34-5d2a-4a86-b0f3-6c8d2e4a9b71",
                     requiredMode = Schema.RequiredMode.REQUIRED)
             @NotNull UUID alternativaId) {}

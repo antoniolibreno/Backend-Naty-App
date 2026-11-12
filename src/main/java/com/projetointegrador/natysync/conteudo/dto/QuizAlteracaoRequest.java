@@ -5,10 +5,10 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-@Schema(description = "Alteracao da nota minima do quiz. Tentativa antiga mantem a nota gravada")
+@Schema(description = "Nova nota mínima do quiz")
 public record QuizAlteracaoRequest(
         @Schema(
-                description = "Nota minima percentual, de 0 a 100, para aprovar o quiz. Aprovar conclui a atividade",
+                description = "Nota mínima para aprovar, de 0 a 100",
                 example = "70",
                 requiredMode = Schema.RequiredMode.REQUIRED,
                 minimum = "0",

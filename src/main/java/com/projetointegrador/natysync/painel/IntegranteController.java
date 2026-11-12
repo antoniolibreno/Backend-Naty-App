@@ -35,10 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/painel/integrantes")
-@Tag(
-        name = "Painel: integrantes",
-        description =
-                "Integrantes da empresa de quem chama, que vem da identidade da sessao. Todas as rotas exigem o papel ADMIN")
+@Tag(name = "Painel: integrantes", description = "Integrantes da empresa de quem chama, restrito ao papel ADMIN.")
 public class IntegranteController {
 
     private final IntegranteService integranteService;
@@ -49,27 +46,24 @@ public class IntegranteController {
 
     @GetMapping
     @Operation(
-            summary = "Lista os integrantes da empresa",
+            summary = "Listar os integrantes",
             description =
-                    "Exige ADMIN. A empresa e a de quem chama. Paginada por pagina e tamanho, com tamanho maximo de 100. A ordem e"
-                            + " sempre por nome e identificador, e o parametro de ordenacao e ignorado. O filtro busca compara"
-                            + " com nome e e-mail, e o filtro ativo com a situacao da conta.")
+                    "Exige ADMIN. Paginada, no máximo 100 por página, ordenada por nome. Filtra por texto e por situação.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Pagina de integrantes ordenada por nome"),
+        @ApiResponse(responseCode = "200", description = "Página de integrantes"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Parametro de consulta invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Parâmetro de paginação ou de filtro inválido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Papel sem permissao para a rota. Codigo ACESSO_NEGADO",
+                description = "Papel diferente de ADMIN",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public PaginaResponse<IntegranteResponse> listar(
-            @Parameter(description = "Texto comparado com nome e e-mail, sem diferenca de caixa", example = "ana")
-                    @RequestParam(required = false)
+            @Parameter(description = "Texto buscado em nome e e-mail", example = "ana") @RequestParam(required = false)
                     String busca,
-            @Parameter(description = "Filtra por situacao. Ausente devolve ativos e inativos", example = "true")
+            @Parameter(description = "Situação da conta. Ausente traz todas", example = "true")
                     @RequestParam(required = false)
                     Boolean ativo,
             @ParameterObject Pageable pagina,
@@ -78,19 +72,16 @@ public class IntegranteController {
     }
 
     @GetMapping("/{integranteId}")
-    @Operation(
-            summary = "Busca um integrante da empresa",
-            description =
-                    "Exige ADMIN. A empresa e a de quem chama. Integrante de outra empresa responde 404, nunca 403.")
+    @Operation(summary = "Buscar um integrante", description = "Exige ADMIN. Integrante de outra empresa recebe 404.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Integrante encontrado"),
         @ApiResponse(
                 responseCode = "403",
-                description = "Papel sem permissao para a rota. Codigo ACESSO_NEGADO",
+                description = "Papel diferente de ADMIN",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Integrante nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Integrante inexistente ou de outra empresa",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public IntegranteResponse buscar(
@@ -103,23 +94,22 @@ public class IntegranteController {
 
     @PostMapping
     @Operation(
-            summary = "Cadastra um integrante na empresa",
-            description = "Exige ADMIN. O e-mail e unico no sistema inteiro. O papel e INTEGRANTE ou ADMIN, e NATY e"
-                    + " recusado. A senha tem de 8 caracteres a 72 bytes e nunca volta na resposta. Responde 201 com o"
-                    + " cabecalho Location do integrante criado.")
+            summary = "Cadastrar um integrante",
+            description =
+                    "Exige ADMIN. O e-mail é único no sistema, o papel é INTEGRANTE ou ADMIN e a senha tem de 8 caracteres a 72 bytes.")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Integrante criado, com Location do integrante"),
+        @ApiResponse(responseCode = "201", description = "Integrante criado"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Dado de cadastro ausente ou inválido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Papel sem permissao para a rota. Codigo ACESSO_NEGADO",
+                description = "Papel diferente de ADMIN",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "E-mail ja cadastrado no sistema. Codigo EMAIL_JA_CADASTRADO",
+                description = "E-mail já cadastrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public ResponseEntity<IntegranteResponse> criar(
@@ -131,29 +121,26 @@ public class IntegranteController {
 
     @PutMapping("/{integranteId}")
     @Operation(
-            summary = "Altera nome, e-mail, papel e perfil do integrante",
-            description = "Exige ADMIN. ADMIN altera so contas INTEGRANTE, e conta ADMIN devolve 403. Conta NATY"
-                    + " nao e administrada pelo painel. Perfil ausente mantem o perfil atual. O e-mail continua unico no"
-                    + " sistema inteiro.")
+            summary = "Alterar um integrante",
+            description =
+                    "Exige ADMIN. Altera só contas INTEGRANTE: conta ADMIN e a própria recebem 403, e conta NATY recebe 409.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Integrante alterado"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Dado de cadastro ausente ou inválido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description =
-                        "Papel sem permissao para a rota, conta ADMIN alvo ou a propria conta. Codigo ACESSO_NEGADO",
+                description = "Papel ou conta alvo sem permissão",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Integrante nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Integrante inexistente ou de outra empresa",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description =
-                        "E-mail ja cadastrado no sistema, codigo EMAIL_JA_CADASTRADO, ou conta NATY como alvo, codigo CONTA_NATY_FORA_DO_PAINEL",
+                description = "E-mail em uso ou conta NATY como alvo",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public IntegranteResponse alterar(
@@ -168,28 +155,26 @@ public class IntegranteController {
     @PutMapping("/{integranteId}/senha")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Define a senha do integrante",
-            description = "Exige ADMIN. Revoga todas as sessoes do integrante. Conta ADMIN so tem a senha definida pelo"
-                    + " papel NATY, e ninguem redefine a propria senha pelo painel. A senha tem de 8 caracteres a 72"
-                    + " bytes.")
+            summary = "Definir a senha",
+            description =
+                    "Exige ADMIN. Revoga as sessões do integrante. Senha de 8 caracteres a 72 bytes. Conta ADMIN e a própria não são redefinidas.")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Senha definida e sessoes revogadas, sem corpo"),
+        @ApiResponse(responseCode = "204", description = "Senha definida"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Senha ausente ou fora do limite",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description =
-                        "Papel sem permissao para a rota, conta ADMIN alvo ou a propria conta. Codigo ACESSO_NEGADO",
+                description = "Papel ou conta alvo sem permissão",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Integrante nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Integrante inexistente ou de outra empresa",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "Conta NATY nao e administrada pelo painel. Codigo CONTA_NATY_FORA_DO_PAINEL",
+                description = "Conta NATY como alvo",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void definirSenha(
@@ -204,28 +189,26 @@ public class IntegranteController {
     @PutMapping("/{integranteId}/ativo")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Ativa ou desativa o integrante",
-            description = "Exige ADMIN. Desativar revoga as sessoes e preserva o progresso. Integrante nunca e"
-                    + " apagado. Conta ADMIN so e ativada ou desativada pelo papel NATY, e ninguem desativa a propria"
-                    + " conta pelo painel.")
+            summary = "Ativar ou desativar um integrante",
+            description =
+                    "Exige ADMIN. Desativar revoga as sessões e preserva o progresso. Conta ADMIN e a própria não são alteradas.")
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Situacao alterada, sem corpo"),
+        @ApiResponse(responseCode = "204", description = "Situação alterada"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Campo ativo ausente",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description =
-                        "Papel sem permissao para a rota, conta ADMIN alvo ou a propria conta. Codigo ACESSO_NEGADO",
+                description = "Papel ou conta alvo sem permissão",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Integrante nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Integrante inexistente ou de outra empresa",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "Conta NATY nao e administrada pelo painel. Codigo CONTA_NATY_FORA_DO_PAINEL",
+                description = "Conta NATY como alvo",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void definirAtivo(

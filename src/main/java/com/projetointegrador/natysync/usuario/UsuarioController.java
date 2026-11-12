@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/usuarios")
-@Tag(
-        name = "Usuarios",
-        description =
-                "Leitura dos colegas da empresa de quem chama. Qualquer papel autenticado acessa, e o e-mail nunca sai")
+@Tag(name = "Usuários", description = "Colegas da empresa de quem chama, para qualquer papel autenticado.")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -31,15 +28,14 @@ public class UsuarioController {
 
     @GetMapping
     @Operation(
-            summary = "Lista os integrantes ativos da empresa de quem chama",
-            description = "Exige sessao valida, de qualquer papel. Devolve identificador, nome e papel dos integrantes"
-                    + " ativos da empresa de quem chama, ordenados por nome e identificador. Paginada por pagina e"
-                    + " tamanho, com tamanho maximo de 100, e o parametro de ordenacao e ignorado.")
+            summary = "Listar os colegas da empresa",
+            description =
+                    "Devolve identificador, nome e papel dos integrantes ativos da empresa, sem e-mail. Paginada, no máximo 100 por página, ordenada por nome.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Pagina de integrantes ativos da empresa"),
+        @ApiResponse(responseCode = "200", description = "Página de integrantes ativos"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Parametro de consulta invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Parâmetro de paginação ou de filtro inválido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public PaginaResponse<UsuarioResponse> listar(@ParameterObject Pageable pagina, IntegranteDaRequisicao quem) {

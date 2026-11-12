@@ -12,14 +12,14 @@ public record EmpresaResponse(
         @Schema(description = "Nome da empresa", example = "Acme Treinamentos")
         String nome,
 
-        @Schema(description = "Indica se a empresa esta ativa", example = "true")
+        @Schema(description = "Indica se a empresa está ativa", example = "true")
         boolean ativa,
 
-        @Schema(description = "Identificador de fuso horario da empresa", example = "America/Sao_Paulo")
+        @Schema(description = "Fuso horário da empresa", example = "America/Sao_Paulo")
         String fusoHorario,
 
-        @Schema(description = "Instante de criacao", example = "2026-11-11T14:32:10.123-03:00")
+        @Schema(description = "Instante de criação", example = "2026-11-11T14:32:10.123-03:00")
         OffsetDateTime criadoEm,
 
-        @Schema(description = "Instante da ultima alteracao", example = "2026-11-11T15:10:00.000-03:00")
+        @Schema(description = "Instante da última alteração", example = "2026-11-11T15:10:00.000-03:00")
         OffsetDateTime atualizadoEm) {}

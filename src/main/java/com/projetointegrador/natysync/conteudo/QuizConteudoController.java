@@ -27,12 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/quizzes")
-@Tag(
-        name = "Conteudo",
-        description =
-                "Escrita do conteudo global de treinamento: trilha, modulo, atividade, quiz, pergunta e alternativa."
-                        + " Toda rota de escrita exige conta NATY. A ordem de criacao acrescenta ao fim, e conteudo com historico nao e removido."
-                        + " Cada alteracao grava um registro de auditoria.")
+@Tag(name = "Conteúdo", description = "Escrita do conteúdo global de treinamento. Exige conta NATY.")
 public class QuizConteudoController {
 
     private final QuizConteudoService quizService;
@@ -43,19 +38,17 @@ public class QuizConteudoController {
 
     @GetMapping("/{quizId}")
     @Operation(
-            summary = "Le o quiz com o gabarito",
-            description = "Unico canal que devolve o campo correta de cada alternativa. A leitura do "
-                    + "integrante em /api/v1/atividades/{id}/quiz nao tem o campo. Exige conta NATY e "
-                    + "vale para todas as empresas.")
+            summary = "Ler um quiz com gabarito",
+            description = "Único canal que devolve o campo correta das alternativas. Exige conta NATY.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Quiz com o gabarito"),
+        @ApiResponse(responseCode = "200", description = "Quiz com gabarito"),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Quiz nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Quiz não encontrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public QuizAdminResponse buscar(
@@ -68,29 +61,26 @@ public class QuizConteudoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
-            summary = "Cria o quiz de uma atividade com suas perguntas e alternativas",
-            description = "Nota minima de 0 a 100, padrao 70. Cada pergunta tem ao menos duas "
-                    + "alternativas e exatamente uma correta. Cada atividade tem no maximo um quiz. "
-                    + "Com quiz, a atividade conclui por tentativa aprovada para quem nao a "
-                    + "concluiu. Exige conta NATY e vale para todas as empresas.")
+            summary = "Criar um quiz",
+            description =
+                    "Cria o quiz da atividade. Nota mínima de 0 a 100, padrão 70. Cada pergunta tem exatamente uma correta. Exige conta NATY.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Quiz criado"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido, pergunta com menos de duas alternativas ou sem exatamente uma "
-                        + "correta. Codigo FALHA_DE_VALIDACAO",
+                description = "Atividade, nota ou perguntas inválidas",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Atividade nao encontrada. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Atividade não encontrada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "A atividade ja tem quiz. Codigo QUIZ_JA_EXISTE",
+                description = "Atividade com quiz",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public QuizAdminResponse criar(@Valid @RequestBody QuizCriacaoRequest requisicao, IntegranteDaRequisicao quem) {
@@ -99,22 +89,21 @@ public class QuizConteudoController {
 
     @PutMapping("/{quizId}")
     @Operation(
-            summary = "Altera a nota minima do quiz",
-            description = "A tentativa antiga mantem a nota gravada, e a nova nota minima vale para as "
-                    + "tentativas seguintes. Exige conta NATY e vale para todas as empresas.")
+            summary = "Alterar a nota mínima",
+            description = "A nova nota vale para as próximas tentativas. As antigas mantêm a nota gravada.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Quiz alterado"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Corpo invalido. Codigo FALHA_DE_VALIDACAO",
+                description = "Nota ausente ou fora de 0 a 100",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Quiz nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Quiz não encontrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public QuizAdminResponse alterar(
@@ -129,23 +118,22 @@ public class QuizConteudoController {
     @DeleteMapping("/{quizId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
-            summary = "Remove o quiz com suas perguntas e alternativas",
-            description = "Recusa quando a atividade tem progresso, tentativa ou ponto registrado, porque "
-                    + "a regra de conclusao dela mudaria. Exige conta NATY e vale para todas as "
-                    + "empresas.")
+            summary = "Remover um quiz",
+            description =
+                    "Remove o quiz com suas perguntas. Recusada se a atividade tiver progresso, tentativa ou ponto.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Quiz removido"),
         @ApiResponse(
                 responseCode = "403",
-                description = "Conta sem papel NATY. Codigo ACESSO_NEGADO",
+                description = "Papel NATY exigido",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "404",
-                description = "Quiz nao encontrado. Codigo RECURSO_NAO_ENCONTRADO",
+                description = "Quiz não encontrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "A atividade do quiz tem historico. Codigo CONTEUDO_COM_PROGRESSO",
+                description = "Atividade com progresso registrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void remover(

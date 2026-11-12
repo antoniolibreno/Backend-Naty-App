@@ -5,10 +5,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Locale;
 
-@Schema(description = "Credencial para abrir uma sessao. O e-mail e normalizado em minusculas e sem espaco nas pontas")
+@Schema(description = "Credencial para abrir uma sessão")
 public record SessaoRequest(
         @Schema(
-                description = "E-mail da conta do integrante",
+                description = "E-mail da conta",
                 example = "ana.souza@acme.com.br",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank @Email String email,

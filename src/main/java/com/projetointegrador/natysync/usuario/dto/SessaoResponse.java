@@ -4,11 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Schema(description = "Sessao emitida: identidade do integrante e token opaco para o cabecalho Authorization")
+@Schema(description = "Sessão emitida com o token de acesso")
 public record SessaoResponse(
-        @Schema(
-                description = "Identificador do integrante autenticado",
-                example = "9b2d7e41-3c5a-4f68-a1d9-7c0e5b8f2a34")
+        @Schema(description = "Identificador do integrante", example = "9b2d7e41-3c5a-4f68-a1d9-7c0e5b8f2a34")
         UUID usuarioId,
 
         @Schema(
@@ -23,8 +21,7 @@ public record SessaoResponse(
         String email,
 
         @Schema(
-                description = "Token opaco da sessao. Aparece em claro so nesta resposta e viaja nas demais"
-                        + " chamadas em Authorization: Bearer",
+                description = "Token opaco, exibido só nesta resposta",
                 example = "q7Xk2mN9pLw4sT8vB1cZ6dF3hJ5rY0uAeG2iO7nMxKc")
         String token,
 
