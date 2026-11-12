@@ -30,6 +30,12 @@ public record IntegranteResponse(
                 allowableValues = {"admin", "supervisor", "user"})
         String perfil,
 
+        @Schema(
+                description = "Telefone só com dígitos, nulo se não informado",
+                example = "11987654321",
+                nullable = true)
+        String telefone,
+
         @Schema(description = "Indica se a conta pode entrar", example = "true")
         boolean ativo,
 

@@ -23,11 +23,8 @@ class EmpresaPainelApiTest extends PainelTest {
     }
 
     private ResponseEntity<JsonNode> criarPelaApi(String nome, String fuso) {
-        ResponseEntity<JsonNode> resposta = chamar(
-                naty.token(),
-                HttpMethod.POST,
-                "/api/v1/painel/empresas",
-                Map.of("nome", nome, "ativa", true, "fusoHorario", fuso));
+        ResponseEntity<JsonNode> resposta =
+                chamar(naty.token(), HttpMethod.POST, "/api/v1/painel/empresas", CorpoDeEmpresa.de(nome, true, fuso));
         if (resposta.getStatusCode() == HttpStatus.CREATED) {
             registrarEmpresaCriada(UUID.fromString(resposta.getBody().get("id").asText()));
         }
@@ -116,7 +113,7 @@ class EmpresaPainelApiTest extends PainelTest {
                 naty.token(),
                 HttpMethod.PUT,
                 "/api/v1/painel/empresas/" + empresa.getId(),
-                Map.of("nome", "Cliente que Sai", "ativa", false, "fusoHorario", "America/Sao_Paulo"));
+                CorpoDeEmpresa.de("Cliente que Sai", false));
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(lerTrilhas(integrante.token()).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -128,11 +125,8 @@ class EmpresaPainelApiTest extends PainelTest {
     void empresaComContaNatyNaoEhDesativadaNemExcluida() {
         String caminho = "/api/v1/painel/empresas/" + naty.empresaId();
 
-        ResponseEntity<JsonNode> desativar = chamar(
-                naty.token(),
-                HttpMethod.PUT,
-                caminho,
-                Map.of("nome", "Naty de Teste", "ativa", false, "fusoHorario", "America/Sao_Paulo"));
+        ResponseEntity<JsonNode> desativar =
+                chamar(naty.token(), HttpMethod.PUT, caminho, CorpoDeEmpresa.de("Naty de Teste", false));
         ResponseEntity<JsonNode> excluir = chamar(naty.token(), HttpMethod.DELETE, caminho);
 
         assertThat(desativar.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
@@ -151,7 +145,7 @@ class EmpresaPainelApiTest extends PainelTest {
                 naty.token(),
                 HttpMethod.PUT,
                 "/api/v1/painel/empresas/" + outraInterna.getId(),
-                Map.of("nome", "Outra Naty", "ativa", false, "fusoHorario", "America/Sao_Paulo"));
+                CorpoDeEmpresa.de("Outra Naty", false));
 
         assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("EMPRESA_COM_CONTA_NATY");
         assertThat(lerTrilhas(outroNaty.token()).getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -163,16 +157,8 @@ class EmpresaPainelApiTest extends PainelTest {
         Conta integrante = criarConta(empresa, Papel.INTEGRANTE);
         String caminho = "/api/v1/painel/empresas/" + empresa.getId();
 
-        chamar(
-                naty.token(),
-                HttpMethod.PUT,
-                caminho,
-                Map.of("nome", "Cliente que Volta", "ativa", false, "fusoHorario", "America/Sao_Paulo"));
-        chamar(
-                naty.token(),
-                HttpMethod.PUT,
-                caminho,
-                Map.of("nome", "Cliente que Volta", "ativa", true, "fusoHorario", "America/Sao_Paulo"));
+        chamar(naty.token(), HttpMethod.PUT, caminho, CorpoDeEmpresa.de("Cliente que Volta", false));
+        chamar(naty.token(), HttpMethod.PUT, caminho, CorpoDeEmpresa.de("Cliente que Volta", true));
 
         assertThat(lerTrilhas(integrante.token()).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(autenticarCom(integrante.email(), SENHA_DE_TESTE).getStatusCode())
@@ -184,5 +170,153 @@ class EmpresaPainelApiTest extends PainelTest {
         assertThat(chamar(naty.token(), HttpMethod.GET, "/api/v1/painel/empresas/" + UUID.randomUUID())
                         .getStatusCode())
                 .isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    private ResponseEntity<JsonNode> criar(Map<String, Object> corpo) {
+        ResponseEntity<JsonNode> resposta = chamar(naty.token(), HttpMethod.POST, "/api/v1/painel/empresas", corpo);
+        if (resposta.getStatusCode() == HttpStatus.CREATED) {
+            registrarEmpresaCriada(UUID.fromString(resposta.getBody().get("id").asText()));
+        }
+        return resposta;
+    }
+
+    private long totalDeEmpresas() {
+        return jdbc.queryForObject("select count(*) from empresa", Long.class);
+    }
+
+    @Test
+    void criacaoCompletaDevolveCnpjERazaoSocial() {
+        String cnpj = CorpoDeEmpresa.cnpjNovo();
+
+        ResponseEntity<JsonNode> resposta = criar(CorpoDeEmpresa.comCnpj("Cliente Completo", cnpj));
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(resposta.getBody().get("cnpj").asText()).isEqualTo(cnpj);
+        assertThat(resposta.getBody().get("razaoSocial").asText()).isEqualTo("Cliente Completo Ltda");
+    }
+
+    @Test
+    void criacaoSemCnpjOuSemRazaoSocialEhErroDeValidacao() {
+        long antes = totalDeEmpresas();
+
+        ResponseEntity<JsonNode> semCnpj = criar(CorpoDeEmpresa.sem("Sem Cnpj", "cnpj"));
+        ResponseEntity<JsonNode> semRazao = criar(CorpoDeEmpresa.sem("Sem Razao", "razaoSocial"));
+
+        assertThat(semCnpj.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(semCnpj.getBody().get("codigo").asText()).isEqualTo("FALHA_DE_VALIDACAO");
+        assertThat(semRazao.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(semRazao.getBody().get("codigo").asText()).isEqualTo("FALHA_DE_VALIDACAO");
+        assertThat(totalDeEmpresas()).isEqualTo(antes);
+    }
+
+    @Test
+    void alteracaoSemCnpjEhErroDeValidacao() {
+        Empresa empresa = criarEmpresa("Para Alterar");
+
+        ResponseEntity<JsonNode> resposta = chamar(
+                naty.token(),
+                HttpMethod.PUT,
+                "/api/v1/painel/empresas/" + empresa.getId(),
+                CorpoDeEmpresa.sem("Para Alterar", "cnpj"));
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void empresaGravadaSemDadosCadastraisEhLidaComCamposNulos() {
+        Empresa empresa = criarEmpresa("Sem Dados Cadastrais");
+
+        JsonNode corpo = chamar(naty.token(), HttpMethod.GET, "/api/v1/painel/empresas/" + empresa.getId())
+                .getBody();
+
+        assertThat(corpo.get("cnpj").isNull()).isTrue();
+        assertThat(corpo.get("razaoSocial").isNull()).isTrue();
+    }
+
+    @Test
+    void cnpjComMascaraEhGuardadoSoComOsCatorzeCaracteres() {
+        String cnpj = CorpoDeEmpresa.cnpjNovo();
+
+        ResponseEntity<JsonNode> resposta =
+                criar(CorpoDeEmpresa.comCnpj("Cliente Mascara", CorpoDeEmpresa.comMascara(cnpj)));
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(resposta.getBody().get("cnpj").asText()).isEqualTo(cnpj);
+        assertThat(jdbc.queryForObject(
+                        "select cnpj from empresa where id = ?",
+                        String.class,
+                        UUID.fromString(resposta.getBody().get("id").asText())))
+                .isEqualTo(cnpj);
+    }
+
+    @Test
+    void cnpjAlfanumericoValidoEhAceitoEMaiusculizado() {
+        ResponseEntity<JsonNode> resposta = criar(CorpoDeEmpresa.comCnpj("Cliente Alfa", "12.abc.345/01de-35"));
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(resposta.getBody().get("cnpj").asText()).isEqualTo("12ABC34501DE35");
+    }
+
+    @Test
+    void cnpjComDigitoErradoOuRepetidoEhRecusado() {
+        long antes = totalDeEmpresas();
+
+        ResponseEntity<JsonNode> digitoErrado = criar(CorpoDeEmpresa.comCnpj("Cliente Errado", "11.222.333/0001-82"));
+        ResponseEntity<JsonNode> repetido = criar(CorpoDeEmpresa.comCnpj("Cliente Zeros", "00000000000000"));
+
+        assertThat(digitoErrado.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(digitoErrado.getBody().get("codigo").asText()).isEqualTo("FALHA_DE_VALIDACAO");
+        assertThat(repetido.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(totalDeEmpresas()).isEqualTo(antes);
+    }
+
+    @Test
+    void criarComCnpjJaCadastradoEhConflitoComOuSemMascara() {
+        String cnpj = CorpoDeEmpresa.cnpjNovo();
+        criar(CorpoDeEmpresa.comCnpj("Primeira", cnpj));
+        long antes = totalDeEmpresas();
+
+        ResponseEntity<JsonNode> igual = criar(CorpoDeEmpresa.comCnpj("Segunda", cnpj));
+        ResponseEntity<JsonNode> mascarado = criar(CorpoDeEmpresa.comCnpj("Terceira", CorpoDeEmpresa.comMascara(cnpj)));
+
+        assertThat(igual.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(igual.getBody().get("codigo").asText()).isEqualTo("CNPJ_JA_CADASTRADO");
+        assertThat(mascarado.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(totalDeEmpresas()).isEqualTo(antes);
+    }
+
+    @Test
+    void alterarParaCnpjDeOutraEmpresaEhConflito() {
+        String cnpjDaOutra = CorpoDeEmpresa.cnpjNovo();
+        criar(CorpoDeEmpresa.comCnpj("Dona do Cnpj", cnpjDaOutra));
+        String id = criar(CorpoDeEmpresa.de("Quer Roubar")).getBody().get("id").asText();
+
+        ResponseEntity<JsonNode> resposta = chamar(
+                naty.token(),
+                HttpMethod.PUT,
+                "/api/v1/painel/empresas/" + id,
+                CorpoDeEmpresa.comCnpj("Quer Roubar", cnpjDaOutra));
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("CNPJ_JA_CADASTRADO");
+    }
+
+    @Test
+    void alterarOutroDadoReenviandoOProprioCnpjNaoEhConflito() {
+        String cnpj = CorpoDeEmpresa.cnpjNovo();
+        String id = criar(CorpoDeEmpresa.comCnpj("Nome Antigo", cnpj))
+                .getBody()
+                .get("id")
+                .asText();
+
+        ResponseEntity<JsonNode> resposta = chamar(
+                naty.token(),
+                HttpMethod.PUT,
+                "/api/v1/painel/empresas/" + id,
+                CorpoDeEmpresa.comCnpj("Nome Novo", cnpj));
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resposta.getBody().get("nome").asText()).isEqualTo("Nome Novo");
+        assertThat(resposta.getBody().get("cnpj").asText()).isEqualTo(cnpj);
     }
 }

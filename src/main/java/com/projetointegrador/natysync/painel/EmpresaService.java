@@ -53,7 +53,7 @@ public class EmpresaService {
     public EmpresaResponse criar(EmpresaRequest requisicao) {
         Empresa empresa = new Empresa();
         preencher(empresa, requisicao);
-        return empresaMapper.paraResposta(empresaRepository.saveAndFlush(empresa));
+        return empresaMapper.paraResposta(salvar(empresa));
     }
 
     @Transactional
@@ -65,7 +65,7 @@ public class EmpresaService {
             usuarioRepository.travarTodosDaEmpresa(empresaId);
         }
         preencher(empresa, requisicao);
-        Empresa salva = empresaRepository.saveAndFlush(empresa);
+        Empresa salva = salvar(empresa);
         if (desativando) {
             sessaoService.revogarTodasDaEmpresa(empresaId);
         }
@@ -91,6 +91,19 @@ public class EmpresaService {
         empresa.setNome(requisicao.nome());
         empresa.setAtiva(requisicao.ativa());
         empresa.setFusoHorario(requisicao.fuso());
+        empresa.setCnpj(requisicao.cnpj());
+        empresa.setRazaoSocial(requisicao.razaoSocial());
+    }
+
+    private Empresa salvar(Empresa empresa) {
+        try {
+            return empresaRepository.saveAndFlush(empresa);
+        } catch (DataIntegrityViolationException excecao) {
+            if (ViolacaoDeConstraint.foi(excecao, ViolacaoDeConstraint.CNPJ_UNICO)) {
+                throw new ConflitoException(CodigoDeConflito.CNPJ_JA_CADASTRADO, "CNPJ ja cadastrado.");
+            }
+            throw excecao;
+        }
     }
 
     private void recusarSeTiverContaNaty(UUID empresaId) {

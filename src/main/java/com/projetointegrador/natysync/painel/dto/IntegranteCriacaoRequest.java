@@ -1,5 +1,6 @@
 package com.projetointegrador.natysync.painel.dto;
 
+import com.projetointegrador.natysync.painel.Telefone;
 import com.projetointegrador.natysync.usuario.Papel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
@@ -43,7 +44,10 @@ public record IntegranteCriacaoRequest(
                 description = "Função no WhatsApp. Ausente assume user",
                 example = "user",
                 allowableValues = {"admin", "supervisor", "user"})
-        @Pattern(regexp = IntegranteAlteracaoRequest.PERFIS) String perfil) {
+        @Pattern(regexp = IntegranteAlteracaoRequest.PERFIS) String perfil,
+
+        @Schema(description = "Telefone com DDD, aceita máscara, de 10 a 13 dígitos", example = "(11) 98765-4321")
+        String telefone) {
 
     public IntegranteCriacaoRequest {
         if (nome != null) {
@@ -55,6 +59,12 @@ public record IntegranteCriacaoRequest(
         if (perfil == null || perfil.isBlank()) {
             perfil = IntegranteAlteracaoRequest.PERFIL_PADRAO;
         }
+        telefone = Telefone.normalizar(telefone);
+    }
+
+    @Schema(hidden = true)
+    @AssertTrue(message = "telefone deve ter de 10 a 13 digitos") public boolean isTelefoneValido() {
+        return Telefone.valido(telefone);
     }
 
     @Schema(hidden = true)
@@ -70,6 +80,6 @@ public record IntegranteCriacaoRequest(
     @Override
     public String toString() {
         return "IntegranteCriacaoRequest[nome=" + nome + ", email=" + email + ", senha=***, papel=" + papel
-                + ", perfil=" + perfil + "]";
+                + ", perfil=" + perfil + ", telefone=" + telefone + "]";
     }
 }

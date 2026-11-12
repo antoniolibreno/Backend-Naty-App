@@ -82,6 +82,16 @@ E-mail é normalizado no construtor do record de entrada, em minúsculas e sem e
 pontas. A validação do Bean Validation roda depois do construtor, então normalizar no
 serviço chegaria tarde.
 
+O CNPJ é normalizado no construtor de `EmpresaRequest` por `Cnpj.normalizar`, e o
+`@AssertTrue isCnpjValido` confere os dígitos verificadores. A unicidade é do índice
+`empresa_cnpj_idx`: `EmpresaService.salvar` força o `flush` e traduz a violação em 409
+`CNPJ_JA_CADASTRADO`, sem consulta prévia, e qualquer outra violação sobe como erro.
+
+O telefone do integrante é normalizado por `Telefone.normalizar`, só com dígitos, e vale de 10
+a 13. Ele é opcional no cadastro e na alteração de integrante, e na alteração o campo ausente
+mantém o valor atual, como `perfil`. O responsável pela empresa é a conta `ADMIN`, e não existe
+dado de contato do responsável em `empresa`.
+
 A senha tem de 8 caracteres a 72 bytes em UTF-8. 72 bytes é o limite do bcrypt, e o
 `BCryptPasswordEncoder` recusa acima disso com exceção, não com erro de validação.
 

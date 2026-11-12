@@ -67,7 +67,7 @@ class AutorizacaoPainelTest extends PainelTest {
 
     @Test
     void escritaDeEmpresaEhNegadaParaAdminEIntegrante() {
-        Map<String, Object> corpo = Map.of("nome", "Tentativa", "ativa", false, "fusoHorario", "America/Sao_Paulo");
+        Map<String, Object> corpo = CorpoDeEmpresa.de("Tentativa", false);
         String caminho = "/api/v1/painel/empresas/" + empresa.getId();
 
         for (Conta conta : List.of(admin, integrante)) {

@@ -179,44 +179,44 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
 
 ## 4. Dados cadastrais no contrato de empresa e telefone no integrante
 
-- [ ] 4.1 Em `painel/dto/EmpresaRequest.java`, adicionar `cnpj` (`@NotBlank`) e `razaoSocial`
+- [x] 4.1 Em `painel/dto/EmpresaRequest.java`, adicionar `cnpj` (`@NotBlank`) e `razaoSocial`
   (`@NotBlank`, `@Size(max = 255)`). No construtor: `cnpj = Cnpj.normalizar(cnpj)` e `trim`
   da razão social. `@AssertTrue(message = "cnpj invalido") isCnpjValido()`: verdadeiro quando
   nulo ou vazio (o `@NotBlank` cobre), senão `Cnpj.valido(cnpj)`, com
   `@Schema(hidden = true)`. Aceite: `./mvnw -B test-compile` passa.
-- [ ] 4.2 Incluir `cnpj` e `razaoSocial` em `painel/dto/EmpresaResponse.java` e ajustar
+- [x] 4.2 Incluir `cnpj` e `razaoSocial` em `painel/dto/EmpresaResponse.java` e ajustar
   `painel/EmpresaMapper.java` para os dois sentidos. Aceite: `./mvnw -B test-compile` passa.
-- [ ] 4.3 Em `painel/dto/IntegranteCriacaoRequest.java` e em
+- [x] 4.3 Em `painel/dto/IntegranteCriacaoRequest.java` e em
   `painel/dto/IntegranteAlteracaoRequest.java`, adicionar `telefone` opcional: no construtor,
   só dígitos (`replaceAll("\\D", "")`) e vazio vira `null`; `@AssertTrue isTelefoneValido`
   (nulo ou de 10 a 13 dígitos) com `@Schema(hidden = true)`. Incluir `telefone` em
   `painel/dto/IntegranteResponse.java`, em `painel/IntegranteMapper.java` e no ponto de
   gravação de `painel/IntegranteService.java`, conforme a decisão de 1.4 para a alteração.
   Aceite: `./mvnw -B test-compile` passa.
-- [ ] 4.4 Em `painel/CodigoDeConflito.java`, criar `CNPJ_JA_CADASTRADO`. Em
+- [x] 4.4 Em `painel/CodigoDeConflito.java`, criar `CNPJ_JA_CADASTRADO`. Em
   `painel/ViolacaoDeConstraint.java`, reconhecer `empresa_cnpj_idx` pelo mesmo mecanismo de
   `usuario_email_idx`. Em `painel/EmpresaService.java`, na criação e na alteração, gravar os
   campos novos, forçar `flush` e traduzir a violação de `empresa_cnpj_idx` em 409
   `CNPJ_JA_CADASTRADO` no formato único de erro; outra violação continua subindo.
-- [ ] 4.5 Em `painel/EmpresaController.java`, documentar no Swagger os campos novos e a
+- [x] 4.5 Em `painel/EmpresaController.java`, documentar no Swagger os campos novos e a
   resposta 409 `CNPJ_JA_CADASTRADO` em `POST` e `PUT`, no padrão de anotação já usado no
   arquivo. Documentar `telefone` nas rotas de integrante. Aceite: test-runner do pacote
   `painel` verde depois da 4.6.
-- [ ] 4.6 Ajustar os testes existentes que montam corpo de empresa ou de integrante conforme
+- [x] 4.6 Ajustar os testes existentes que montam corpo de empresa ou de integrante conforme
   a decisão de 1.4 (helper `CorpoDeEmpresa` com CNPJ válido distinto por chamada, ou edição
   ponto a ponto). Aceite: test-runner com `./mvnw -B test -Dtest='**/painel/**'` e
   `./mvnw -B test -Dtest='**/acompanhamento/**'` verdes.
-- [ ] 4.7 Em `painel/EmpresaPainelApiTest.java`, um teste por cenário do requisito
+- [x] 4.7 Em `painel/EmpresaPainelApiTest.java`, um teste por cenário do requisito
   "Cadastro de empresa pelo papel NATY" (criação completa, CNPJ ausente, razão social
   ausente, empresa gravada sem CNPJ por SQL lida com campos nulos), "CNPJ válido e
   normalizado" (máscara, alfanumérico, dígito errado, repetidos) e "CNPJ único entre as
   empresas" (criação, alteração para CNPJ alheio, alteração com o próprio CNPJ). Aceite:
   test-runner com `./mvnw -B test -Dtest='EmpresaPainelApiTest'` verde.
-- [ ] 4.8 Nos testes de integrante de `painel`, cobrir telefone opcional: criação sem
+- [x] 4.8 Nos testes de integrante de `painel`, cobrir telefone opcional: criação sem
   telefone, com telefone mascarado guardado só com dígitos, com 9 e com 14 dígitos recusado,
   alteração conforme a decisão de 1.4 e `IntegranteResponse` devolvendo o telefone. Aceite:
   test-runner com `./mvnw -B test -Dtest='**/painel/**'` verde.
-- [ ] 4.9 Atualizar `painel/CLAUDE.md` (CNPJ normalizado no construtor, `Cnpj`,
+- [x] 4.9 Atualizar `painel/CLAUDE.md` (CNPJ normalizado no construtor, `Cnpj`,
   `CNPJ_JA_CADASTRADO` por `empresa_cnpj_idx`, responsável é a conta `ADMIN`, telefone
   normalizado e opcional no integrante, bootstrap com CNPJ e razão social) e
   `docs/regras.md` (CNPJ único entre empresas, responsável é o `ADMIN`). Aceite: varredura

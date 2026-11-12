@@ -73,6 +73,7 @@ public class IntegranteService {
         usuario.setEmail(requisicao.email());
         usuario.setPapel(requisicao.papel());
         usuario.setPerfil(requisicao.perfil());
+        usuario.setTelefone(requisicao.telefone());
         usuario.setStatus(STATUS_INICIAL);
         usuario.setSenhaHash(codificadorDeSenha.encode(requisicao.senha()));
         return integranteMapper.paraResposta(salvar(usuario));
@@ -89,6 +90,9 @@ public class IntegranteService {
         usuario.setPapel(requisicao.papel());
         if (requisicao.perfil() != null) {
             usuario.setPerfil(requisicao.perfil());
+        }
+        if (requisicao.telefone() != null) {
+            usuario.setTelefone(requisicao.telefone());
         }
         return integranteMapper.paraResposta(salvar(usuario));
     }

@@ -81,7 +81,8 @@ public class EmpresaController {
     @PostMapping
     @Operation(
             summary = "Criar uma empresa",
-            description = "Exige NATY. O fuso horário, como America/Sao_Paulo, define o dia de estudo dos integrantes.")
+            description =
+                    "Exige NATY. Informe CNPJ e razão social. O fuso, como America/Sao_Paulo, define o dia de estudo.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Empresa criada"),
         @ApiResponse(
@@ -91,6 +92,10 @@ public class EmpresaController {
         @ApiResponse(
                 responseCode = "403",
                 description = "Papel diferente de NATY",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
+        @ApiResponse(
+                responseCode = "409",
+                description = "CNPJ já cadastrado em outra empresa",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public ResponseEntity<EmpresaResponse> criar(@Valid @RequestBody EmpresaRequest requisicao) {
@@ -103,7 +108,7 @@ public class EmpresaController {
     @Operation(
             summary = "Atualizar uma empresa",
             description =
-                    "Exige NATY. Substitui nome, situação e fuso. Desativar revoga as sessões dos integrantes, e empresa com conta NATY não é desativada.")
+                    "Exige NATY. Substitui nome, situação, fuso, CNPJ e razão social. Desativar revoga as sessões dos integrantes.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Empresa atualizada"),
         @ApiResponse(
@@ -120,7 +125,7 @@ public class EmpresaController {
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "Empresa com conta NATY não pode ser desativada",
+                description = "CNPJ já cadastrado em outra empresa, ou empresa com conta NATY desativada",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public EmpresaResponse atualizar(

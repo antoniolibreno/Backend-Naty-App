@@ -45,7 +45,8 @@ class EmpresaServiceTest {
     void criarNormalizaONomeEGuardaOFuso() {
         when(empresaRepository.saveAndFlush(any(Empresa.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        var resposta = service.criar(new EmpresaRequest(" Empresa Teste ", true, "America/Manaus"));
+        var resposta = service.criar(new EmpresaRequest(
+                " Empresa Teste ", true, "America/Manaus", CorpoDeEmpresa.cnpjNovo(), "Empresa Teste Ltda"));
 
         assertThat(resposta.nome()).isEqualTo("Empresa Teste");
         assertThat(resposta.fusoHorario()).isEqualTo("America/Manaus");
@@ -55,7 +56,9 @@ class EmpresaServiceTest {
     void desativarRevogaAsSessoesDaEmpresa() {
         Empresa empresa = empresaAtiva();
 
-        service.atualizar(empresa.getId(), new EmpresaRequest("Empresa", false, "America/Sao_Paulo"));
+        service.atualizar(
+                empresa.getId(),
+                new EmpresaRequest("Empresa", false, "America/Sao_Paulo", CorpoDeEmpresa.cnpjNovo(), "Empresa Ltda"));
 
         verify(usuarioRepository).travarTodosDaEmpresa(empresa.getId());
         verify(sessaoService).revogarTodasDaEmpresa(empresa.getId());
@@ -66,7 +69,9 @@ class EmpresaServiceTest {
     void alterarSemDesativarNaoRevogaSessao() {
         Empresa empresa = empresaAtiva();
 
-        service.atualizar(empresa.getId(), new EmpresaRequest("Outro nome", true, "America/Sao_Paulo"));
+        service.atualizar(
+                empresa.getId(),
+                new EmpresaRequest("Outro nome", true, "America/Sao_Paulo", CorpoDeEmpresa.cnpjNovo(), "Empresa Ltda"));
 
         verify(sessaoService, never()).revogarTodasDaEmpresa(any());
     }
@@ -97,8 +102,10 @@ class EmpresaServiceTest {
         when(usuarioRepository.existsByEmpresaIdAndPapel(empresa.getId(), Papel.NATY))
                 .thenReturn(true);
 
-        assertThatThrownBy(() ->
-                        service.atualizar(empresa.getId(), new EmpresaRequest("Empresa", false, "America/Sao_Paulo")))
+        assertThatThrownBy(() -> service.atualizar(
+                        empresa.getId(),
+                        new EmpresaRequest(
+                                "Empresa", false, "America/Sao_Paulo", CorpoDeEmpresa.cnpjNovo(), "Empresa Ltda")))
                 .isInstanceOfSatisfying(ConflitoException.class, excecao -> assertThat(excecao.getCodigo())
                         .isEqualTo("EMPRESA_COM_CONTA_NATY"));
         verify(sessaoService, never()).revogarTodasDaEmpresa(any());

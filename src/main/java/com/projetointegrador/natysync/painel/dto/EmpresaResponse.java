@@ -18,6 +18,15 @@ public record EmpresaResponse(
         @Schema(description = "Fuso horário da empresa", example = "America/Sao_Paulo")
         String fusoHorario,
 
+        @Schema(
+                description = "CNPJ com 14 caracteres, nulo se não informado",
+                example = "11222333000181",
+                nullable = true)
+        String cnpj,
+
+        @Schema(description = "Razão social", example = "Acme Treinamentos Ltda", nullable = true)
+        String razaoSocial,
+
         @Schema(description = "Instante de criação", example = "2026-11-11T14:32:10.123-03:00")
         OffsetDateTime criadoEm,
 

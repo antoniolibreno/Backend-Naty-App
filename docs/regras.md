@@ -17,6 +17,11 @@ serviço externo responde por quem existe.
 resolve a empresa pela credencial encontrada. O app não envia empresa e não existe tela
 de escolha. A mesma pessoa em duas empresas precisa de dois e-mails.
 
+**O CNPJ é único entre as empresas.** Toda empresa cadastrada pelo painel tem CNPJ e razão
+social, e o CNPJ é guardado normalizado, numérico ou alfanumérico, com os dígitos
+verificadores conferidos. O responsável pela empresa é a conta `ADMIN` dela, com telefone
+informado no cadastro, e o contratante é essa mesma pessoa.
+
 **O token de sessão é opaco e mora em tabela.** Isso permite revogar sessão no logout e
 na troca de senha, e a mesma linha guarda o último acesso. Token assinado sem estado não
 revoga e exigiria uma segunda tabela só para o último acesso.

@@ -1,5 +1,6 @@
 package com.projetointegrador.natysync.painel.dto;
 
+import com.projetointegrador.natysync.painel.Telefone;
 import com.projetointegrador.natysync.usuario.Papel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
@@ -36,7 +37,10 @@ public record IntegranteAlteracaoRequest(
                 description = "Função no WhatsApp. Ausente mantém o atual",
                 example = "user",
                 allowableValues = {"admin", "supervisor", "user"})
-        @Pattern(regexp = PERFIS) String perfil) {
+        @Pattern(regexp = PERFIS) String perfil,
+
+        @Schema(description = "Telefone com DDD, de 10 a 13 dígitos. Ausente mantém o atual", example = "11987654321")
+        String telefone) {
 
     static final String PERFIS = "admin|supervisor|user";
     static final String PERFIL_PADRAO = "user";
@@ -51,6 +55,12 @@ public record IntegranteAlteracaoRequest(
         if (perfil != null && perfil.isBlank()) {
             perfil = null;
         }
+        telefone = Telefone.normalizar(telefone);
+    }
+
+    @Schema(hidden = true)
+    @AssertTrue(message = "telefone deve ter de 10 a 13 digitos") public boolean isTelefoneValido() {
+        return Telefone.valido(telefone);
     }
 
     @Schema(hidden = true)
