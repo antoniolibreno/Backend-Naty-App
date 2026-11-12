@@ -1,5 +1,6 @@
 package com.projetointegrador.natysync.painel;
 
+import com.projetointegrador.natysync.painel.dto.EmpresaCriacaoRequest;
 import com.projetointegrador.natysync.painel.dto.EmpresaRequest;
 import com.projetointegrador.natysync.painel.dto.EmpresaResponse;
 import com.projetointegrador.natysync.shared.exception.ErroResposta;
@@ -100,10 +101,10 @@ public class EmpresaController {
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "CNPJ já cadastrado em outra empresa",
+                description = "CNPJ ou e-mail do administrador já cadastrado",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
-    public ResponseEntity<EmpresaResponse> criar(@Valid @RequestBody EmpresaRequest requisicao) {
+    public ResponseEntity<EmpresaResponse> criar(@Valid @RequestBody EmpresaCriacaoRequest requisicao) {
         EmpresaResponse resposta = empresaService.criar(requisicao);
         return ResponseEntity.created(URI.create("/api/v1/painel/empresas/" + resposta.id()))
                 .body(resposta);

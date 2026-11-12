@@ -105,6 +105,14 @@ A unicidade de e-mail é global. O cadastro de uma empresa recebe 409 para e-mai
 em outra, e isso revela que o e-mail existe em algum lugar. É o preço do login sem escolha
 de empresa.
 
+O `POST` de empresa recebe `EmpresaCriacaoRequest`, com o bloco `administrador` obrigatório
+(`AdministradorInicialRequest`: nome, e-mail, senha e telefone). `EmpresaService.criar` grava a
+empresa e chama `IntegranteService.criar` com papel `ADMIN` na mesma transação, então CNPJ
+repetido ou e-mail repetido desfaz a empresa e a conta. O `PUT` recebe `EmpresaRequest`, nunca
+cria conta, e o Jackson ignora o bloco `administrador` enviado nele. O telefone é obrigatório só
+nesse bloco. `AdministradorInicialRequest` mascara a senha no `toString`, como
+`IntegranteCriacaoRequest`.
+
 `GET /api/v1/painel/empresas` aceita `busca` opcional, que procura por trecho do nome, da razão
 social e do CNPJ. O texto vai para `EmpresaRepository.buscar` em minúsculas, e o CNPJ parcial
 passa por `Cnpj.normalizar`, então a máscara não atrapalha. `%`, `_` e `\` da entrada são

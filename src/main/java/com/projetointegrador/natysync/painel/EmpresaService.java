@@ -2,6 +2,7 @@ package com.projetointegrador.natysync.painel;
 
 import com.projetointegrador.natysync.empresa.Empresa;
 import com.projetointegrador.natysync.empresa.EmpresaRepository;
+import com.projetointegrador.natysync.painel.dto.EmpresaCriacaoRequest;
 import com.projetointegrador.natysync.painel.dto.EmpresaRequest;
 import com.projetointegrador.natysync.painel.dto.EmpresaResponse;
 import com.projetointegrador.natysync.shared.exception.ConflitoException;
@@ -29,16 +30,19 @@ public class EmpresaService {
     private final UsuarioRepository usuarioRepository;
     private final SessaoService sessaoService;
     private final EmpresaMapper empresaMapper;
+    private final IntegranteService integranteService;
 
     public EmpresaService(
             EmpresaRepository empresaRepository,
             UsuarioRepository usuarioRepository,
             SessaoService sessaoService,
-            EmpresaMapper empresaMapper) {
+            EmpresaMapper empresaMapper,
+            IntegranteService integranteService) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.sessaoService = sessaoService;
         this.empresaMapper = empresaMapper;
+        this.integranteService = integranteService;
     }
 
     public PaginaResponse<EmpresaResponse> listar(Pageable pagina, String busca) {
@@ -61,10 +65,12 @@ public class EmpresaService {
     }
 
     @Transactional
-    public EmpresaResponse criar(EmpresaRequest requisicao) {
+    public EmpresaResponse criar(EmpresaCriacaoRequest requisicao) {
         Empresa empresa = new Empresa();
-        preencher(empresa, requisicao);
-        return empresaMapper.paraResposta(salvar(empresa));
+        preencher(empresa, requisicao.paraEmpresa());
+        Empresa salva = salvar(empresa);
+        integranteService.criar(salva.getId(), requisicao.administrador().comoIntegrante());
+        return empresaMapper.paraResposta(salva);
     }
 
     @Transactional

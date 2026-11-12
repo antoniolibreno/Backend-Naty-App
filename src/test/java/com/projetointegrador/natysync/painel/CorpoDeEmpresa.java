@@ -2,6 +2,7 @@ package com.projetointegrador.natysync.painel;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 final class CorpoDeEmpresa {
@@ -21,11 +22,44 @@ final class CorpoDeEmpresa {
 
     static Map<String, Object> de(String nome, boolean ativa, String fuso) {
         return Map.of(
-                "nome", nome,
-                "ativa", ativa,
-                "fusoHorario", fuso,
-                "cnpj", cnpjNovo(),
-                "razaoSocial", nome + " Ltda");
+                "nome",
+                nome,
+                "ativa",
+                ativa,
+                "fusoHorario",
+                fuso,
+                "cnpj",
+                cnpjNovo(),
+                "razaoSocial",
+                nome + " Ltda",
+                "administrador",
+                administrador());
+    }
+
+    static Map<String, Object> administrador() {
+        return Map.of(
+                "nome", "Administrador Inicial",
+                "email", "admin-" + UUID.randomUUID() + "@teste.com.br",
+                "senha", "senha-nova-123",
+                "telefone", "11987654321");
+    }
+
+    static Map<String, Object> comAdministrador(String nome, Map<String, Object> administrador) {
+        Map<String, Object> corpo = new HashMap<>(de(nome));
+        corpo.put("administrador", administrador);
+        return corpo;
+    }
+
+    static Map<String, Object> administradorSem(String campo) {
+        Map<String, Object> administrador = new HashMap<>(administrador());
+        administrador.remove(campo);
+        return administrador;
+    }
+
+    static Map<String, Object> administradorCom(String campo, Object valor) {
+        Map<String, Object> administrador = new HashMap<>(administrador());
+        administrador.put(campo, valor);
+        return administrador;
     }
 
     static Map<String, Object> comCnpj(String nome, String cnpj) {

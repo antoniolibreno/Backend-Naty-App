@@ -243,23 +243,23 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
 
 ## 6. Criação de empresa com o primeiro ADMIN
 
-- [ ] 6.1 Criar `painel/dto/AdministradorInicialRequest.java`, record com `nome`
+- [x] 6.1 Criar `painel/dto/AdministradorInicialRequest.java`, record com `nome`
   (`@NotBlank`, `@Size(max = 255)`), `email` (`@NotBlank`, `@Email`, `@Size(max = 255)`),
   `senha` (`@NotBlank`, `@Size(min = SenhaRequest.TAMANHO_MINIMO)`) e `telefone`
   (`@NotBlank`), `@AssertTrue isSenhaDentroDoLimite` com `SenhaRequest.cabeNoBcrypt`,
   `@AssertTrue isTelefoneValido` (10 a 13 dígitos), e-mail normalizado e telefone só com
   dígitos no construtor, e `toString` com `senha=***`, igual a `IntegranteCriacaoRequest`.
-- [ ] 6.2 Criar `painel/dto/EmpresaCriacaoRequest.java` com os mesmos campos, validações e
+- [x] 6.2 Criar `painel/dto/EmpresaCriacaoRequest.java` com os mesmos campos, validações e
   normalizações de `EmpresaRequest` mais `@NotNull @Valid AdministradorInicialRequest
   administrador` e `toString` que não imprime a senha. Trocar o corpo do `POST` de
   `painel/EmpresaController.java` para `EmpresaCriacaoRequest`, documentando o bloco e a
   resposta 409 `EMAIL_JA_CADASTRADO` no Swagger. O `PUT` continua com `EmpresaRequest`.
   Ajustar `EmpresaMapper` para o novo request.
-- [ ] 6.3 Em `painel/EmpresaService.java`, no método de criação já `@Transactional`, depois
+- [x] 6.3 Em `painel/EmpresaService.java`, no método de criação já `@Transactional`, depois
   de gravar a empresa, cadastrar a conta pelo método de `IntegranteService` identificado em
   1.3, com papel `ADMIN`, telefone e perfil padrão. A exceção de e-mail repetido e a de CNPJ
   repetido sobem sem captura para o rollback desfazer a empresa e a conta.
-- [ ] 6.4 Em `painel/EmpresaPainelApiTest.java`, um teste por cenário do requisito "Criação
+- [x] 6.4 Em `painel/EmpresaPainelApiTest.java`, um teste por cenário do requisito "Criação
   de empresa com o primeiro ADMIN": login da conta criada devolve papel `ADMIN` e a
   `empresaId` nova; bloco ausente devolve 400 e nada é criado; cada dado do administrador
   ausente devolve 400 e nada é criado; telefone com máscara guardado só com dígitos; telefone
@@ -268,7 +268,7 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
   senha com 7 caracteres e com 73 bytes devolve 400 e nada é criado; `PUT` com bloco não cria
   conta (ou 400, conforme 1.4); senha ausente da resposta e do log pelo padrão achado na
   pergunta 8 de 1.3. Aceite: test-runner com `./mvnw -B test -Dtest='**/painel/**'` verde.
-- [ ] 6.5 Registrar em `painel/CLAUDE.md` o bloco `administrador` obrigatório, a transação
+- [x] 6.5 Registrar em `painel/CLAUDE.md` o bloco `administrador` obrigatório, a transação
   única e o `toString` mascarado. Aceite: varredura de travessão vazia.
 
 ## 7. Empresa sempre com ADMIN ativo
