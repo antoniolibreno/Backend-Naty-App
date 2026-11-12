@@ -54,8 +54,10 @@ linhas pelos UUIDs fixos. Não edite `V3`: o Flyway valida o checksum do que já
 
 ## Ausências deliberadas
 
-Este pacote não escreve conteúdo. Não existe endpoint de criação ou edição. O CRUD
-administrativo está no backlog e exige o papel `NATY`, porque o conteúdo é global.
+Este pacote não escreve conteúdo. A escrita pertence ao pacote `conteudo`, que exige o papel
+`NATY` porque o conteúdo é global, e nenhuma classe fora dele chama setter de entidade nem
+escreve nos repositórios daqui. `ModuloRepository`, as consultas de ordem e a consulta de
+histórico de `AtividadeRepository` existem para o `conteudo`.
 
 A leitura de conteúdo exige token. O conteúdo continua global e idêntico para todas as
 empresas: o que a sessão decide é se o servidor responde, não o que ele responde.

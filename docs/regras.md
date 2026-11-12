@@ -93,6 +93,21 @@ alterar o que já existe.
 **Só o papel `NATY` escreve conteúdo.** O conteúdo é global, e um `ADMIN` de cliente que
 editasse a trilha mudaria o treinamento de todas as empresas.
 
+**Escrita de conteúdo cria no fim e reordena em operação própria.** A ordem entre irmãos tem
+índice único por pai, então criar e editar nunca recebem a posição. A reordenação recebe a
+lista completa dos irmãos e renumera de 1 a n, e lista diferente dos irmãos atuais é recusada.
+
+**Trilha inativa some da listagem e mantém o histórico.** Progresso, tentativa e ponto de quem
+a estudou continuam gravados. Conteúdo com progresso, tentativa ou ponto registrado não é
+removido, e a alternativa é desativar a trilha.
+
+**Toda alteração de conteúdo é registrada.** O registro guarda a conta, a entidade, o
+identificador, a ação e o momento, na mesma transação da alteração, e sobrevive à remoção do
+conteúdo. É ele que responde quem trocou um gabarito quando as notas mudam de repente.
+
+**Duração de vídeo só existe com vídeo**, e vídeo exige URL HTTPS do YouTube e duração
+positiva.
+
 **O gabarito não sai em leitura.** O DTO de alternativa não tem o campo de resposta
 correta: um campo que não existe no record não vaza, enquanto uma anotação de ocultação
 esquecida em campo novo vaza em silêncio. O DTO de escrita, que carrega o gabarito, é um
@@ -184,8 +199,8 @@ conta `NATY`, que nasce do bootstrap ou do seed.
 
 ## Escrita e schema
 
-**Só o pacote `painel` escreve em `usuario` e em `empresa`.** Concentrar a escrita em um
-lugar é o que mantém a regra auditável.
+**Só o pacote `painel` escreve em `usuario` e em `empresa`, e só o pacote `conteudo` escreve
+nas entidades de `trilha`.** Concentrar a escrita em um lugar é o que mantém a regra auditável.
 
 **O schema do banco é do Flyway.** `ddl-auto` fica em `validate`: adicionar campo em
 entidade sem a migration correspondente derruba a aplicação na subida, e isso é

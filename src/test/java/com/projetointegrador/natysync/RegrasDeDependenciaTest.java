@@ -3,6 +3,16 @@ package com.projetointegrador.natysync;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.projetointegrador.natysync.trilha.Alternativa;
+import com.projetointegrador.natysync.trilha.Atividade;
+import com.projetointegrador.natysync.trilha.AtividadeRepository;
+import com.projetointegrador.natysync.trilha.Modulo;
+import com.projetointegrador.natysync.trilha.ModuloRepository;
+import com.projetointegrador.natysync.trilha.Pergunta;
+import com.projetointegrador.natysync.trilha.Quiz;
+import com.projetointegrador.natysync.trilha.QuizRepository;
+import com.projetointegrador.natysync.trilha.Trilha;
+import com.projetointegrador.natysync.trilha.TrilhaRepository;
 import com.projetointegrador.natysync.usuario.Usuario;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -12,6 +22,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -46,13 +57,54 @@ class RegrasDeDependenciaTest {
     }
 
     @Test
-    void respostaDeLeituraNaoTemCampoDeGabarito() {
+    void somenteConteudoEscreveNoConteudoDeTrilha() {
+        noClasses()
+                .that()
+                .resideOutsideOfPackage(RAIZ + ".conteudo..")
+                .should(chamarEscritaDeConteudo())
+                .check(classesDeProducao);
+    }
+
+    @Test
+    void respostaDeLeituraForaDeConteudoNaoTemCampoDeGabarito() {
         fields().that()
                 .areDeclaredInClassesThat()
                 .haveSimpleNameEndingWith("Response")
+                .and()
+                .areDeclaredInClassesThat()
+                .resideOutsideOfPackage(RAIZ + ".conteudo..")
                 .should()
                 .notHaveName("correta")
                 .check(classesDeProducao);
+    }
+
+    private static final List<Class<?>> ENTIDADES_DE_CONTEUDO =
+            List.of(Trilha.class, Modulo.class, Atividade.class, Quiz.class, Pergunta.class, Alternativa.class);
+    private static final List<Class<?>> REPOSITORIOS_DE_CONTEUDO =
+            List.of(TrilhaRepository.class, ModuloRepository.class, AtividadeRepository.class, QuizRepository.class);
+
+    private static ArchCondition<com.tngtech.archunit.core.domain.JavaClass> chamarEscritaDeConteudo() {
+        return new ArchCondition<>("escrever em conteudo de trilha") {
+            @Override
+            public void check(com.tngtech.archunit.core.domain.JavaClass classe, ConditionEvents eventos) {
+                for (JavaMethodCall chamada : classe.getMethodCallsFromSelf()) {
+                    boolean outraClasse = !chamada.getTargetOwner().equals(classe);
+                    boolean setterDeEntidade =
+                            ENTIDADES_DE_CONTEUDO.stream().anyMatch(entidade -> chamada.getTargetOwner()
+                                            .isEquivalentTo(entidade))
+                                    && chamada.getName().startsWith("set");
+                    boolean escritaNoRepositorio =
+                            REPOSITORIOS_DE_CONTEUDO.stream().anyMatch(repositorio -> chamada.getTargetOwner()
+                                            .isAssignableTo(repositorio))
+                                    && (ESCRITAS_DO_REPOSITORIO.contains(chamada.getName())
+                                            || chamada.getName().startsWith("definirOrdem")
+                                            || chamada.getName().startsWith("deslocarOrdem"));
+                    if (outraClasse && (setterDeEntidade || escritaNoRepositorio)) {
+                        eventos.add(SimpleConditionEvent.satisfied(chamada, chamada.getDescription()));
+                    }
+                }
+            }
+        };
     }
 
     private static ArchCondition<com.tngtech.archunit.core.domain.JavaClass> chamarEscritaDeUsuario() {

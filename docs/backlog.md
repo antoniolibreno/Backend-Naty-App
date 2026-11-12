@@ -347,12 +347,12 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   fixos e insere o conteúdo verdadeiro, sem tocar em `V3`.
   Toca: nova migration em `db/migration`
 
-- [ ] **9.2 Expor o CRUD de trilha**
+- [x] **9.2 Expor o CRUD de trilha**
   Permite criar e editar trilha pela API em vez de por migration. Depende da autenticação:
   sem login, um CRUD administrativo fica aberto na internet.
   Toca: `POST`, `PUT` e `DELETE` em `/api/v1/trilhas`
 
-- [ ] **9.3 Expor o CRUD de módulo e atividade**
+- [x] **9.3 Expor o CRUD de módulo e atividade**
   Mesma ideia, um nível abaixo, incluindo os campos de imagem, vídeo, duração e XP.
   Toca: `/api/v1/modulos`, `/api/v1/atividades`
 
@@ -372,12 +372,12 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   não só no conteúdo semeado.
   Toca: `trilha`
 
-- [ ] **9.7 Permitir reordenar módulo e atividade**
+- [x] **9.7 Permitir reordenar módulo e atividade**
   A ordem define a trilha e tem unicidade por pai no banco. Reordenar é operação própria,
   senão qualquer troca de posição colide com o índice único.
   Toca: `trilha`, índices `modulo(trilha_id, ordem)` e `atividade(modulo_id, ordem)`
 
-- [ ] **9.8 Ativar e desativar trilha sem apagar progresso**
+- [x] **9.8 Ativar e desativar trilha sem apagar progresso**
   Trilha inativa desaparece da listagem, e o progresso de quem já a fez continua contando
   para pontuação e acompanhamento.
   Toca: coluna `trilha.ativa`, `progresso`
@@ -387,7 +387,7 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   Oferece desativação em vez de remoção.
   Toca: `trilha`, `progresso`
 
-- [ ] **9.10 Registrar quem alterou o conteúdo**
+- [x] **9.10 Registrar quem alterou o conteúdo**
   Guarda autor e momento de cada alteração, para dar para descobrir quem trocou o gabarito
   quando as notas caírem de repente.
   Toca: nova migration em `db/migration`, `trilha`
