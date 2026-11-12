@@ -27,7 +27,8 @@ Este pacote não conhece nenhum dos dois.
   O parâmetro de ordenação é ignorado e o e-mail nunca sai.
 - `LimpezaDeSessao`: remove sessão expirada ou revogada há mais que `app.sessao.retencao`,
   no cron de `app.sessao.limpeza.cron`. O cron `-` a desliga, e o perfil de teste o usa.
-- `dto/SessaoRequest` e `dto/SessaoResponse`.
+- `dto/SessaoRequest` e `dto/SessaoResponse`. A resposta da emissão e da renovação traz o `papel`
+  da conta, para o cliente escolher entre o painel da Naty, o painel do contratante e o app.
 - `IntegranteDaRequisicao` e `IntegranteArgumentResolver`: injetam o integrante, a empresa
   e o papel da chamada nos controllers que precisam saber de quem é a operação. O registro
   do resolvedor fica em `config/WebMvcResolverConfig`.

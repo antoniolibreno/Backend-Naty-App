@@ -1,5 +1,6 @@
 package com.projetointegrador.natysync.usuario.dto;
 
+import com.projetointegrador.natysync.usuario.Papel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -20,6 +21,9 @@ public record SessaoResponse(
         @Schema(description = "E-mail do integrante", example = "ana.souza@acme.com.br")
         String email,
 
+        @Schema(description = "Papel da conta, define a tela do cliente", example = "INTEGRANTE")
+        Papel papel,
+
         @Schema(
                 description = "Token opaco, exibido só nesta resposta",
                 example = "q7Xk2mN9pLw4sT8vB1cZ6dF3hJ5rY0uAeG2iO7nMxKc")
@@ -31,6 +35,6 @@ public record SessaoResponse(
     @Override
     public String toString() {
         return "SessaoResponse[usuarioId=" + usuarioId + ", empresaId=" + empresaId + ", nome=" + nome + ", email="
-                + email + ", token=***, expiraEm=" + expiraEm + "]";
+                + email + ", papel=" + papel + ", token=***, expiraEm=" + expiraEm + "]";
     }
 }

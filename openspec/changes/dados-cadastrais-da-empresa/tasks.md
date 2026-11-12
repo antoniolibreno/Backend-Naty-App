@@ -299,15 +299,15 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
 
 ## 8. Papel na resposta de sessão
 
-- [ ] 8.1 Em `usuario/dto/SessaoResponse.java`, adicionar `Papel papel` com `@Schema`
+- [x] 8.1 Em `usuario/dto/SessaoResponse.java`, adicionar `Papel papel` com `@Schema`
   (descrição "Papel da conta: INTEGRANTE, ADMIN ou NATY", exemplo `INTEGRANTE`), mantendo o
   `toString` que mascara o token. Preencher o campo em todos os pontos de construção
   achados na pergunta 3 de 1.3 (emissão e renovação). Aceite: `./mvnw -B test-compile` passa.
-- [ ] 8.2 Em `usuario/SessaoApiTest.java` (ou `AutenticacaoApiTest.java`, onde o login é
+- [x] 8.2 Em `usuario/SessaoApiTest.java` (ou `AutenticacaoApiTest.java`, onde o login é
   testado), cobrir o cenário "Papel na resposta" com as três contas. Em
   `usuario/RenovacaoDeSessaoApiTest.java`, provar que a renovação devolve o papel. Aceite:
   test-runner com `./mvnw -B test -Dtest='**/usuario/**'` verde.
-- [ ] 8.3 Registrar em `usuario/CLAUDE.md` que a resposta de sessão traz o papel para o
+- [x] 8.3 Registrar em `usuario/CLAUDE.md` que a resposta de sessão traz o papel para o
   cliente escolher a tela. Aceite: varredura de travessão vazia.
 
 ## 9. Integração e fechamento
