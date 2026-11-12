@@ -16,6 +16,8 @@ import tools.jackson.databind.JsonNode;
 
 class SessaoApiTest extends IntegracaoTest {
 
+    private final String emailIntegrante = emailUnico("integrante");
+
     private UUID empresaId;
     private UUID usuarioId;
 
@@ -23,7 +25,7 @@ class SessaoApiTest extends IntegracaoTest {
     void criarIntegrante() {
         Empresa empresa = criarEmpresa("Empresa de Teste");
         empresaId = empresa.getId();
-        usuarioId = criarIntegrante(empresa, "Integrante de Teste", "integrante@teste.com.br");
+        usuarioId = criarIntegrante(empresa, "Integrante de Teste", emailIntegrante);
     }
 
     @AfterEach
@@ -45,7 +47,7 @@ class SessaoApiTest extends IntegracaoTest {
     @Test
     void autenticaEDevolveIntegranteEmpresaEToken() {
         ResponseEntity<JsonNode> resposta =
-                criarSessao(Map.of("email", "integrante@teste.com.br", "senha", SENHA_DE_TESTE), JsonNode.class);
+                criarSessao(Map.of("email", emailIntegrante, "senha", SENHA_DE_TESTE), JsonNode.class);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody().get("usuarioId").asText()).isEqualTo(usuarioId.toString());
@@ -57,8 +59,8 @@ class SessaoApiTest extends IntegracaoTest {
 
     @Test
     void resolveComMaiusculasEEspacos() {
-        ResponseEntity<JsonNode> resposta =
-                criarSessao(Map.of("email", "  Integrante@Teste.COM.BR  ", "senha", SENHA_DE_TESTE), JsonNode.class);
+        ResponseEntity<JsonNode> resposta = criarSessao(
+                Map.of("email", "  " + emailIntegrante.toUpperCase() + "  ", "senha", SENHA_DE_TESTE), JsonNode.class);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody().get("usuarioId").asText()).isEqualTo(usuarioId.toString());
@@ -82,7 +84,7 @@ class SessaoApiTest extends IntegracaoTest {
 
     @Test
     void senhaAusenteDevolveErroDeValidacao() {
-        ResponseEntity<JsonNode> resposta = criarSessao(Map.of("email", "integrante@teste.com.br"), JsonNode.class);
+        ResponseEntity<JsonNode> resposta = criarSessao(Map.of("email", emailIntegrante), JsonNode.class);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("FALHA_DE_VALIDACAO");
@@ -91,7 +93,7 @@ class SessaoApiTest extends IntegracaoTest {
     @Test
     void senhaVaziaDevolveErroDeValidacao() {
         ResponseEntity<JsonNode> resposta =
-                criarSessao(Map.of("email", "integrante@teste.com.br", "senha", "  "), JsonNode.class);
+                criarSessao(Map.of("email", emailIntegrante, "senha", "  "), JsonNode.class);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
@@ -99,7 +101,7 @@ class SessaoApiTest extends IntegracaoTest {
     @Test
     void senhaNaoRetornaNaResposta() {
         ResponseEntity<String> resposta =
-                criarSessao(Map.of("email", "integrante@teste.com.br", "senha", SENHA_DE_TESTE), String.class);
+                criarSessao(Map.of("email", emailIntegrante, "senha", SENHA_DE_TESTE), String.class);
 
         assertThat(resposta.getBody()).doesNotContain(SENHA_DE_TESTE);
         assertThat(resposta.getBody()).doesNotContain("senha");

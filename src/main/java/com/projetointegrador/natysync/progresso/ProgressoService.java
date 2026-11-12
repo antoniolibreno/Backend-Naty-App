@@ -1,5 +1,7 @@
 package com.projetointegrador.natysync.progresso;
 
+import com.projetointegrador.natysync.progresso.dto.ProximaAtividadeResponse;
+import com.projetointegrador.natysync.progresso.dto.ResumoProgressoResponse;
 import com.projetointegrador.natysync.progresso.dto.TentativaQuizRequest;
 import com.projetointegrador.natysync.progresso.dto.TentativaQuizResponse;
 import com.projetointegrador.natysync.progresso.dto.TrilhaProgressoResponse;
@@ -31,6 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +48,7 @@ public class ProgressoService {
     private final TrilhaProgressoMontador montador;
     private final QuizRepository quizRepository;
     private final EntityManager entityManager;
+    private final ApplicationEventPublisher eventos;
 
     public ProgressoService(
             TrilhaRepository trilhaRepository,
@@ -53,7 +57,8 @@ public class ProgressoService {
             ProgressoAtividadeRepository progressoAtividadeRepository,
             TrilhaProgressoMontador montador,
             QuizRepository quizRepository,
-            EntityManager entityManager) {
+            EntityManager entityManager,
+            ApplicationEventPublisher eventos) {
         this.trilhaRepository = trilhaRepository;
         this.atividadeRepository = atividadeRepository;
         this.usuarioRepository = usuarioRepository;
@@ -61,6 +66,7 @@ public class ProgressoService {
         this.montador = montador;
         this.quizRepository = quizRepository;
         this.entityManager = entityManager;
+        this.eventos = eventos;
     }
 
     public TrilhaProgressoResponse buscarTrilhaComProgresso(UUID trilhaId, IntegranteDaRequisicao integrante) {
@@ -69,6 +75,36 @@ public class ProgressoService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Trilha nao encontrada: " + trilhaId));
         Map<UUID, ProgressoAtividade> progressos = progressosDoIntegrante(integrante);
         return montador.montar(trilha, montador.sequenciar(trilha, progressos), progressos);
+    }
+
+    public ResumoProgressoResponse resumir(UUID integranteId, UUID empresaId) {
+        usuarioRepository
+                .buscarNaEmpresa(integranteId, empresaId)
+                .filter(Usuario::isAtivo)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Integrante nao encontrado: " + integranteId));
+        Map<UUID, ProgressoAtividade> progressos = progressosDe(integranteId);
+        int total = 0;
+        int concluidas = 0;
+        ProximaAtividadeResponse proxima = null;
+        for (Trilha trilha : trilhaRepository.findAllByAtivaTrueOrderByOrdemAsc()) {
+            SequenciaDaTrilha sequencia = montador.sequenciar(trilha, progressos);
+            total += sequencia.totalAtividades();
+            concluidas += sequencia.atividadesConcluidas();
+            if (proxima == null && sequencia.proximaAtividadeId() != null) {
+                proxima = proximaAtividade(trilha, sequencia.proximaAtividadeId());
+            }
+        }
+        int percentual = total == 0 ? 0 : concluidas * 100 / total;
+        return new ResumoProgressoResponse(integranteId, total, concluidas, percentual, proxima);
+    }
+
+    private ProximaAtividadeResponse proximaAtividade(Trilha trilha, UUID atividadeId) {
+        return trilha.getModulos().stream()
+                .flatMap(modulo -> modulo.getAtividades().stream())
+                .filter(atividade -> atividade.getId().equals(atividadeId))
+                .findFirst()
+                .map(atividade -> new ProximaAtividadeResponse(atividadeId, trilha.getId(), atividade.getTitulo()))
+                .orElseThrow();
     }
 
     @Transactional
@@ -89,14 +125,22 @@ public class ProgressoService {
         if (progresso == null) {
             progresso = novoProgresso(atividade, integrante);
         }
+        OffsetDateTime agora = agora();
+        boolean videoRegistrado = false;
+        boolean atividadeConcluida = false;
         if (progresso.getVideoAssistidoEm() == null) {
             validarTempoDeVideo(atividade, progresso);
-            progresso.setVideoAssistidoEm(agora());
+            progresso.setVideoAssistidoEm(agora);
             progresso = progressoAtividadeRepository.save(progresso);
+            videoRegistrado = true;
         }
         if (atividade.getQuiz() == null && progresso.getConcluidoEm() == null) {
-            progresso.setConcluidoEm(agora());
+            progresso.setConcluidoEm(agora);
             progresso = progressoAtividadeRepository.save(progresso);
+            atividadeConcluida = true;
+        }
+        if (videoRegistrado || atividadeConcluida) {
+            publicarEstudo(integrante, atividadeId, agora, atividadeConcluida);
         }
         if (progresso.getConcluidoEm() != null) {
             progressos.put(atividadeId, progresso);
@@ -227,10 +271,13 @@ public class ProgressoService {
         if (progresso.getMelhorNota() == null || nota > progresso.getMelhorNota()) {
             progresso.setMelhorNota(nota);
         }
-        if (aprovado && progresso.getConcluidoEm() == null) {
-            progresso.setConcluidoEm(agora());
+        OffsetDateTime agora = agora();
+        boolean atividadeConcluida = aprovado && progresso.getConcluidoEm() == null;
+        if (atividadeConcluida) {
+            progresso.setConcluidoEm(agora);
         }
         progresso = progressoAtividadeRepository.save(progresso);
+        publicarEstudo(integrante, atividadeId, agora, atividadeConcluida);
         if (progresso.getConcluidoEm() != null) {
             progressos.put(atividadeId, progresso);
         }
@@ -263,6 +310,15 @@ public class ProgressoService {
         return novoProgresso(atividade, integrante, null);
     }
 
+    private void publicarEstudo(
+            IntegranteDaRequisicao integrante,
+            UUID atividadeId,
+            OffsetDateTime ocorridoEm,
+            boolean atividadeConcluida) {
+        eventos.publishEvent(new EstudoRegistrado(
+                integrante.usuarioId(), integrante.empresaId(), atividadeId, ocorridoEm, atividadeConcluida));
+    }
+
     private OffsetDateTime agora() {
         return OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS);
     }
@@ -276,7 +332,11 @@ public class ProgressoService {
     }
 
     private Map<UUID, ProgressoAtividade> progressosDoIntegrante(IntegranteDaRequisicao integrante) {
-        return progressoAtividadeRepository.findByUsuarioId(integrante.usuarioId()).stream()
+        return progressosDe(integrante.usuarioId());
+    }
+
+    private Map<UUID, ProgressoAtividade> progressosDe(UUID usuarioId) {
+        return progressoAtividadeRepository.findByUsuarioId(usuarioId).stream()
                 .collect(Collectors.toMap(
                         progresso -> progresso.getAtividade().getId(),
                         Function.identity(),

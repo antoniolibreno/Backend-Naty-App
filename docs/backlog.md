@@ -19,7 +19,7 @@ Nada desta lista vira card.
   `Authorization: Bearer`.
 - Entidades `Trilha`, `Modulo`, `Atividade`, `Quiz`, `Pergunta`, `Alternativa`,
   `Usuario`, `Empresa`, `Sessao` e `ProgressoAtividade`, com repositórios e mappers.
-- Migrations `V1` a `V7`, seed de desenvolvimento com credencial, tratamento global de
+- Migrations `V1` a `V11`, seed de desenvolvimento com credencial, tratamento global de
   erro em formato único e Docker Compose.
 - Painel administrativo sob `/api/v1/painel/**`: cadastro de empresa com fuso horário pelo
   papel `NATY`, cadastro, senha, desativação e listagem paginada de integrante pelo `ADMIN`
@@ -28,6 +28,9 @@ Nada desta lista vira card.
 - Progresso na trilha: desbloqueio linear, `GET /api/v1/trilhas/{trilhaId}/progresso` e
   `POST /api/v1/atividades/{atividadeId}/video-assistido`, com o integrante resolvido a
   partir do token da sessão, coberto por testes de integração.
+- Gamificação: ponto da atividade na primeira conclusão, sequência de dias no fuso da
+  empresa, catálogo global de conquistas, `GET /api/v1/ranking` e
+  `GET /api/v1/integrantes/{integranteId}/gamificacao`.
 
 Ganchos que já estão no banco e que o backlog aproveita em vez de recriar:
 `atividade.xp` com valor 10, `quiz.nota_minima` com valor 70, `atividade.duracao_segundos`
@@ -119,7 +122,7 @@ As arestas que fixam a ordem:
   integrante são filtrados pela empresa de quem chamou.
   Toca: todos os controllers de leitura por empresa
 
-- [ ] **3.8 Renovar token**
+- [x] **3.8 Renovar token**
   A sessão expira pelo prazo de `app.sessao.expiracao`. Falta o caminho de renovação, para o
   app não exigir login a cada abertura nem manter sessão eterna.
   Toca: `POST /api/v1/sessoes`, `usuario`
@@ -206,7 +209,7 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
 
 ### Progresso na trilha
 
-- [ ] **4.7 Expor o resumo de progresso do integrante**
+- [x] **4.7 Expor o resumo de progresso do integrante**
   Devolve percentual concluído, atividades feitas e qual é a próxima atividade, para o app
   mostrar o "continuar de onde parou" sem pedir a trilha inteira.
   Toca: `GET /api/v1/integrantes/{integranteId}/progresso`
@@ -288,50 +291,50 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
 
 ### Gamificação
 
-- [ ] **6.1 Escrever a migration de pontuação, sequência e conquista**
+- [x] **6.1 Escrever a migration de pontuação, sequência e conquista**
   Cria as tabelas de pontos do integrante, sequência de dias e conquistas obtidas, sempre
   ligadas à empresa.
   Toca: nova migration em `db/migration`
 
-- [ ] **6.2 Criar o pacote `gamificacao` com entidades e repositórios**
+- [x] **6.2 Criar o pacote `gamificacao` com entidades e repositórios**
   Nasce com o seu próprio `CLAUDE.md`.
   Toca: `gamificacao`
 
-- [ ] **6.3 Conceder o XP da atividade na conclusão**
+- [x] **6.3 Conceder o XP da atividade na conclusão**
   Usa a coluna `atividade.xp` para somar pontos quando a atividade conclui. Não inventa
   outra fonte de pontuação.
   Toca: `gamificacao`, coluna `atividade.xp`
 
-- [ ] **6.4 Calcular a sequência de dias no fuso da empresa**
+- [x] **6.4 Calcular a sequência de dias no fuso da empresa**
   Os carimbos são gravados em UTC, e a virada do dia acontece no fuso do cliente. Depende
   da coluna de fuso criada em 11.2.
   Toca: `gamificacao`
 
-- [ ] **6.5 Semear o catálogo de conquistas por migration**
+- [x] **6.5 Semear o catálogo de conquistas por migration**
   As conquistas são conteúdo global, iguais para todas as empresas, e entram por migration
   como o resto do conteúdo.
   Toca: nova migration em `db/migration`
 
-- [ ] **6.6 Implementar a concessão de conquista**
+- [x] **6.6 Implementar a concessão de conquista**
   Avalia as regras quando algo muda no progresso e concede a conquista uma única vez por
   integrante.
   Toca: `gamificacao`
 
-- [ ] **6.7 Expor `GET /api/v1/ranking`**
+- [x] **6.7 Expor `GET /api/v1/ranking`**
   Devolve a classificação dos integrantes dentro da empresa de quem chamou, com desempate
   por quem chegou primeiro à pontuação e paginação obrigatória.
   Toca: `GET /api/v1/ranking`
 
-- [ ] **6.8 Expor `GET /api/v1/integrantes/{integranteId}/gamificacao`**
+- [x] **6.8 Expor `GET /api/v1/integrantes/{integranteId}/gamificacao`**
   Devolve pontos, sequência atual e conquistas do integrante, para o app montar o perfil.
   Toca: `GET /api/v1/integrantes/{integranteId}/gamificacao`
 
-- [ ] **6.9 Testar que ponto não é concedido duas vezes pela mesma atividade**
+- [x] **6.9 Testar que ponto não é concedido duas vezes pela mesma atividade**
   Concluir de novo, ou refazer o quiz já aprovado, não soma XP de novo, senão o ranking
   vira farsa.
   Toca: `src/test/java/.../gamificacao`
 
-- [ ] **6.10 Escrever `gamificacao/CLAUDE.md`**
+- [x] **6.10 Escrever `gamificacao/CLAUDE.md`**
   Registra onde mora a sequência, em que fuso, como o ranking é calculado e por que ponto
   é idempotente.
   Toca: `gamificacao/CLAUDE.md`
@@ -344,52 +347,52 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   fixos e insere o conteúdo verdadeiro, sem tocar em `V3`.
   Toca: nova migration em `db/migration`
 
-- [ ] **9.2 Expor o CRUD de trilha**
+- [x] **9.2 Expor o CRUD de trilha**
   Permite criar e editar trilha pela API em vez de por migration. Depende da autenticação:
   sem login, um CRUD administrativo fica aberto na internet.
   Toca: `POST`, `PUT` e `DELETE` em `/api/v1/trilhas`
 
-- [ ] **9.3 Expor o CRUD de módulo e atividade**
+- [x] **9.3 Expor o CRUD de módulo e atividade**
   Mesma ideia, um nível abaixo, incluindo os campos de imagem, vídeo, duração e XP.
   Toca: `/api/v1/modulos`, `/api/v1/atividades`
 
-- [ ] **9.4 Expor o CRUD de quiz, pergunta e alternativa**
+- [x] **9.4 Expor o CRUD de quiz, pergunta e alternativa**
   É o único lugar onde o gabarito entra e sai da API, e só para quem administra. A leitura
   do quiz pelo integrante continua sem `correta`.
   Toca: `/api/v1/quizzes`, `/api/v1/perguntas`, `/api/v1/alternativas`
 
-- [ ] **9.5 Separar o DTO de escrita do DTO de leitura da alternativa**
+- [x] **9.5 Separar o DTO de escrita do DTO de leitura da alternativa**
   A escrita precisa do campo de alternativa correta e a leitura não pode nem ter o campo.
   Dois records distintos, nunca um só com o campo anulado, que é o jeito de vazar gabarito
   por esquecimento.
   Toca: `trilha/dto`
 
-- [ ] **9.6 Validar exatamente uma alternativa correta por pergunta**
+- [x] **9.6 Validar exatamente uma alternativa correta por pergunta**
   Pergunta com zero ou duas corretas quebra a correção do quiz. A regra vale na escrita,
   não só no conteúdo semeado.
   Toca: `trilha`
 
-- [ ] **9.7 Permitir reordenar módulo e atividade**
+- [x] **9.7 Permitir reordenar módulo e atividade**
   A ordem define a trilha e tem unicidade por pai no banco. Reordenar é operação própria,
   senão qualquer troca de posição colide com o índice único.
   Toca: `trilha`, índices `modulo(trilha_id, ordem)` e `atividade(modulo_id, ordem)`
 
-- [ ] **9.8 Ativar e desativar trilha sem apagar progresso**
+- [x] **9.8 Ativar e desativar trilha sem apagar progresso**
   Trilha inativa desaparece da listagem, e o progresso de quem já a fez continua contando
   para pontuação e acompanhamento.
   Toca: coluna `trilha.ativa`, `progresso`
 
-- [ ] **9.9 Impedir remoção de conteúdo com progresso registrado**
+- [x] **9.9 Impedir remoção de conteúdo com progresso registrado**
   Apagar atividade que tem progresso ou tentativa joga fora o histórico de quem estudou.
   Oferece desativação em vez de remoção.
   Toca: `trilha`, `progresso`
 
-- [ ] **9.10 Registrar quem alterou o conteúdo**
+- [x] **9.10 Registrar quem alterou o conteúdo**
   Guarda autor e momento de cada alteração, para dar para descobrir quem trocou o gabarito
   quando as notas caírem de repente.
   Toca: nova migration em `db/migration`, `trilha`
 
-- [ ] **9.11 Testar que o CRUD exige papel administrativo**
+- [x] **9.11 Testar que o CRUD exige papel administrativo**
   Prova que token de integrante comum recebe negação em toda escrita de conteúdo.
   Toca: `src/test/java/.../trilha`
 
@@ -404,45 +407,45 @@ Decisões que o épico carrega e que precisam sair antes do código:
 - **Definição de parado:** quantos dias sem concluir atividade contam como parado. O
   número nasce como propriedade configurável, não como constante no código.
 
-- [ ] **7.1 Criar o pacote `acompanhamento`**
+- [x] **7.1 Criar o pacote `acompanhamento`**
   Nasce com o seu próprio `CLAUDE.md`, lendo progresso e gamificação sem escrever neles.
   Toca: `acompanhamento`
 
-- [ ] **7.2 Expor a listagem de integrantes com quem avançou e quem parou**
+- [x] **7.2 Expor a listagem de integrantes com quem avançou e quem parou**
   Devolve, por empresa, cada integrante com onde está na trilha e desde quando não se
   move. É a tela principal da Naty.
   Toca: `GET /api/v1/acompanhamento/empresas/{empresaId}/integrantes`
 
-- [ ] **7.3 Expor as métricas agregadas da empresa**
+- [x] **7.3 Expor as métricas agregadas da empresa**
   Devolve adesão, percentual médio de conclusão e quantos pararam, para a Naty comparar
   clientes sem abrir integrante por integrante.
   Toca: `GET /api/v1/acompanhamento/empresas/{empresaId}/metricas`
 
-- [ ] **7.4 Restringir o acompanhamento ao papel `NATY`**
+- [x] **7.4 Restringir o acompanhamento ao papel `NATY`**
   É o único lugar que lê dado de mais de uma empresa.
   Toca: `acompanhamento`, `config/SecurityConfig.java`
 
-- [ ] **7.5 Mostrar onde as pessoas travam**
+- [x] **7.5 Mostrar onde as pessoas travam**
   Devolve, por atividade, quantos chegaram e quantos passaram. É o que revela a atividade
   ou a pergunta que está barrando a empresa inteira.
   Toca: `GET /api/v1/acompanhamento/atividades`
 
-- [ ] **7.6 Exportar a lista de integrantes em CSV**
+- [x] **7.6 Exportar a lista de integrantes em CSV**
   Quem acompanha vai querer mandar a lista para o time que fala com o cliente, sem copiar
   da tela.
   Toca: `GET /api/v1/acompanhamento/empresas/{empresaId}/integrantes.csv`
 
-- [ ] **7.7 Criar os índices que o acompanhamento exige**
+- [x] **7.7 Criar os índices que o acompanhamento exige**
   As consultas cruzam progresso e tentativa por empresa e por data. Sem índice, o painel
   varre tabela cheia a cada abertura.
   Toca: nova migration em `db/migration`
 
-- [ ] **7.8 Testar que integrante comum não acessa o acompanhamento**
+- [x] **7.8 Testar que integrante comum não acessa o acompanhamento**
   Prova que token de integrante recebe negação de acesso em todos os endpoints deste
   pacote.
   Toca: `src/test/java/.../acompanhamento`
 
-- [ ] **7.9 Escrever `acompanhamento/CLAUDE.md`**
+- [x] **7.9 Escrever `acompanhamento/CLAUDE.md`**
   Registra que este pacote só lê, que ele atravessa empresas de propósito e qual é a
   definição de parado.
   Toca: `acompanhamento/CLAUDE.md`
@@ -459,7 +462,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   exige montar o id.
   Toca: `empresa/Empresa.java`
 
-- [ ] **10.3 Trocar o assert frágil de `QuizApiTest`**
+- [x] **10.3 Trocar o assert frágil de `QuizApiTest`**
   O teste garante que o gabarito não vaza procurando o texto `true` no corpo da resposta.
   Qualquer campo booleano verdadeiro futuro quebra o teste sem nenhum vazamento real.
   Verificar a estrutura da resposta no lugar.
@@ -470,59 +473,59 @@ Decisões que o épico carrega e que precisam sair antes do código:
   Ranking e acompanhamento seguem o mesmo padrão.
   Toca: `shared/pagina/PaginaResponse.java`, `application.yml`
 
-- [ ] **10.5 Criar `src/test/resources` com `application-test.yml`**
+- [x] **10.5 Criar `src/test/resources` com `application-test.yml`**
   Não existe recurso de teste, então os testes herdam o perfil de desenvolvimento. Um
   perfil de teste próprio deixa explícito o que roda no teste.
   Toca: `src/test/resources/application-test.yml`
 
-- [ ] **10.6 Decidir o destino de `DataUtil`**
+- [x] **10.6 Decidir o destino de `DataUtil`**
   É uma classe utilitária vazia em `shared`. Ou ganha o cálculo de data que a sequência de
   dias precisa, ou sai do projeto.
   Toca: `shared/util/DataUtil.java`
 
-- [ ] **10.7 Expor métricas da aplicação**
+- [x] **10.7 Expor métricas da aplicação**
   Publica métricas de requisição e de banco, para dar para responder "está lento onde" sem
   adivinhar.
   Toca: `application.yml`, `/actuator`
 
-- [ ] **10.8 Padronizar log sem vazar credencial**
+- [x] **10.8 Padronizar log sem vazar credencial**
   Define o que é logado em cada camada e garante que senha, hash de senha e token de
   sessão não apareçam em log nem em mensagem de erro.
   Toca: `painel`, `usuario`, `shared`
 
-- [ ] **10.9 Testar as regras de dependência entre pacotes**
+- [x] **10.9 Testar as regras de dependência entre pacotes**
   Faz o build falhar se `trilha` passar a depender de `progresso`, se algum pacote além de
   `painel` escrever em `usuario`, ou se um DTO de leitura ganhar campo de gabarito. Essas
   setas são fáceis de inverter por conveniência.
   Toca: `src/test/java`
 
-- [ ] **10.10 Verificar a regra de comentários e a de escrita de documento no build**
+- [x] **10.10 Verificar a regra de comentários e a de escrita de documento no build**
   A busca por comentário explicativo, por marcador temporal no código e por narrativa de
   mudança nos documentos é item manual de checklist. Vira passo do build, senão depende de
   disciplina.
   Toca: `pom.xml`
 
-- [ ] **10.11 Configurar integração contínua**
+- [x] **10.11 Configurar integração contínua**
   Roda `./mvnw -B verify` em cada envio, com Docker disponível para os Testcontainers,
   para formatação e testes não dependerem de quem lembrou de rodar.
   Toca: configuração de CI
 
-- [ ] **10.12 Correlacionar log por requisição**
+- [x] **10.12 Correlacionar log por requisição**
   Injeta um identificador por chamada no log e devolve no cabeçalho, para conseguir seguir
   uma chamada do app até o erro.
   Toca: `config`, `shared`
 
-- [ ] **10.13 Fechar o detalhe do Actuator em produção**
+- [x] **10.13 Fechar o detalhe do Actuator em produção**
   Em produção o detalhe de saúde aparece para qualquer token autenticado, inclusive o de um
   integrante, e mostra o estado do banco. Falta restringir o detalhe por papel.
   Toca: `application.yml`, `application-prod.yml`
 
-- [ ] **10.14 Definir retenção de dado operacional**
+- [x] **10.14 Definir retenção de dado operacional**
   Decide o que fazer com tentativa de quiz velha e com sessão expirada, para tabela de
   histórico não crescer para sempre.
   Toca: `progresso`, `usuario`
 
-- [ ] **10.15 Expor a leitura de integrante em `UsuarioController`**
+- [x] **10.15 Expor a leitura de integrante em `UsuarioController`**
   O controller tem o caminho declarado e nenhum método mapeado, e `UsuarioResponse` e
   `UsuarioFiltro` são classes vazias. A tela de ranking e o acompanhamento precisam ler
   integrante, sempre filtrado por empresa. A escrita mora no painel.
@@ -540,7 +543,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   corpo, que no login carrega a senha.
   Toca: `shared/exception/ApiExceptionHandler.java`
 
-- [ ] **10.18 Trocar os e-mails fixos dos testes por e-mails aleatórios**
+- [x] **10.18 Trocar os e-mails fixos dos testes por e-mails aleatórios**
   O índice de e-mail é único no sistema inteiro e o banco de teste é compartilhado. Uma
   limpeza que falha deixa um e-mail fixo no banco e derruba as classes seguintes que usam o
   mesmo e-mail.

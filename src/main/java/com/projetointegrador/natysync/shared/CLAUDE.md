@@ -52,6 +52,11 @@ contrato da listagem não mudar com a versão da biblioteca.
 Exceção de um pacote só mora no pacote dele, não aqui. `shared` fica com o que é
 transversal de verdade.
 
+Log não carrega credencial. Nenhuma camada registra corpo de requisição nem `Authorization`,
+todo record que carrega senha ou token sobrescreve `toString` com o valor mascarado, e
+`LogSemCredencialTest` procura a senha, o hash e o token na saída capturada com o log em
+DEBUG.
+
 ## Armadilhas
 
 `shared` é imã de código sem dono. Antes de colocar algo aqui, verifique se o código não
@@ -85,7 +90,3 @@ O 401 sai por dois caminhos: `CredencialInvalidaException` quando um serviço re
 `config/RecusaDeAcesso` quando a cadeia de segurança barra antes do controller. Os dois
 devolvem `ErroResposta` com o mesmo código, senão o app teria dois formatos para o mesmo
 caso.
-
-## Ausências deliberadas
-
-`util/DataUtil` é uma classe utilitária sem método e sem consumidor.

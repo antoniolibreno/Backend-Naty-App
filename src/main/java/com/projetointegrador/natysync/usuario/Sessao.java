@@ -36,6 +36,9 @@ public class Sessao {
     @Column(name = "criado_em", nullable = false)
     private OffsetDateTime criadoEm;
 
+    @Column(name = "iniciada_em", nullable = false)
+    private OffsetDateTime iniciadaEm;
+
     @Column(name = "expira_em", nullable = false)
     private OffsetDateTime expiraEm;
 

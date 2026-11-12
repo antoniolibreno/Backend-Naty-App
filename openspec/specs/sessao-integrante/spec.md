@@ -164,3 +164,115 @@ A sessão SHALL guardar o momento do último acesso do integrante.
 - **WHEN** o integrante usa uma sessão válida
 - **THEN** o sistema registra o momento do acesso na própria sessão, e NÃO no cadastro do
   integrante
+
+### Requirement: Sessão antiga é removida
+
+O sistema SHALL remover a sessão cuja expiração ou revogação ocorreu há mais que o prazo
+de retenção, e NÃO SHALL remover sessão válida nem sessão dentro do prazo. A limpeza SHALL
+rodar de forma periódica. O prazo de retenção e a periodicidade SHALL ser lidos de
+configuração de ambiente, nunca de constante em código. A produção SHALL recusar subir sem
+o prazo de retenção.
+
+A remoção de sessão NÃO SHALL apagar progresso, tentativa de quiz nem ponto do integrante.
+
+#### Scenario: Sessão expirada além do prazo
+
+- **WHEN** a limpeza roda e existe sessão expirada há mais que o prazo de retenção
+- **THEN** o sistema remove essa sessão
+
+#### Scenario: Sessão revogada além do prazo
+
+- **WHEN** a limpeza roda e existe sessão revogada há mais que o prazo de retenção
+- **THEN** o sistema remove essa sessão
+
+#### Scenario: Sessão dentro do prazo
+
+- **WHEN** a limpeza roda e a sessão expirou há menos que o prazo de retenção
+- **THEN** o sistema mantém a sessão
+
+#### Scenario: Sessão válida
+
+- **WHEN** a limpeza roda e a sessão não expirou nem foi revogada
+- **THEN** o sistema mantém a sessão
+
+#### Scenario: Produção sem prazo
+
+- **WHEN** a aplicação sobe em produção sem o prazo de retenção configurado
+- **THEN** a aplicação recusa subir
+
+### Requirement: Renovação da sessão
+
+`POST /api/v1/sessoes/atual/renovacao` SHALL exigir token de sessão válido e SHALL emitir
+um token novo com expiração de `app.sessao.expiracao` a partir do momento da renovação,
+limitada pela duração máxima da sessão. A resposta SHALL ter o mesmo corpo da emissão de
+sessão, com o token novo e o novo momento de expiração. O token apresentado SHALL ser
+revogado na mesma operação e NÃO SHALL ser aceito na chamada seguinte. Token expirado,
+revogado, inexistente ou de integrante que não pode mais entrar SHALL responder 401
+`CREDENCIAL_INVALIDA`. Renovações concorrentes do mesmo token SHALL emitir no máximo um
+token novo.
+
+#### Scenario: Renovação com token válido
+
+- **WHEN** o integrante renova a sessão com um token válido
+- **THEN** o sistema devolve um token novo com expiração futura, e o token novo é aceito
+  nas chamadas seguintes
+
+#### Scenario: Token antigo recusado
+
+- **WHEN** o integrante usa o token apresentado na renovação depois de renovar
+- **THEN** o sistema responde 401 `CREDENCIAL_INVALIDA`
+
+#### Scenario: Token expirado
+
+- **WHEN** o cliente tenta renovar com um token cuja expiração já passou
+- **THEN** o sistema responde 401 `CREDENCIAL_INVALIDA` e NÃO emite token
+
+#### Scenario: Token revogado
+
+- **WHEN** o cliente tenta renovar com um token revogado
+- **THEN** o sistema responde 401 `CREDENCIAL_INVALIDA` e NÃO emite token
+
+#### Scenario: Integrante desativado
+
+- **WHEN** o integrante foi desativado e tenta renovar com um token anterior à desativação
+- **THEN** o sistema responde 401 `CREDENCIAL_INVALIDA`
+
+#### Scenario: Renovações concorrentes
+
+- **WHEN** duas renovações do mesmo token chegam ao mesmo tempo
+- **THEN** exatamente uma emite token novo e a outra responde 401 `CREDENCIAL_INVALIDA`
+
+#### Scenario: Sem token
+
+- **WHEN** o cliente chama a renovação sem token
+- **THEN** o sistema responde 401 `CREDENCIAL_INVALIDA`
+
+### Requirement: Duração máxima da sessão
+
+A sessão SHALL ter duração máxima contada a partir da autenticação por e-mail e senha, e
+as renovações NÃO SHALL estendê-la. A expiração de um token renovado SHALL ser o menor
+entre o prazo de expiração a partir da renovação e o fim da duração máxima. Depois do fim
+da duração máxima, a renovação SHALL responder 401 `CREDENCIAL_INVALIDA`. A duração máxima
+SHALL ser lida de configuração de ambiente, nunca de constante em código, e a produção
+SHALL recusar subir sem ela.
+
+#### Scenario: Expiração limitada pela duração máxima
+
+- **WHEN** o integrante renova a sessão quando falta menos que o prazo de expiração para o
+  fim da duração máxima
+- **THEN** a expiração do token novo é o fim da duração máxima
+
+#### Scenario: Duração máxima esgotada
+
+- **WHEN** o integrante tenta renovar depois do fim da duração máxima contada do login
+- **THEN** o sistema responde 401 `CREDENCIAL_INVALIDA` e o app autentica de novo
+
+#### Scenario: Revogação alcança a cadeia de renovações
+
+- **WHEN** quem administra redefine a senha do integrante ou o desativa
+- **THEN** todos os tokens do integrante, inclusive os emitidos por renovação, são recusados
+
+#### Scenario: Produção sem duração máxima
+
+- **WHEN** a aplicação sobe em produção sem a duração máxima configurada
+- **THEN** a aplicação recusa subir

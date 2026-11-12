@@ -4,6 +4,8 @@ import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -40,4 +42,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID>, JpaSpec
     boolean existsByEmpresaId(UUID empresaId);
 
     boolean existsByEmpresaIdAndPapel(UUID empresaId, Papel papel);
+
+    Page<Usuario> findByEmpresaIdAndAtivoTrue(UUID empresaId, Pageable pagina);
 }

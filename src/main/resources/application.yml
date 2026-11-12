@@ -27,6 +27,12 @@ spring:
         default-page-size: 20
         max-page-size: 100
 
+logging:
+  pattern:
+    level: "%5p [%X{requisicaoId:-}]"
+  level:
+    org.hibernate: INFO
+
 server:
   port: ${SERVER_PORT:8080}
 
@@ -35,6 +41,12 @@ app:
     origens: ${APP_CORS_ORIGENS:http://localhost:*}
   sessao:
     expiracao: ${APP_SESSAO_EXPIRACAO:7d}
+    duracao-maxima: ${APP_SESSAO_DURACAO_MAXIMA:30d}
+    retencao: ${APP_SESSAO_RETENCAO:30d}
+    limpeza:
+      cron: ${APP_SESSAO_LIMPEZA_CRON:0 0 3 * * *}
+  acompanhamento:
+    dias-parado: ${APP_ACOMPANHAMENTO_DIAS_PARADO:3}
   senha:
     forca-hash: ${APP_SENHA_FORCA_HASH:10}
   bootstrap:
@@ -49,10 +61,11 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,flyway
+        include: health,info,flyway,metrics
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
+      roles: NATY
 
 springdoc:
   swagger-ui:

@@ -60,6 +60,19 @@ ambiente.** A aplicação recusa subir em produção sem eles, para não existir
 de segurança em repositório. O token é opaco e não é assinado, então não existe chave de
 assinatura.
 
+**A sessão renova até uma duração máxima contada do login.** Com token válido, a renovação
+emite token novo e revoga o apresentado, então o app não pede senha a cada abertura. A
+expiração do token novo nunca passa do fim de `app.sessao.duracao-maxima`, e depois dele o
+app autentica de novo. Sem teto, renovar indefinidamente mantém a sessão eterna e anula o
+prazo de expiração. A duração máxima vive em variável de ambiente, e a produção recusa subir
+sem ela.
+
+**A sessão encerrada é removida depois de um prazo de retenção.** Sessão expirada ou
+revogada há mais que `app.sessao.retencao` sai da tabela por limpeza periódica, com
+periodicidade em `app.sessao.limpeza.cron`. O prazo vive em variável de ambiente e a
+produção recusa subir sem ele. A remoção de sessão não toca em progresso, tentativa nem
+ponto.
+
 ## Isolamento por empresa
 
 **Todo dado de pessoa é filtrado pela empresa de quem chamou.** Integrante, progresso,
@@ -80,6 +93,29 @@ alterar o que já existe.
 **Só o papel `NATY` escreve conteúdo.** O conteúdo é global, e um `ADMIN` de cliente que
 editasse a trilha mudaria o treinamento de todas as empresas.
 
+**Escrita de conteúdo cria no fim e reordena em operação própria.** A ordem entre irmãos tem
+índice único por pai, então criar e editar nunca recebem a posição. A reordenação recebe a
+lista completa dos irmãos e renumera de 1 a n, e lista diferente dos irmãos atuais é recusada.
+
+**Trilha inativa some da listagem e mantém o histórico.** Progresso, tentativa e ponto de quem
+a estudou continuam gravados. Conteúdo com progresso, tentativa ou ponto registrado não é
+removido, e a alternativa é desativar a trilha.
+
+**Toda alteração de conteúdo é registrada.** O registro guarda a conta, a entidade, o
+identificador, a ação e o momento, na mesma transação da alteração, e sobrevive à remoção do
+conteúdo. É ele que responde quem trocou um gabarito quando as notas mudam de repente.
+
+**Duração de vídeo só existe com vídeo**, e vídeo exige URL HTTPS do YouTube e duração
+positiva.
+
+**Toda pergunta tem exatamente uma alternativa correta e ao menos duas alternativas.** A regra
+vale na entrada e em toda transição do estado gravado: marcar uma correta move a marca, e
+desmarcar a única correta, remover a correta ou deixar menos de duas alternativas é recusado. Quiz
+sem pergunta quebra a correção, então a última pergunta não é removida.
+
+**O gabarito sai por um único canal, a leitura administrativa do quiz.** Ela exige `NATY`. A
+leitura do quiz pelo integrante e a resposta de tentativa não têm o campo `correta`.
+
 **O gabarito não sai em leitura.** O DTO de alternativa não tem o campo de resposta
 correta: um campo que não existe no record não vaza, enquanto uma anotação de ocultação
 esquecida em campo novo vaza em silêncio. O DTO de escrita, que carrega o gabarito, é um
@@ -90,7 +126,8 @@ certificação: o atrito de bloquear a retentativa custa mais do que a força br
 economiza.
 
 **O histórico completo de tentativas é guardado**, não só a última, porque é ele que
-revela quem está travado em uma atividade.
+revela quem está travado em uma atividade. Tentativa não tem prazo de retenção: o
+acompanhamento depende do histórico inteiro.
 
 **A correção acontece só no servidor**, comparando as respostas com a coluna
 `alternativa.correta`. Nota enviada pelo cliente não existe como campo de entrada.
@@ -158,6 +195,21 @@ paginação é obrigatória.
 
 **Ranking entre empresas não existe.**
 
+## Acompanhamento
+
+**A Naty acompanha quem avança e quem parou, e só a conta `NATY` lê o acompanhamento.** É o
+único ponto, junto do cadastro de empresas, que atravessa empresas, e nunca escreve em progresso,
+pontuação nem cadastro.
+
+**Parado é o integrante que passou o prazo configurado sem concluir atividade.** O prazo vive em
+`app.acompanhamento.dias-parado`, padrão 3 dias de calendário no fuso da empresa, e a comparação é
+`dias >= prazo`. Conta nova sem estudo está sem início até passar o prazo, e quem concluiu tudo
+nunca está parado.
+
+**O funil por atividade conta quem chegou e quem passou.** Chegou quem tem a atividade liberada,
+passou quem a concluiu, e é essa diferença que revela a atividade que barra a empresa inteira. A
+conta `NATY` e o integrante desativado ficam fora de toda contagem.
+
 ## Consumidores
 
 **O app Flutter tem Login, Home no estilo Duolingo e tela de assistir aula.** São as três
@@ -170,8 +222,8 @@ conta `NATY`, que nasce do bootstrap ou do seed.
 
 ## Escrita e schema
 
-**Só o pacote `painel` escreve em `usuario` e em `empresa`.** Concentrar a escrita em um
-lugar é o que mantém a regra auditável.
+**Só o pacote `painel` escreve em `usuario` e em `empresa`, e só o pacote `conteudo` escreve
+nas entidades de `trilha`.** Concentrar a escrita em um lugar é o que mantém a regra auditável.
 
 **O schema do banco é do Flyway.** `ddl-auto` fica em `validate`: adicionar campo em
 entidade sem a migration correspondente derruba a aplicação na subida, e isso é
@@ -181,6 +233,15 @@ proposital.
 descrição do que já rodou. Correção de conteúdo semeado entra em migration nova.
 
 **Senha, hash de senha e token de sessão nunca aparecem em log nem em mensagem de erro.**
+Nenhuma camada registra corpo de requisição nem o cabeçalho `Authorization`, e o
+`org.hibernate` fica em INFO porque em DEBUG ele imprime o hash da entidade.
+
+**Toda resposta carrega `X-Request-Id`, e toda linha de log da chamada carrega o mesmo
+valor.** O cliente pode enviar o identificador, aceito entre 8 e 64 caracteres de letra,
+dígito e hífen. Qualquer outro valor recebe um identificador gerado.
+
+**O Actuator exige a conta `NATY`, exceto a saúde sem detalhe.** Métricas, estado de banco
+e demais endpoints são operacionais do sistema inteiro, não de uma empresa.
 
 **Listagem é paginada.** Ranking, integrantes e acompanhamento crescem com a empresa, e
 a primeira empresa grande não pode descobrir isso em produção.

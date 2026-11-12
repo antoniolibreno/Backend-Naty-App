@@ -21,6 +21,11 @@ Este pacote não conhece nenhum dos dois.
 - `UsuarioService.verificarCredencial`: confere e-mail e senha no login, com a linha do
   usuário travada. Exige transação aberta por quem chama.
 - `SessaoController`: `POST /api/v1/sessoes`.
+- `UsuarioController`: `GET /api/v1/usuarios`, página dos integrantes ativos da empresa de
+  quem chama, com `id`, `nome` e `papel` em `dto/UsuarioResponse`, ordenada por nome e id.
+  O parâmetro de ordenação é ignorado e o e-mail nunca sai.
+- `LimpezaDeSessao`: remove sessão expirada ou revogada há mais que `app.sessao.retencao`,
+  no cron de `app.sessao.limpeza.cron`. O cron `-` a desliga, e o perfil de teste o usa.
 - `dto/SessaoRequest` e `dto/SessaoResponse`.
 - `IntegranteDaRequisicao` e `IntegranteArgumentResolver`: injetam o integrante, a empresa
   e o papel da chamada nos controllers que precisam saber de quem é a operação. O registro
@@ -103,8 +108,14 @@ correspondente derruba a aplicação na subida, e isso é proposital.
 
 ## Ausências deliberadas
 
-`UsuarioController` declara o caminho `/api/v1/usuarios` e não mapeia nenhum método.
-`UsuarioMapper`, `dto/UsuarioResponse` e `dto/UsuarioFiltro` não têm conteúdo. A listagem de
-integrante para quem administra mora no `painel`.
+A listagem com e-mail e dados de cadastro, para quem administra, mora no `painel`.
+`GET /api/v1/usuarios` é leitura de colegas e não expõe contato.
 
-A sessão não renova: quando o token expira, o app autentica de novo.
+A sessão renova por `SessaoService.renovar`, exposta em `POST /api/v1/sessoes/atual/renovacao`.
+Cada renovação cria uma linha nova em `sessao` com `iniciada_em` herdado do login, e a expiração
+é o menor entre `app.sessao.expiracao` a partir da renovação e o fim de
+`app.sessao.duracao-maxima` a partir de `iniciada_em`. O update `revogarPorTokenHash` é
+condicionado a `revogado_em is null`, e o retorno zero faz a renovação concorrente recusar, o
+que garante no máximo um token novo por token apresentado. Token expirado, revogado,
+inexistente, de integrante que não entra mais e com a duração máxima esgotada recebem a mesma
+recusa. Revogar por integrante ou por empresa alcança a cadeia inteira de renovações.

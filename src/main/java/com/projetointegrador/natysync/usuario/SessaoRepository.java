@@ -32,4 +32,8 @@ public interface SessaoRepository extends JpaRepository<Sessao, UUID> {
     @Query("update Sessao s set s.revogadoEm = :momento where s.revogadoEm is null"
             + " and s.usuario.id in (select u.id from Usuario u where u.empresa.id = :empresaId)")
     int revogarTodasDaEmpresa(@Param("empresaId") UUID empresaId, @Param("momento") OffsetDateTime momento);
+
+    @Modifying
+    @Query("delete from Sessao s where s.expiraEm < :limite or s.revogadoEm < :limite")
+    int removerEncerradasAntesDe(@Param("limite") OffsetDateTime limite);
 }

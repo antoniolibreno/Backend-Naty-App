@@ -15,6 +15,9 @@ import tools.jackson.databind.JsonNode;
 
 class IsolamentoPorEmpresaTest extends IntegracaoTest {
 
+    private final String emailIntegranteA = emailUnico("integrante-a");
+    private final String emailIntegranteB = emailUnico("integrante-b");
+
     private static final UUID TRILHA = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final UUID PRIMEIRA_ATIVIDADE = UUID.fromString("00000000-0000-0000-0002-000000000001");
 
@@ -29,13 +32,13 @@ class IsolamentoPorEmpresaTest extends IntegracaoTest {
     void criarDuasEmpresas() {
         Empresa empresaA = criarEmpresa("Empresa A");
         empresaAId = empresaA.getId();
-        integranteAId = criarIntegrante(empresaA, "Integrante A", "integrante-a@teste.com.br");
-        tokenA = autenticar("integrante-a@teste.com.br", SENHA_DE_TESTE);
+        integranteAId = criarIntegrante(empresaA, "Integrante A", emailIntegranteA);
+        tokenA = autenticar(emailIntegranteA, SENHA_DE_TESTE);
 
         Empresa empresaB = criarEmpresa("Empresa B");
         empresaBId = empresaB.getId();
-        integranteBId = criarIntegrante(empresaB, "Integrante B", "integrante-b@teste.com.br");
-        tokenB = autenticar("integrante-b@teste.com.br", SENHA_DE_TESTE);
+        integranteBId = criarIntegrante(empresaB, "Integrante B", emailIntegranteB);
+        tokenB = autenticar(emailIntegranteB, SENHA_DE_TESTE);
     }
 
     @AfterEach
