@@ -170,7 +170,7 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
   `design.md`: formato `^[0-9A-Z]{12}[0-9]{2}$`, caracteres não todos iguais, valor do
   caractere igual a ASCII menos 48, pesos `5,4,3,2,9,8,7,6,5,4,3,2` e
   `6,5,4,3,2,9,8,7,6,5,4,3,2`, resto menor que 2 vira 0). Sem comentário explicativo.
-- [ ] 3.2 Criar `painel/CnpjTest.java` (JUnit puro, sem Spring) com: `11222333000181`
+- [x] 3.2 Criar `painel/CnpjTest.java` (JUnit puro, sem Spring) com: `11222333000181`
   válido, `48055059000103` válido, `12ABC34501DE35` válido, `11222333000182` inválido,
   `00000000000000` inválido, `AAAAAAAAAAAA00` inválido, 13 caracteres inválido, letra nas
   duas últimas posições inválido, `normalizar("12.abc.345/01de-35")` igual a
