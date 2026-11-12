@@ -23,7 +23,14 @@ class BootstrapNatyTest {
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
     private final EmpresaRepository empresaRepository = mock(EmpresaRepository.class);
 
+    private static final String CNPJ_VALIDO = "48.055.059/0001-03";
+    private static final String RAZAO_SOCIAL = "Naty App Oficial LTDA";
+
     private BootstrapNaty bootstrap(boolean obrigatorio, String email, String senha) {
+        return bootstrap(obrigatorio, email, senha, CNPJ_VALIDO, RAZAO_SOCIAL);
+    }
+
+    private BootstrapNaty bootstrap(boolean obrigatorio, String email, String senha, String cnpj, String razaoSocial) {
         return new BootstrapNaty(
                 usuarioRepository,
                 empresaRepository,
@@ -33,7 +40,9 @@ class BootstrapNatyTest {
                 "Equipe Naty",
                 email,
                 senha,
-                "Naty");
+                "Naty",
+                cnpj,
+                razaoSocial);
     }
 
     @Test
@@ -48,6 +57,48 @@ class BootstrapNatyTest {
         assertThat(usuario.getValue().getPapel()).isEqualTo(Papel.NATY);
         assertThat(usuario.getValue().getEmail()).isEqualTo("naty@naty.com");
         assertThat(usuario.getValue().getEmpresa().getNome()).isEqualTo("Naty");
+    }
+
+    @Test
+    void gravaCnpjNormalizadoERazaoSocialNaEmpresaInterna() {
+        when(usuarioRepository.existsByPapel(Papel.NATY)).thenReturn(false);
+
+        bootstrap(true, "naty@naty.com", "senha-forte-1").run(null);
+
+        ArgumentCaptor<Empresa> empresa = ArgumentCaptor.forClass(Empresa.class);
+        verify(empresaRepository).save(empresa.capture());
+        assertThat(empresa.getValue().getCnpj()).isEqualTo("48055059000103");
+        assertThat(empresa.getValue().getRazaoSocial()).isEqualTo(RAZAO_SOCIAL);
+    }
+
+    @Test
+    void recusaSubirQuandoObrigatorioESemCnpj() {
+        when(usuarioRepository.existsByPapel(Papel.NATY)).thenReturn(false);
+
+        assertThatThrownBy(() -> bootstrap(true, "naty@naty.com", "senha-forte-1", "", RAZAO_SOCIAL)
+                        .run(null))
+                .isInstanceOf(IllegalStateException.class);
+        verify(empresaRepository, never()).save(any());
+    }
+
+    @Test
+    void recusaSubirQuandoObrigatorioESemRazaoSocial() {
+        when(usuarioRepository.existsByPapel(Papel.NATY)).thenReturn(false);
+
+        assertThatThrownBy(() -> bootstrap(true, "naty@naty.com", "senha-forte-1", CNPJ_VALIDO, " ")
+                        .run(null))
+                .isInstanceOf(IllegalStateException.class);
+        verify(empresaRepository, never()).save(any());
+    }
+
+    @Test
+    void recusaSubirComCnpjInvalido() {
+        when(usuarioRepository.existsByPapel(Papel.NATY)).thenReturn(false);
+
+        assertThatThrownBy(() -> bootstrap(true, "naty@naty.com", "senha-forte-1", "48.055.059/0001-04", RAZAO_SOCIAL)
+                        .run(null))
+                .isInstanceOf(IllegalStateException.class);
+        verify(empresaRepository, never()).save(any());
     }
 
     @Test

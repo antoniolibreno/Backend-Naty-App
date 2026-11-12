@@ -39,6 +39,12 @@ public class Empresa {
     @Column(name = "fuso_horario", nullable = false, length = 64)
     private ZoneId fusoHorario = FUSO_PADRAO;
 
+    @Column(length = 14)
+    private String cnpj;
+
+    @Column(name = "razao_social")
+    private String razaoSocial;
+
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)
     private OffsetDateTime criadoEm;

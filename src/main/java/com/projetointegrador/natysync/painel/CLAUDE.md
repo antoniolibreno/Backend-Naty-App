@@ -19,8 +19,13 @@ Depende de `usuario` e de `empresa`. Nenhum pacote depende dele.
 - `EmpresaService`: desativar empresa revoga as sessões dos integrantes dela.
 - `BootstrapNaty`: `ApplicationRunner` que cria a empresa interna e a conta `NATY` a partir
   de `app.bootstrap.naty.*` quando não existe nenhum `NATY`. Recusa subir quando o
-  bootstrap é obrigatório e faltam as variáveis, quando a senha está fora do limite e
-  quando o e-mail pertence a uma conta que não é `NATY`.
+  bootstrap é obrigatório e faltam as variáveis, quando a senha está fora do limite, quando
+  o CNPJ não passa em `Cnpj.valido` e quando o e-mail pertence a uma conta que não é `NATY`.
+  A empresa interna nasce com `app.bootstrap.naty.cnpj` normalizado e
+  `app.bootstrap.naty.razao-social`.
+- `Cnpj`: `normalizar` remove `.`, `/`, `-` e espaço e converte para maiúsculas, e `valido`
+  confere formato, caracteres não todos iguais e os dois dígitos verificadores, numérico ou
+  alfanumérico.
 - `TravaDaContaDeSeed`: `ApplicationRunner` que recusa subir fora do perfil `dev` quando
   encontra uma das contas do seed, cuja senha é pública.
 - `CodigoDeConflito`: códigos estáveis dos 409 deste pacote.

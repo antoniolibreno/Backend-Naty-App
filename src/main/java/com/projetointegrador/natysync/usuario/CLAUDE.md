@@ -10,7 +10,8 @@ Este pacote não conhece nenhum dos dois.
 
 ## Contratos
 
-- `Usuario`: entidade JPA mapeada na tabela `usuario`, ligada a `Empresa`.
+- `Usuario`: entidade JPA mapeada na tabela `usuario`, ligada a `Empresa`, com `telefone`
+  opcional, só dígitos, de 10 a 13.
 - `Usuario.podeEntrar()`: integrante ativo de empresa ativa. É a regra única de quem entra,
   usada no login e em cada chamada autenticada.
 - `UsuarioRepository`: busca por identificador dentro de uma empresa,
@@ -105,6 +106,9 @@ quebra quem o constrói, e não quem só lê `usuarioId` e `empresaId`.
 
 `ddl-auto` está em `validate`. Adicionar campo na entidade sem escrever a migration
 correspondente derruba a aplicação na subida, e isso é proposital.
+
+`usuario.telefone` é nulo no banco. A obrigatoriedade existe só no administrador inicial da
+empresa, na API do `painel`, e `usuario_telefone_check` aceita apenas 10 a 13 dígitos.
 
 ## Ausências deliberadas
 
