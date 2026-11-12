@@ -156,9 +156,12 @@ desenvolvimento e do bootstrap por variável de ambiente em produção. Produç�
 sem conta `NATY` e sem as variáveis do bootstrap, e qualquer perfil fora de `dev` recusa
 subir se encontrar uma conta do seed.
 
-A sessão não renova. Quando o token expira, o app autentica de novo. Sessão encerrada há mais
+A sessão renova em `POST /api/v1/sessoes/atual/renovacao`: com token válido, o sistema emite
+token novo, revoga o apresentado e limita a expiração à duração máxima, contada do login e
+configurada em `app.sessao.duracao-maxima`. Esgotada a duração máxima, ou com o token
+expirado, o app autentica de novo. Sessão encerrada há mais
 que `app.sessao.retencao` é removida por limpeza periódica, e produção recusa subir sem esse
-prazo.
+prazo, e também sem a duração máxima.
 
 O Actuator exige `NATY`, exceto `/actuator/health` sem detalhe. Toda resposta carrega
 `X-Request-Id`.

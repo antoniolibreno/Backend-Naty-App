@@ -60,6 +60,13 @@ ambiente.** A aplicação recusa subir em produção sem eles, para não existir
 de segurança em repositório. O token é opaco e não é assinado, então não existe chave de
 assinatura.
 
+**A sessão renova até uma duração máxima contada do login.** Com token válido, a renovação
+emite token novo e revoga o apresentado, então o app não pede senha a cada abertura. A
+expiração do token novo nunca passa do fim de `app.sessao.duracao-maxima`, e depois dele o
+app autentica de novo. Sem teto, renovar indefinidamente mantém a sessão eterna e anula o
+prazo de expiração. A duração máxima vive em variável de ambiente, e a produção recusa subir
+sem ela.
+
 **A sessão encerrada é removida depois de um prazo de retenção.** Sessão expirada ou
 revogada há mais que `app.sessao.retencao` sai da tabela por limpeza periódica, com
 periodicidade em `app.sessao.limpeza.cron`. O prazo vive em variável de ambiente e a

@@ -36,6 +36,17 @@ public class SessaoController {
         return sessaoService.autenticar(requisicao);
     }
 
+    @PostMapping("/atual/renovacao")
+    @Operation(
+            summary = "Renova a sessao em uso",
+            description = "Com token valido, emite um token novo com o mesmo corpo da emissao e revoga o token"
+                    + " apresentado. A expiracao nunca passa da duracao maxima contada do login. Token expirado,"
+                    + " revogado ou de integrante que nao pode mais entrar devolve 401.")
+    public SessaoResponse renovar(@RequestHeader(TokenSessaoFiltro.CABECALHO_AUTORIZACAO) String autorizacao) {
+        return sessaoService.renovar(
+                autorizacao.substring(TokenSessaoFiltro.PREFIXO_BEARER.length()).trim());
+    }
+
     @DeleteMapping("/atual")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(

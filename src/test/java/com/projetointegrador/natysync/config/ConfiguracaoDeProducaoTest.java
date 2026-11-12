@@ -26,4 +26,9 @@ class ConfiguracaoDeProducaoTest {
     void expiracaoDeSessaoNaoTemValorPadraoEmProducao() throws IOException {
         assertThat(propriedade("app.sessao.expiracao")).isEqualTo("${APP_SESSAO_EXPIRACAO}");
     }
+
+    @Test
+    void duracaoMaximaDeSessaoNaoTemValorPadraoEmProducao() throws IOException {
+        assertThat(propriedade("app.sessao.duracao-maxima")).isEqualTo("${APP_SESSAO_DURACAO_MAXIMA}");
+    }
 }

@@ -111,4 +111,11 @@ correspondente derruba a aplicação na subida, e isso é proposital.
 A listagem com e-mail e dados de cadastro, para quem administra, mora no `painel`.
 `GET /api/v1/usuarios` é leitura de colegas e não expõe contato.
 
-A sessão não renova: quando o token expira, o app autentica de novo.
+A sessão renova por `SessaoService.renovar`, exposta em `POST /api/v1/sessoes/atual/renovacao`.
+Cada renovação cria uma linha nova em `sessao` com `iniciada_em` herdado do login, e a expiração
+é o menor entre `app.sessao.expiracao` a partir da renovação e o fim de
+`app.sessao.duracao-maxima` a partir de `iniciada_em`. O update `revogarPorTokenHash` é
+condicionado a `revogado_em is null`, e o retorno zero faz a renovação concorrente recusar, o
+que garante no máximo um token novo por token apresentado. Token expirado, revogado,
+inexistente, de integrante que não entra mais e com a duração máxima esgotada recebem a mesma
+recusa. Revogar por integrante ou por empresa alcança a cadeia inteira de renovações.

@@ -41,6 +41,7 @@ app:
     origens: ${APP_CORS_ORIGENS:http://localhost:*}
   sessao:
     expiracao: ${APP_SESSAO_EXPIRACAO:7d}
+    duracao-maxima: ${APP_SESSAO_DURACAO_MAXIMA:30d}
     retencao: ${APP_SESSAO_RETENCAO:30d}
     limpeza:
       cron: ${APP_SESSAO_LIMPEZA_CRON:0 0 3 * * *}

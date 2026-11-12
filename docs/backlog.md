@@ -122,7 +122,7 @@ As arestas que fixam a ordem:
   integrante são filtrados pela empresa de quem chamou.
   Toca: todos os controllers de leitura por empresa
 
-- [ ] **3.8 Renovar token**
+- [x] **3.8 Renovar token**
   A sessão expira pelo prazo de `app.sessao.expiracao`. Falta o caminho de renovação, para o
   app não exigir login a cada abertura nem manter sessão eterna.
   Toca: `POST /api/v1/sessoes`, `usuario`

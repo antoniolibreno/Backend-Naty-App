@@ -22,19 +22,23 @@ import org.springframework.transaction.annotation.Transactional;
 public class SessaoService {
 
     private static final int BYTES_DO_TOKEN = 32;
+    private static final String RECUSA_DA_SESSAO = "Sessao invalida.";
 
     private final UsuarioService usuarioService;
     private final SessaoRepository sessaoRepository;
     private final Duration expiracao;
+    private final Duration duracaoMaxima;
     private final SecureRandom sorteador = new SecureRandom();
 
     public SessaoService(
             UsuarioService usuarioService,
             SessaoRepository sessaoRepository,
-            @Value("${app.sessao.expiracao}") Duration expiracao) {
+            @Value("${app.sessao.expiracao}") Duration expiracao,
+            @Value("${app.sessao.duracao-maxima}") Duration duracaoMaxima) {
         this.usuarioService = usuarioService;
         this.sessaoRepository = sessaoRepository;
         this.expiracao = expiracao;
+        this.duracaoMaxima = duracaoMaxima;
     }
 
     @Transactional
@@ -43,14 +47,43 @@ public class SessaoService {
         String token = sortearToken();
         OffsetDateTime agora = agora();
 
+        Sessao sessao = emitir(usuario, token, agora, agora);
+        return respostaDe(sessao, token);
+    }
+
+    @Transactional
+    public SessaoResponse renovar(String tokenApresentado) {
+        OffsetDateTime agora = agora();
+        String hashApresentado = hashDe(tokenApresentado);
+        Sessao anterior = sessaoRepository
+                .buscarComIntegrantePorTokenHash(hashApresentado)
+                .filter(encontrada -> encontrada.estaValidaEm(agora))
+                .filter(encontrada -> encontrada.getUsuario().podeEntrar())
+                .filter(encontrada -> agora.isBefore(encontrada.getIniciadaEm().plus(duracaoMaxima)))
+                .orElseThrow(() -> new CredencialInvalidaException(RECUSA_DA_SESSAO));
+        if (sessaoRepository.revogarPorTokenHash(hashApresentado, agora) == 0) {
+            throw new CredencialInvalidaException(RECUSA_DA_SESSAO);
+        }
+        String token = sortearToken();
+        Sessao nova = emitir(anterior.getUsuario(), token, agora, anterior.getIniciadaEm());
+        return respostaDe(nova, token);
+    }
+
+    private Sessao emitir(Usuario usuario, String token, OffsetDateTime agora, OffsetDateTime iniciadaEm) {
+        OffsetDateTime expiraEm = agora.plus(expiracao);
+        OffsetDateTime fimDaDuracaoMaxima = iniciadaEm.plus(duracaoMaxima);
         Sessao sessao = new Sessao();
         sessao.setUsuario(usuario);
         sessao.setTokenHash(hashDe(token));
         sessao.setCriadoEm(agora);
-        sessao.setExpiraEm(agora.plus(expiracao));
+        sessao.setIniciadaEm(iniciadaEm);
+        sessao.setExpiraEm(expiraEm.isBefore(fimDaDuracaoMaxima) ? expiraEm : fimDaDuracaoMaxima);
         sessao.setUltimoAcessoEm(agora);
-        sessaoRepository.save(sessao);
+        return sessaoRepository.save(sessao);
+    }
 
+    private SessaoResponse respostaDe(Sessao sessao, String token) {
+        Usuario usuario = sessao.getUsuario();
         return new SessaoResponse(
                 usuario.getId(),
                 usuario.getEmpresa().getId(),
@@ -67,7 +100,7 @@ public class SessaoService {
                 .buscarComIntegrantePorTokenHash(hashDe(token))
                 .filter(encontrada -> encontrada.estaValidaEm(agora))
                 .filter(encontrada -> encontrada.getUsuario().podeEntrar())
-                .orElseThrow(() -> new CredencialInvalidaException("Sessao invalida."));
+                .orElseThrow(() -> new CredencialInvalidaException(RECUSA_DA_SESSAO));
         sessaoRepository.registrarAcesso(sessao.getId(), agora);
         Usuario usuario = sessao.getUsuario();
         return new IntegranteDaRequisicao(usuario.getId(), usuario.getEmpresa().getId(), usuario.getPapel());
