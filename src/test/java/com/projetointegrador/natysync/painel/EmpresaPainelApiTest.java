@@ -319,4 +319,108 @@ class EmpresaPainelApiTest extends PainelTest {
         assertThat(resposta.getBody().get("nome").asText()).isEqualTo("Nome Novo");
         assertThat(resposta.getBody().get("cnpj").asText()).isEqualTo(cnpj);
     }
+
+    private static final String EMPRESAS = "/api/v1/painel/empresas";
+
+    private String marca() {
+        return "Marca" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
+    }
+
+    private JsonNode buscar(String parametros) {
+        return chamar(naty.token(), HttpMethod.GET, EMPRESAS + "?" + parametros).getBody();
+    }
+
+    private java.util.List<String> nomes(JsonNode pagina) {
+        java.util.List<String> nomes = new java.util.ArrayList<>();
+        pagina.get("itens").forEach(item -> nomes.add(item.get("nome").asText()));
+        return nomes;
+    }
+
+    @Test
+    void buscaPorParteDoNomeIgnoraCaixa() {
+        String marca = marca();
+        criar(CorpoDeEmpresa.de(marca + " Treinamentos"));
+        criar(CorpoDeEmpresa.de("Outra Empresa"));
+
+        JsonNode pagina = buscar("busca=" + marca.toLowerCase());
+
+        assertThat(nomes(pagina)).containsExactly(marca + " Treinamentos");
+    }
+
+    @Test
+    void buscaPorRazaoSocialEmMaiusculasSemCasarComONome() {
+        String marca = marca();
+        criar(CorpoDeEmpresa.comRazaoSocial("Nome Sem Marca " + marca.length(), marca + "Razao"));
+
+        JsonNode pagina = buscar("busca=" + marca.toUpperCase() + "RAZAO");
+
+        assertThat(nomes(pagina)).containsExactly("Nome Sem Marca " + marca.length());
+    }
+
+    @Test
+    void buscaPorCnpjParcialComEmMascaraOuSem() {
+        String cnpj = CorpoDeEmpresa.cnpjNovo();
+        String nome = marca();
+        criar(CorpoDeEmpresa.comCnpj(nome, cnpj));
+        String comMascara = CorpoDeEmpresa.comMascara(cnpj);
+
+        assertThat(nomes(buscar("busca=" + cnpj))).containsExactly(nome);
+        assertThat(nomes(buscar("busca=" + comMascara))).containsExactly(nome);
+        assertThat(nomes(buscar("busca=" + comMascara.substring(0, 10)))).contains(nome);
+    }
+
+    @Test
+    void buscaSemResultadoDevolvePaginaVazia() {
+        JsonNode pagina = buscar("busca=" + marca() + "inexistente");
+
+        assertThat(pagina.get("itens").size()).isZero();
+        assertThat(pagina.get("totalItens").asLong()).isZero();
+        assertThat(pagina.get("totalPaginas").asInt()).isZero();
+    }
+
+    @Test
+    void curingasDaBuscaSaoLiteraisENaoDevolvemTodasAsEmpresas() {
+        criar(CorpoDeEmpresa.de(marca()));
+
+        assertThat(buscar("busca=%").get("itens").size()).isZero();
+        assertThat(buscar("busca=_").get("itens").size()).isZero();
+    }
+
+    @Test
+    void buscaVaziaEquivaleAListagemSemBusca() {
+        criar(CorpoDeEmpresa.de(marca()));
+
+        JsonNode semBusca = buscar("tamanho=100");
+        JsonNode comBuscaVazia = buscar("busca=&tamanho=100");
+
+        assertThat(comBuscaVazia.get("totalItens").asLong())
+                .isEqualTo(semBusca.get("totalItens").asLong());
+        assertThat(nomes(comBuscaVazia)).isEqualTo(nomes(semBusca));
+    }
+
+    @Test
+    void ordemPorNomeEMantidaComBusca() {
+        String marca = marca();
+        criar(CorpoDeEmpresa.de(marca + " B"));
+        criar(CorpoDeEmpresa.de(marca + " A"));
+        criar(CorpoDeEmpresa.de(marca + " C"));
+
+        assertThat(nomes(buscar("busca=" + marca))).containsExactly(marca + " A", marca + " B", marca + " C");
+    }
+
+    @Test
+    void totalDePaginasConsideraSoOsResultadosDaBusca() {
+        String marca = marca();
+        criar(CorpoDeEmpresa.de(marca + " 1"));
+        criar(CorpoDeEmpresa.de(marca + " 2"));
+        criar(CorpoDeEmpresa.de(marca + " 3"));
+
+        JsonNode primeira = buscar("busca=" + marca + "&tamanho=2&pagina=0");
+        JsonNode segunda = buscar("busca=" + marca + "&tamanho=2&pagina=1");
+
+        assertThat(primeira.get("totalItens").asLong()).isEqualTo(3);
+        assertThat(primeira.get("totalPaginas").asInt()).isEqualTo(2);
+        assertThat(primeira.get("itens").size()).isEqualTo(2);
+        assertThat(segunda.get("itens").size()).isEqualTo(1);
+    }
 }

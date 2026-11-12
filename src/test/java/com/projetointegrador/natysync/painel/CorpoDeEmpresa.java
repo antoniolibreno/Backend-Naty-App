@@ -34,6 +34,12 @@ final class CorpoDeEmpresa {
         return corpo;
     }
 
+    static Map<String, Object> comRazaoSocial(String nome, String razaoSocial) {
+        Map<String, Object> corpo = new HashMap<>(de(nome));
+        corpo.put("razaoSocial", razaoSocial);
+        return corpo;
+    }
+
     static Map<String, Object> sem(String nome, String campo) {
         Map<String, Object> corpo = new HashMap<>(de(nome));
         corpo.remove(campo);

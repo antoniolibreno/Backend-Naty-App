@@ -105,6 +105,13 @@ A unicidade de e-mail é global. O cadastro de uma empresa recebe 409 para e-mai
 em outra, e isso revela que o e-mail existe em algum lugar. É o preço do login sem escolha
 de empresa.
 
+`GET /api/v1/painel/empresas` aceita `busca` opcional, que procura por trecho do nome, da razão
+social e do CNPJ. O texto vai para `EmpresaRepository.buscar` em minúsculas, e o CNPJ parcial
+passa por `Cnpj.normalizar`, então a máscara não atrapalha. `%`, `_` e `\` da entrada são
+escapados em `EmpresaService.escaparCuringas`, e busca com `%` não devolve todas as empresas.
+Busca nula ou em branco devolve a listagem sem filtro, e a ordem por nome e identificador vale
+com e sem busca.
+
 A listagem ignora o parâmetro `sort` do cliente e ordena por nome e identificador. Ordenar
 por campo livre expõe coluna e quebra paginação estável.
 

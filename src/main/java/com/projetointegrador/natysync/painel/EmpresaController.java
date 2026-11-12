@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -42,7 +43,7 @@ public class EmpresaController {
     @GetMapping
     @Operation(
             summary = "Listar as empresas",
-            description = "Exige NATY. Paginada, no máximo 100 por página, ordenada por nome.")
+            description = "Exige NATY. Paginada, no máximo 100 por página, ordenada por nome. Aceita busca por texto.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Página de empresas"),
         @ApiResponse(
@@ -54,8 +55,12 @@ public class EmpresaController {
                 description = "Papel diferente de NATY",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
-    public PaginaResponse<EmpresaResponse> listar(@ParameterObject Pageable pagina) {
-        return empresaService.listar(pagina);
+    public PaginaResponse<EmpresaResponse> listar(
+            @ParameterObject Pageable pagina,
+            @Parameter(description = "Procura em nome, razão social e CNPJ, com ou sem máscara", example = "acme")
+                    @RequestParam(required = false)
+                    String busca) {
+        return empresaService.listar(pagina, busca);
     }
 
     @GetMapping("/{empresaId}")

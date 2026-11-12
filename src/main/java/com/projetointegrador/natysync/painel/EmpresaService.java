@@ -10,6 +10,7 @@ import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
 import com.projetointegrador.natysync.usuario.Papel;
 import com.projetointegrador.natysync.usuario.SessaoService;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -40,9 +41,19 @@ public class EmpresaService {
         this.empresaMapper = empresaMapper;
     }
 
-    public PaginaResponse<EmpresaResponse> listar(Pageable pagina) {
+    public PaginaResponse<EmpresaResponse> listar(Pageable pagina, String busca) {
         PageRequest pedido = PageRequest.of(pagina.getPageNumber(), pagina.getPageSize(), ORDEM_DA_LISTAGEM);
-        return PaginaResponse.de(empresaRepository.findAll(pedido), empresaMapper::paraResposta);
+        if (busca == null || busca.isBlank()) {
+            return PaginaResponse.de(empresaRepository.findAll(pedido), empresaMapper::paraResposta);
+        }
+        String texto = "%" + escaparCuringas(busca.trim().toLowerCase(Locale.ROOT)) + "%";
+        String cnpjNormalizado = Cnpj.normalizar(busca);
+        String cnpjParcial = cnpjNormalizado.isEmpty() ? null : "%" + escaparCuringas(cnpjNormalizado) + "%";
+        return PaginaResponse.de(empresaRepository.buscar(texto, cnpjParcial, pedido), empresaMapper::paraResposta);
+    }
+
+    private static String escaparCuringas(String texto) {
+        return texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     public EmpresaResponse buscarPorId(UUID empresaId) {

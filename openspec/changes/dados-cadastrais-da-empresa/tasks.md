@@ -224,21 +224,21 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
 
 ## 5. Busca na listagem de empresas
 
-- [ ] 5.1 Em `empresa/EmpresaRepository.java`, criar `Page<Empresa> buscar(String texto,
+- [x] 5.1 Em `empresa/EmpresaRepository.java`, criar `Page<Empresa> buscar(String texto,
   String cnpjParcial, Pageable pagina)` com `@Query` JPQL:
   `lower(e.nome) like :texto escape '\'` ou `lower(e.razaoSocial) like :texto escape '\'` ou
   (`:cnpjParcial` não nulo e `e.cnpj like :cnpjParcial escape '\'`). Os parâmetros chegam
   já com `%` nas pontas e com `%`, `_` e `\` da entrada escapados.
-- [ ] 5.2 Em `painel/EmpresaService.java`, receber `busca` opcional na listagem: nula ou em
+- [x] 5.2 Em `painel/EmpresaService.java`, receber `busca` opcional na listagem: nula ou em
   branco usa a listagem atual; senão monta `texto` (minúsculas, `Locale.ROOT`, escapado) e
   `cnpjParcial` (`Cnpj.normalizar`, escapado, `null` quando vazio) e chama `buscar` com a
   mesma ordenação fixa por nome e identificador. Em `painel/EmpresaController.java`, aceitar
   `@RequestParam(required = false) String busca` com `@Parameter` descrito no Swagger.
-- [ ] 5.3 Em `painel/EmpresaPainelApiTest.java`, testes dos cenários do requisito "Busca na
+- [x] 5.3 Em `painel/EmpresaPainelApiTest.java`, testes dos cenários do requisito "Busca na
   listagem de empresas" mais: busca com `%` não devolve todas, busca vazia igual à listagem
   sem busca, ordem por nome mantida com busca, total de páginas correto com busca. Aceite:
   test-runner com `./mvnw -B test -Dtest='EmpresaPainelApiTest'` verde.
-- [ ] 5.4 Registrar em `painel/CLAUDE.md` o parâmetro `busca` e o escape dos curingas.
+- [x] 5.4 Registrar em `painel/CLAUDE.md` o parâmetro `busca` e o escape dos curingas.
   Aceite: varredura de travessão vazia.
 
 ## 6. Criação de empresa com o primeiro ADMIN
