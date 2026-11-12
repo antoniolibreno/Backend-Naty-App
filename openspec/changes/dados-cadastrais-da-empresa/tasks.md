@@ -158,9 +158,10 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
   o fato de as duas colunas serem nulas no banco, e `usuario/CLAUDE.md` com a coluna
   `telefone` nula. Aceite: varredura de travessão vazia
   (`git diff | grep -n "$(python3 -c 'print(chr(8212))')"`).
-- [ ] 2.7 Pendência da confirmação do CNPJ da Naty: o Breno confirma na Receita Federal que
+- [x] 2.7 Pendência da confirmação do CNPJ da Naty: o Breno confirma na Receita Federal que
   `48.055.059/0001-03` é o CNPJ de `Naty App Oficial LTDA` antes de configurá-lo em
-  produção. Aceite: confirmação do Breno registrada na tarefa 9.4.
+  produção. Aceite: confirmação do Breno registrada na tarefa 9.4. Confirmado pelo Breno em consulta
+  da Serasa Experian: CNPJ `48.055.059/0001-03`, razão social `NATY APP OFICIAL LTDA - ME`.
 
 ## 3. CNPJ
 
@@ -312,14 +313,14 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
 
 ## 9. Integração e fechamento
 
-- [ ] 9.1 Atualizar `README.md` (empresa com CNPJ e razão social; criação com o primeiro
+- [x] 9.1 Atualizar `README.md` (empresa com CNPJ e razão social; criação com o primeiro
   `ADMIN` e telefone; variáveis `APP_BOOTSTRAP_NATY_CNPJ` e
   `APP_BOOTSTRAP_NATY_RAZAO_SOCIAL`; papel no login) e o `CLAUDE.md` raiz se a descrição de
   `painel` ou de `empresa` deixar de bater. Aceite: varredura de travessão vazia e texto sem
   verbo de mudança nem marcador de tempo.
-- [ ] 9.2 Rodar `npx --yes @fission-ai/openspec@latest validate dados-cadastrais-da-empresa
+- [x] 9.2 Rodar `npx --yes @fission-ai/openspec@latest validate dados-cadastrais-da-empresa
   --strict`. Aceite: sem erro.
-- [ ] 9.3 Antes do fechamento, `git fetch origin` e `git merge origin/main`; conflito que
+- [x] 9.3 Antes do fechamento, `git fetch origin` e `git merge origin/main`; conflito que
   mude comportamento de outra pessoa é parada para o Breno. Test-runner com
   `./mvnw -B test-compile` e `./mvnw -B verify`; se o `spotless:check` falhar, rodar
   `./mvnw -B spotless:apply` e repetir. Aceite: build verde e resumo (total, falhas e motivo)
