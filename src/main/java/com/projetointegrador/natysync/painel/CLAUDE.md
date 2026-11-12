@@ -113,6 +113,15 @@ cria conta, e o Jackson ignora o bloco `administrador` enviado nele. O telefone 
 nesse bloco. `AdministradorInicialRequest` mascara a senha no `toString`, como
 `IntegranteCriacaoRequest`.
 
+Toda empresa tem ao menos um `ADMIN` ativo. `IntegranteService` recusa com 409
+`ULTIMO_ADMINISTRADOR` desativar a conta ou rebaixar o papel do último `ADMIN` ativo da empresa,
+e a conta fica como estava. A checagem trava a linha da empresa por
+`EmpresaRepository.travarPorId`, depois da trava da linha do alvo, e conta os outros `ADMIN`
+ativos. A trava serializa duas desativações simultâneas dos dois últimos `ADMIN`: a segunda lê o
+resultado já gravado da primeira e recebe 409. Desativar a empresa inteira em `EmpresaService`
+não passa por essa regra. `ADMIN` não administra conta `ADMIN`, então a tentativa dele de
+desativar a própria conta responde 403 antes da checagem.
+
 `GET /api/v1/painel/empresas` aceita `busca` opcional, que procura por trecho do nome, da razão
 social e do CNPJ. O texto vai para `EmpresaRepository.buscar` em minúsculas, e o CNPJ parcial
 passa por `Cnpj.normalizar`, então a máscara não atrapalha. `%`, `_` e `\` da entrada são

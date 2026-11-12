@@ -140,7 +140,7 @@ public class IntegranteController {
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "E-mail em uso ou conta NATY como alvo",
+                description = "E-mail em uso, conta NATY como alvo ou rebaixa o último ADMIN ativo",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public IntegranteResponse alterar(
@@ -208,7 +208,7 @@ public class IntegranteController {
                 content = @Content(schema = @Schema(implementation = ErroResposta.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "Conta NATY como alvo",
+                description = "Conta NATY como alvo ou desativa o último ADMIN ativo",
                 content = @Content(schema = @Schema(implementation = ErroResposta.class)))
     })
     public void definirAtivo(

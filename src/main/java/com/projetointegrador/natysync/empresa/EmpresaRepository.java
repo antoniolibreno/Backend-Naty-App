@@ -1,9 +1,12 @@
 package com.projetointegrador.natysync.empresa;
 
+import jakarta.persistence.LockModeType;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -16,4 +19,8 @@ public interface EmpresaRepository extends JpaRepository<Empresa, UUID> {
                or e.cnpj like coalesce(:cnpjParcial, '') escape '\\'
             """)
     Page<Empresa> buscar(@Param("texto") String texto, @Param("cnpjParcial") String cnpjParcial, Pageable pagina);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select e from Empresa e where e.id = :id")
+    Optional<Empresa> travarPorId(@Param("id") UUID id);
 }

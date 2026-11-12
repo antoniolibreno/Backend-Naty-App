@@ -202,8 +202,14 @@ Desativar a empresa inteira NÃO SHALL ser afetado por essa regra.
 
 #### Scenario: Desativar o último ADMIN
 
-- **WHEN** um `NATY` ou o próprio `ADMIN` desativa a única conta `ADMIN` ativa da empresa
+- **WHEN** um `NATY` desativa a única conta `ADMIN` ativa da empresa
 - **THEN** o sistema devolve 409 com código `ULTIMO_ADMINISTRADOR` e a conta continua ativa
+
+#### Scenario: ADMIN desativa a própria conta
+
+- **WHEN** o único `ADMIN` ativo da empresa tenta desativar a própria conta
+- **THEN** o sistema devolve 403 `ACESSO_NEGADO`, porque conta `ADMIN` só é administrada pelo
+  papel `NATY`, e a conta continua ativa
 
 #### Scenario: Rebaixar o último ADMIN
 
@@ -215,7 +221,7 @@ Desativar a empresa inteira NÃO SHALL ser afetado por essa regra.
 
 - **WHEN** um `NATY` desativa uma conta `ADMIN` da empresa e existe outra conta `ADMIN`
   ativa na mesma empresa
-- **THEN** o sistema desativa a conta e devolve 200
+- **THEN** o sistema desativa a conta e devolve 204
 
 #### Scenario: Outro ADMIN inativo não conta
 

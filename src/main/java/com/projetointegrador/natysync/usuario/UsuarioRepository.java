@@ -43,5 +43,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID>, JpaSpec
 
     boolean existsByEmpresaIdAndPapel(UUID empresaId, Papel papel);
 
+    boolean existsByEmpresaIdAndPapelAndAtivoTrueAndIdNot(UUID empresaId, Papel papel, UUID id);
+
     Page<Usuario> findByEmpresaIdAndAtivoTrue(UUID empresaId, Pageable pagina);
 }

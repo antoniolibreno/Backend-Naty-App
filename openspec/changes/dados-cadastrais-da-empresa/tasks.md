@@ -273,7 +273,7 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
 
 ## 7. Empresa sempre com ADMIN ativo
 
-- [ ] 7.1 Em `painel/CodigoDeConflito.java`, criar `ULTIMO_ADMINISTRADOR`. Em
+- [x] 7.1 Em `painel/CodigoDeConflito.java`, criar `ULTIMO_ADMINISTRADOR`. Em
   `painel/IntegranteService.java`, nos pontos achados na pergunta 9 de 1.3, recusar com
   `409 ULTIMO_ADMINISTRADOR` desativar conta ou alterar o papel da conta que é o último
   `ADMIN` ativo da empresa, contando só contas `ADMIN` ativas da mesma empresa e excluindo a
@@ -281,19 +281,19 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
   pela checagem. Se isso exigir mudar a interface pública de `IntegranteService` além de
   método novo, PARAR e registrar na revisão humana 1.5. Aceite: `./mvnw -B test-compile`
   passa.
-- [ ] 7.2 Em `painel/IntegranteService.java`, tratar a concorrência: duas desativações
+- [x] 7.2 Em `painel/IntegranteService.java`, tratar a concorrência: duas desativações
   simultâneas dos dois últimos `ADMIN` ativos não podem deixar a empresa sem nenhum. Usar
   trava pessimista na linha da empresa ou consulta equivalente dentro da transação, e
   registrar a escolha em `painel/CLAUDE.md`. Aceite: teste de concorrência no padrão dos
   testes existentes do projeto, ou, se não houver padrão, tarefa registrada em
   `docs/backlog.md`.
-- [ ] 7.3 Em `painel/IntegranteController.java` e na documentação Swagger das rotas de
+- [x] 7.3 Em `painel/IntegranteController.java` e na documentação Swagger das rotas de
   desativação e de alteração de integrante, documentar a resposta 409 `ULTIMO_ADMINISTRADOR`.
-- [ ] 7.4 Testes por cenário do requisito "Empresa sempre com ADMIN ativo": desativar o
-  último `ADMIN` por `NATY` e pelo próprio `ADMIN`, rebaixar o último `ADMIN`, desativar um
+- [x] 7.4 Testes por cenário do requisito "Empresa sempre com ADMIN ativo": desativar o
+  último `ADMIN` por `NATY`, o próprio `ADMIN` recebendo 403, rebaixar o último `ADMIN`, desativar um
   `ADMIN` havendo outro ativo, outro `ADMIN` inativo não conta, desativar a empresa inteira
   com um único `ADMIN`. Aceite: test-runner com `./mvnw -B test -Dtest='**/painel/**'` verde.
-- [ ] 7.5 Registrar em `painel/CLAUDE.md` a regra do último `ADMIN` e o código
+- [x] 7.5 Registrar em `painel/CLAUDE.md` a regra do último `ADMIN` e o código
   `ULTIMO_ADMINISTRADOR`. Aceite: varredura de travessão vazia e texto sem verbo de mudança
   nem marcador de tempo.
 
