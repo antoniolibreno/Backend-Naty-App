@@ -160,11 +160,8 @@ permitido. A checagem mora em `IntegranteService`, no ponto onde ele desativa e 
 e conta apenas contas `ADMIN` ativas da mesma empresa, com a conta alterada excluída da
 contagem.
 
-O requisito é escrito em `specs/cadastro-empresa/spec.md` como requisito de empresa "Empresa
-sempre com ADMIN ativo". Pendência explícita: o contrato de `cadastro-integrante` descreve
-desativação e alteração de papel e precisa de um delta próprio com o mesmo comportamento.
-Como esse delta é arquivo novo fora desta proposta, a necessidade é registrada na última
-tarefa do grupo de fechamento (9.4) para decisão do Breno.
+O requisito "Empresa sempre com ADMIN ativo" é escrito em `specs/cadastro-integrante/spec.md`,
+porque descreve a desativação e a alteração de papel de integrante.
 
 Se a implementação exigir mudar a interface pública de `IntegranteService` além de método
 novo, a parada de revisão humana 1.5 registra a mudança antes do código.

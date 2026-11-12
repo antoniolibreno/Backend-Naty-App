@@ -57,7 +57,9 @@ Nenhuma.
 ### Modified Capabilities
 
 - `cadastro-empresa`: empresa com CNPJ e razão social, unicidade de CNPJ, busca na
-  listagem, criação com o primeiro `ADMIN` e empresa sempre com `ADMIN` ativo.
+  listagem, criação com o primeiro `ADMIN`.
+- `cadastro-integrante`: telefone opcional do integrante e empresa sempre com `ADMIN` ativo na
+  desativação e na alteração de papel.
 - `sessao-integrante`: a resposta da emissão e da renovação de sessão traz o papel da
   conta.
 

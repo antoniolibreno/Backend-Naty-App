@@ -325,14 +325,13 @@ Pacote raiz dos caminhos abaixo: `src/main/java/com/projetointegrador/natysync`.
   `./mvnw -B test-compile` e `./mvnw -B verify`; se o `spotless:check` falhar, rodar
   `./mvnw -B spotless:apply` e repetir. Aceite: build verde e resumo (total, falhas e motivo)
   mostrado ao Breno.
-- [ ] 9.4 Pendência para decisão do Breno: o contrato de `cadastro-integrante` descreve
-  desativação e alteração de papel e precisa de um spec delta próprio com a regra
-  `ULTIMO_ADMINISTRADOR`. O delta é arquivo novo fora desta proposta, então a necessidade
-  fica registrada aqui e em `design.md` (D9), e a decisão é criar o delta nesta change ou em
-  proposta própria. Registrar também a confirmação do CNPJ da tarefa 2.7.
+- [x] 9.4 O requisito "Empresa sempre com ADMIN ativo" e o requisito "Telefone do integrante"
+  moram em `specs/cadastro-integrante/spec.md`, e a confirmação do CNPJ da tarefa 2.7 está
+  registrada nela.
 
 ## Workflow follow-up
 
 - Arquivar a change depois do merge, com `/opsx:archive`.
-- Conferir que `openspec/specs/cadastro-empresa/spec.md` e
-  `openspec/specs/sessao-integrante/spec.md` receberam os requisitos novos.
+- Conferir que `openspec/specs/cadastro-empresa/spec.md`,
+  `openspec/specs/cadastro-integrante/spec.md` e `openspec/specs/sessao-integrante/spec.md`
+  receberam os requisitos novos.
