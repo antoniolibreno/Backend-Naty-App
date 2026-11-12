@@ -209,7 +209,7 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
 
 ### Progresso na trilha
 
-- [ ] **4.7 Expor o resumo de progresso do integrante**
+- [x] **4.7 Expor o resumo de progresso do integrante**
   Devolve percentual concluído, atividades feitas e qual é a próxima atividade, para o app
   mostrar o "continuar de onde parou" sem pedir a trilha inteira.
   Toca: `GET /api/v1/integrantes/{integranteId}/progresso`

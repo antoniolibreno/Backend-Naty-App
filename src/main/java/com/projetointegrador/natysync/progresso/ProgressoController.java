@@ -1,5 +1,6 @@
 package com.projetointegrador.natysync.progresso;
 
+import com.projetointegrador.natysync.progresso.dto.ResumoProgressoResponse;
 import com.projetointegrador.natysync.progresso.dto.TentativaQuizRequest;
 import com.projetointegrador.natysync.progresso.dto.TentativaQuizResponse;
 import com.projetointegrador.natysync.progresso.dto.TrilhaProgressoResponse;
@@ -32,6 +33,16 @@ public class ProgressoController {
     @Operation(summary = "Devolve a trilha com o estado de cada atividade para o integrante")
     public TrilhaProgressoResponse detalharProgresso(@PathVariable UUID trilhaId, IntegranteDaRequisicao integrante) {
         return progressoService.buscarTrilhaComProgresso(trilhaId, integrante);
+    }
+
+    @GetMapping("/integrantes/{integranteId}/progresso")
+    @Operation(
+            summary = "Resume o progresso do integrante somando as trilhas ativas",
+            description = "Devolve total de atividades, concluidas, percentual e a proxima atividade, para a propria"
+                    + " conta ou colega ativo da mesma empresa. Outra empresa, conta desativada e identificador"
+                    + " inexistente respondem 404.")
+    public ResumoProgressoResponse resumirProgresso(@PathVariable UUID integranteId, IntegranteDaRequisicao quem) {
+        return progressoService.resumir(integranteId, quem.empresaId());
     }
 
     @PostMapping("/atividades/{atividadeId}/video-assistido")
