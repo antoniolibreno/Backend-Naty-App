@@ -462,7 +462,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   exige montar o id.
   Toca: `empresa/Empresa.java`
 
-- [ ] **10.3 Trocar o assert frágil de `QuizApiTest`**
+- [x] **10.3 Trocar o assert frágil de `QuizApiTest`**
   O teste garante que o gabarito não vaza procurando o texto `true` no corpo da resposta.
   Qualquer campo booleano verdadeiro futuro quebra o teste sem nenhum vazamento real.
   Verificar a estrutura da resposta no lugar.
@@ -473,7 +473,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   Ranking e acompanhamento seguem o mesmo padrão.
   Toca: `shared/pagina/PaginaResponse.java`, `application.yml`
 
-- [ ] **10.5 Criar `src/test/resources` com `application-test.yml`**
+- [x] **10.5 Criar `src/test/resources` com `application-test.yml`**
   Não existe recurso de teste, então os testes herdam o perfil de desenvolvimento. Um
   perfil de teste próprio deixa explícito o que roda no teste.
   Toca: `src/test/resources/application-test.yml`
@@ -493,19 +493,19 @@ Decisões que o épico carrega e que precisam sair antes do código:
   sessão não apareçam em log nem em mensagem de erro.
   Toca: `painel`, `usuario`, `shared`
 
-- [ ] **10.9 Testar as regras de dependência entre pacotes**
+- [x] **10.9 Testar as regras de dependência entre pacotes**
   Faz o build falhar se `trilha` passar a depender de `progresso`, se algum pacote além de
   `painel` escrever em `usuario`, ou se um DTO de leitura ganhar campo de gabarito. Essas
   setas são fáceis de inverter por conveniência.
   Toca: `src/test/java`
 
-- [ ] **10.10 Verificar a regra de comentários e a de escrita de documento no build**
+- [x] **10.10 Verificar a regra de comentários e a de escrita de documento no build**
   A busca por comentário explicativo, por marcador temporal no código e por narrativa de
   mudança nos documentos é item manual de checklist. Vira passo do build, senão depende de
   disciplina.
   Toca: `pom.xml`
 
-- [ ] **10.11 Configurar integração contínua**
+- [x] **10.11 Configurar integração contínua**
   Roda `./mvnw -B verify` em cada envio, com Docker disponível para os Testcontainers,
   para formatação e testes não dependerem de quem lembrou de rodar.
   Toca: configuração de CI
@@ -543,7 +543,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   corpo, que no login carrega a senha.
   Toca: `shared/exception/ApiExceptionHandler.java`
 
-- [ ] **10.18 Trocar os e-mails fixos dos testes por e-mails aleatórios**
+- [x] **10.18 Trocar os e-mails fixos dos testes por e-mails aleatórios**
   O índice de e-mail é único no sistema inteiro e o banco de teste é compartilhado. Uma
   limpeza que falha deixa um e-mail fixo no banco e derruba as classes seguintes que usam o
   mesmo e-mail.

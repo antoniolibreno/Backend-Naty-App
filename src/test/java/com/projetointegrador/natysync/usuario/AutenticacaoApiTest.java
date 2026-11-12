@@ -19,6 +19,12 @@ import tools.jackson.databind.JsonNode;
 
 class AutenticacaoApiTest extends IntegracaoTest {
 
+    private final String emailAtivo = emailUnico("ativo");
+    private final String emailDeInativa = emailUnico("de-inativa");
+    private final String emailDesativado = emailUnico("desativado");
+    private final String emailFicaInativa = emailUnico("fica-inativa");
+    private final String emailNinguem = emailUnico("ninguem");
+
     private static final UUID TRILHA = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
     @Autowired
@@ -32,8 +38,8 @@ class AutenticacaoApiTest extends IntegracaoTest {
     void criarIntegrantes() {
         Empresa empresa = criarEmpresa("Empresa de Autenticacao");
         empresaId = empresa.getId();
-        integranteId = criarIntegrante(empresa, "Integrante Ativo", "ativo@teste.com.br");
-        desativadoId = criarIntegrante(empresa, "Integrante Desativado", "desativado@teste.com.br");
+        integranteId = criarIntegrante(empresa, "Integrante Ativo", emailAtivo);
+        desativadoId = criarIntegrante(empresa, "Integrante Desativado", emailDesativado);
 
         Usuario desativado = usuarioRepository.findById(desativadoId).orElseThrow();
         desativado.setAtivo(false);
@@ -63,7 +69,7 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
     @Test
     void senhaCorretaEmiteToken() {
-        ResponseEntity<JsonNode> resposta = autenticarCom("ativo@teste.com.br", SENHA_DE_TESTE);
+        ResponseEntity<JsonNode> resposta = autenticarCom(emailAtivo, SENHA_DE_TESTE);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody().get("token").asText()).isNotBlank();
@@ -71,7 +77,7 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
     @Test
     void senhaIncorretaEhRecusada() {
-        ResponseEntity<JsonNode> resposta = autenticarCom("ativo@teste.com.br", "senha-errada");
+        ResponseEntity<JsonNode> resposta = autenticarCom(emailAtivo, "senha-errada");
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(resposta.getBody().get("codigo").asText()).isEqualTo("CREDENCIAL_INVALIDA");
@@ -79,8 +85,8 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
     @Test
     void emailInexistenteDevolveAMesmaRecusaQueSenhaIncorreta() {
-        ResponseEntity<JsonNode> inexistente = autenticarCom("ninguem@teste.com.br", SENHA_DE_TESTE);
-        ResponseEntity<JsonNode> senhaErrada = autenticarCom("ativo@teste.com.br", "senha-errada");
+        ResponseEntity<JsonNode> inexistente = autenticarCom(emailNinguem, SENHA_DE_TESTE);
+        ResponseEntity<JsonNode> senhaErrada = autenticarCom(emailAtivo, "senha-errada");
 
         assertThat(inexistente.getStatusCode()).isEqualTo(senhaErrada.getStatusCode());
         assertThat(inexistente.getBody().get("codigo").asText())
@@ -91,7 +97,7 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
     @Test
     void integranteDesativadoNaoObtemSessao() {
-        ResponseEntity<JsonNode> resposta = autenticarCom("desativado@teste.com.br", SENHA_DE_TESTE);
+        ResponseEntity<JsonNode> resposta = autenticarCom(emailDesativado, SENHA_DE_TESTE);
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(sessaoRepository.findByUsuarioId(desativadoId)).isEmpty();
@@ -113,7 +119,7 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
     @Test
     void tokenExpiradoEhRecusado() {
-        String token = autenticar("ativo@teste.com.br", SENHA_DE_TESTE);
+        String token = autenticar(emailAtivo, SENHA_DE_TESTE);
         assertThat(lerTrilhaCom(token).getStatusCode()).isEqualTo(HttpStatus.OK);
 
         Sessao sessao = sessaoRepository.findByUsuarioId(integranteId).getFirst();
@@ -125,7 +131,7 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
     @Test
     void tokenRevogadoNaoEhAceitoNaChamadaSeguinte() {
-        String token = autenticar("ativo@teste.com.br", SENHA_DE_TESTE);
+        String token = autenticar(emailAtivo, SENHA_DE_TESTE);
         assertThat(lerTrilhaCom(token).getStatusCode()).isEqualTo(HttpStatus.OK);
 
         ResponseEntity<Void> revogacao =
@@ -137,7 +143,7 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
     @Test
     void oTokenEmClaroNaoEhGuardadoEmBanco() {
-        String token = autenticar("ativo@teste.com.br", SENHA_DE_TESTE);
+        String token = autenticar(emailAtivo, SENHA_DE_TESTE);
 
         Sessao sessao = sessaoRepository.findByUsuarioId(integranteId).getFirst();
 
@@ -159,12 +165,12 @@ class AutenticacaoApiTest extends IntegracaoTest {
     @Test
     void integranteDeEmpresaInativaNaoAutenticaComAMesmaRecusa() {
         Empresa inativa = criarEmpresa("Empresa Inativa");
-        criarIntegrante(inativa, "Integrante de Inativa", "de-inativa@teste.com.br");
+        criarIntegrante(inativa, "Integrante de Inativa", emailDeInativa);
         inativa.setAtiva(false);
         empresaRepository.save(inativa);
 
-        ResponseEntity<JsonNode> recusa = autenticarCom("de-inativa@teste.com.br", SENHA_DE_TESTE);
-        ResponseEntity<JsonNode> senhaErrada = autenticarCom("ativo@teste.com.br", "senha-errada");
+        ResponseEntity<JsonNode> recusa = autenticarCom(emailDeInativa, SENHA_DE_TESTE);
+        ResponseEntity<JsonNode> senhaErrada = autenticarCom(emailAtivo, "senha-errada");
 
         assertThat(recusa.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(recusa.getBody().get("mensagem").asText())
@@ -174,8 +180,8 @@ class AutenticacaoApiTest extends IntegracaoTest {
     @Test
     void sessaoAbertaCaiQuandoAEmpresaFicaInativa() {
         Empresa empresa = criarEmpresa("Empresa que Fica Inativa");
-        criarIntegrante(empresa, "Integrante", "fica-inativa@teste.com.br");
-        String token = autenticar("fica-inativa@teste.com.br", SENHA_DE_TESTE);
+        criarIntegrante(empresa, "Integrante", emailFicaInativa);
+        String token = autenticar(emailFicaInativa, SENHA_DE_TESTE);
         assertThat(lerTrilhaCom(token).getStatusCode()).isEqualTo(HttpStatus.OK);
 
         empresa.setAtiva(false);
@@ -186,7 +192,7 @@ class AutenticacaoApiTest extends IntegracaoTest {
 
     @Test
     void usoDaSessaoRegistraOUltimoAcessoNaSessao() {
-        String token = autenticar("ativo@teste.com.br", SENHA_DE_TESTE);
+        String token = autenticar(emailAtivo, SENHA_DE_TESTE);
         Sessao sessao = sessaoRepository.findByUsuarioId(integranteId).getFirst();
         sessao.setUltimoAcessoEm(OffsetDateTime.now(ZoneOffset.UTC).minusDays(1));
         sessaoRepository.save(sessao);
