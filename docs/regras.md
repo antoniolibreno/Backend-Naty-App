@@ -195,6 +195,21 @@ paginação é obrigatória.
 
 **Ranking entre empresas não existe.**
 
+## Acompanhamento
+
+**A Naty acompanha quem avança e quem parou, e só a conta `NATY` lê o acompanhamento.** É o
+único ponto, junto do cadastro de empresas, que atravessa empresas, e nunca escreve em progresso,
+pontuação nem cadastro.
+
+**Parado é o integrante que passou o prazo configurado sem concluir atividade.** O prazo vive em
+`app.acompanhamento.dias-parado`, padrão 3 dias de calendário no fuso da empresa, e a comparação é
+`dias >= prazo`. Conta nova sem estudo está sem início até passar o prazo, e quem concluiu tudo
+nunca está parado.
+
+**O funil por atividade conta quem chegou e quem passou.** Chegou quem tem a atividade liberada,
+passou quem a concluiu, e é essa diferença que revela a atividade que barra a empresa inteira. A
+conta `NATY` e o integrante desativado ficam fora de toda contagem.
+
 ## Consumidores
 
 **O app Flutter tem Login, Home no estilo Duolingo e tela de assistir aula.** São as três

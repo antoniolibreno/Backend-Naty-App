@@ -64,6 +64,8 @@ public class SecurityConfig {
                                 "/api/v1/perguntas/**",
                                 "/api/v1/alternativas/**")
                         .hasRole(Papel.NATY.name())
+                        .requestMatchers("/api/v1/acompanhamento/**")
+                        .hasRole(Papel.NATY.name())
                         .requestMatchers("/api/v1/painel/empresas/**")
                         .hasRole(Papel.NATY.name())
                         .requestMatchers("/api/v1/painel/integrantes/**")

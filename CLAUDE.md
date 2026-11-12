@@ -118,6 +118,9 @@ pergunta e alternativa. Conteúdo semeado por migration e escrito pelo `conteudo
 ordem, ativação de trilha, proteção do histórico e registro de quem alterou o conteúdo. Único
 pacote que escreve nas entidades de `trilha`.
 
+`acompanhamento`: leitura do progresso de qualquer empresa para a conta `NATY`, com situação de
+cada integrante, métricas, CSV e funil por atividade. Só lê, e nada depende dele.
+
 `progresso`: estado de cada integrante na trilha, com desbloqueio linear e conclusão de
 atividade. Publica o fato de estudo que a gamificação escuta.
 

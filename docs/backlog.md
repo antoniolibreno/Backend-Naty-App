@@ -407,45 +407,45 @@ Decisões que o épico carrega e que precisam sair antes do código:
 - **Definição de parado:** quantos dias sem concluir atividade contam como parado. O
   número nasce como propriedade configurável, não como constante no código.
 
-- [ ] **7.1 Criar o pacote `acompanhamento`**
+- [x] **7.1 Criar o pacote `acompanhamento`**
   Nasce com o seu próprio `CLAUDE.md`, lendo progresso e gamificação sem escrever neles.
   Toca: `acompanhamento`
 
-- [ ] **7.2 Expor a listagem de integrantes com quem avançou e quem parou**
+- [x] **7.2 Expor a listagem de integrantes com quem avançou e quem parou**
   Devolve, por empresa, cada integrante com onde está na trilha e desde quando não se
   move. É a tela principal da Naty.
   Toca: `GET /api/v1/acompanhamento/empresas/{empresaId}/integrantes`
 
-- [ ] **7.3 Expor as métricas agregadas da empresa**
+- [x] **7.3 Expor as métricas agregadas da empresa**
   Devolve adesão, percentual médio de conclusão e quantos pararam, para a Naty comparar
   clientes sem abrir integrante por integrante.
   Toca: `GET /api/v1/acompanhamento/empresas/{empresaId}/metricas`
 
-- [ ] **7.4 Restringir o acompanhamento ao papel `NATY`**
+- [x] **7.4 Restringir o acompanhamento ao papel `NATY`**
   É o único lugar que lê dado de mais de uma empresa.
   Toca: `acompanhamento`, `config/SecurityConfig.java`
 
-- [ ] **7.5 Mostrar onde as pessoas travam**
+- [x] **7.5 Mostrar onde as pessoas travam**
   Devolve, por atividade, quantos chegaram e quantos passaram. É o que revela a atividade
   ou a pergunta que está barrando a empresa inteira.
   Toca: `GET /api/v1/acompanhamento/atividades`
 
-- [ ] **7.6 Exportar a lista de integrantes em CSV**
+- [x] **7.6 Exportar a lista de integrantes em CSV**
   Quem acompanha vai querer mandar a lista para o time que fala com o cliente, sem copiar
   da tela.
   Toca: `GET /api/v1/acompanhamento/empresas/{empresaId}/integrantes.csv`
 
-- [ ] **7.7 Criar os índices que o acompanhamento exige**
+- [x] **7.7 Criar os índices que o acompanhamento exige**
   As consultas cruzam progresso e tentativa por empresa e por data. Sem índice, o painel
   varre tabela cheia a cada abertura.
   Toca: nova migration em `db/migration`
 
-- [ ] **7.8 Testar que integrante comum não acessa o acompanhamento**
+- [x] **7.8 Testar que integrante comum não acessa o acompanhamento**
   Prova que token de integrante recebe negação de acesso em todos os endpoints deste
   pacote.
   Toca: `src/test/java/.../acompanhamento`
 
-- [ ] **7.9 Escrever `acompanhamento/CLAUDE.md`**
+- [x] **7.9 Escrever `acompanhamento/CLAUDE.md`**
   Registra que este pacote só lê, que ele atravessa empresas de propósito e qual é a
   definição de parado.
   Toca: `acompanhamento/CLAUDE.md`

@@ -70,6 +70,26 @@ class RegrasDeDependenciaTest {
     }
 
     @Test
+    void acompanhamentoSoLe() {
+        noClasses()
+                .that()
+                .resideInAPackage(RAIZ + ".acompanhamento..")
+                .should(escreverEmDadoDeOutroPacote())
+                .check(classesDeProducao);
+    }
+
+    @Test
+    void nadaForaDeAcompanhamentoDependeDele() {
+        noClasses()
+                .that()
+                .resideOutsideOfPackage(RAIZ + ".acompanhamento..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage(RAIZ + ".acompanhamento..")
+                .check(classesDeProducao);
+    }
+
+    @Test
     void nadaForaDeConteudoDependeDosDtosDeGabarito() {
         noClasses()
                 .that()
@@ -127,6 +147,25 @@ class RegrasDeDependenciaTest {
                                             || chamada.getName().startsWith("definirOrdem")
                                             || chamada.getName().startsWith("deslocarOrdem"));
                     if (outraClasse && (setterDeEntidade || escritaNoRepositorio)) {
+                        eventos.add(SimpleConditionEvent.satisfied(chamada, chamada.getDescription()));
+                    }
+                }
+            }
+        };
+    }
+
+    private static ArchCondition<com.tngtech.archunit.core.domain.JavaClass> escreverEmDadoDeOutroPacote() {
+        return new ArchCondition<>("escrever em dado de outro pacote") {
+            @Override
+            public void check(com.tngtech.archunit.core.domain.JavaClass classe, ConditionEvents eventos) {
+                for (JavaMethodCall chamada : classe.getMethodCallsFromSelf()) {
+                    boolean setterDeEntidade =
+                            chamada.getTargetOwner().isAnnotatedWith(jakarta.persistence.Entity.class)
+                                    && chamada.getName().startsWith("set");
+                    boolean escritaNoRepositorio = chamada.getTargetOwner()
+                                    .isAssignableTo(org.springframework.data.repository.Repository.class)
+                            && ESCRITAS_DO_REPOSITORIO.contains(chamada.getName());
+                    if (setterDeEntidade || escritaNoRepositorio) {
                         eventos.add(SimpleConditionEvent.satisfied(chamada, chamada.getDescription()));
                     }
                 }
