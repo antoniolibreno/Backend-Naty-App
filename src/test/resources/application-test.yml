@@ -3,6 +3,11 @@ logging:
     com.projetointegrador.natysync: INFO
     org.hibernate.SQL: WARN
 
+app:
+  sessao:
+    limpeza:
+      cron: "-"
+
 spring:
   jpa:
     show-sql: false

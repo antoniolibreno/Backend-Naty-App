@@ -60,6 +60,12 @@ ambiente.** A aplicação recusa subir em produção sem eles, para não existir
 de segurança em repositório. O token é opaco e não é assinado, então não existe chave de
 assinatura.
 
+**A sessão encerrada é removida depois de um prazo de retenção.** Sessão expirada ou
+revogada há mais que `app.sessao.retencao` sai da tabela por limpeza periódica, com
+periodicidade em `app.sessao.limpeza.cron`. O prazo vive em variável de ambiente e a
+produção recusa subir sem ele. A remoção de sessão não toca em progresso, tentativa nem
+ponto.
+
 ## Isolamento por empresa
 
 **Todo dado de pessoa é filtrado pela empresa de quem chamou.** Integrante, progresso,
@@ -90,7 +96,8 @@ certificação: o atrito de bloquear a retentativa custa mais do que a força br
 economiza.
 
 **O histórico completo de tentativas é guardado**, não só a última, porque é ele que
-revela quem está travado em uma atividade.
+revela quem está travado em uma atividade. Tentativa não tem prazo de retenção: o
+acompanhamento depende do histórico inteiro.
 
 **A correção acontece só no servidor**, comparando as respostas com a coluna
 `alternativa.correta`. Nota enviada pelo cliente não existe como campo de entrada.
@@ -181,6 +188,15 @@ proposital.
 descrição do que já rodou. Correção de conteúdo semeado entra em migration nova.
 
 **Senha, hash de senha e token de sessão nunca aparecem em log nem em mensagem de erro.**
+Nenhuma camada registra corpo de requisição nem o cabeçalho `Authorization`, e o
+`org.hibernate` fica em INFO porque em DEBUG ele imprime o hash da entidade.
+
+**Toda resposta carrega `X-Request-Id`, e toda linha de log da chamada carrega o mesmo
+valor.** O cliente pode enviar o identificador, aceito entre 8 e 64 caracteres de letra,
+dígito e hífen. Qualquer outro valor recebe um identificador gerado.
+
+**O Actuator exige a conta `NATY`, exceto a saúde sem detalhe.** Métricas, estado de banco
+e demais endpoints são operacionais do sistema inteiro, não de uma empresa.
 
 **Listagem é paginada.** Ranking, integrantes e acompanhamento crescem com a empresa, e
 a primeira empresa grande não pode descobrir isso em produção.

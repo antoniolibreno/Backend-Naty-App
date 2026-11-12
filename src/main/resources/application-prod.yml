@@ -1,6 +1,7 @@
 app:
   sessao:
     expiracao: ${APP_SESSAO_EXPIRACAO}
+    retencao: ${APP_SESSAO_RETENCAO}
   senha:
     forca-hash: ${APP_SENHA_FORCA_HASH}
   bootstrap:
@@ -14,11 +15,6 @@ spring:
 logging:
   level:
     com.projetointegrador.natysync: INFO
-
-management:
-  endpoint:
-    health:
-      show-details: when-authorized
 
 springdoc:
   swagger-ui:

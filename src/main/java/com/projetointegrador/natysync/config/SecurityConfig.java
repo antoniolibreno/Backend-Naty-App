@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(ROTAS_PUBLICAS)
                         .permitAll()
+                        .requestMatchers("/actuator/**")
+                        .hasRole(Papel.NATY.name())
                         .requestMatchers("/api/v1/painel/empresas/**")
                         .hasRole(Papel.NATY.name())
                         .requestMatchers("/api/v1/painel/integrantes/**")

@@ -30,6 +30,9 @@ A validação exige todas as perguntas exatamente uma vez e uma alternativa pert
 Este pacote não conhece `gamificacao`. Ele só publica `EstudoRegistrado`, e quem pontua
 escuta o fato.
 
+Tentativa de quiz não tem prazo de retenção. O histórico inteiro alimenta o acompanhamento,
+e nenhuma limpeza periódica toca em `tentativa_quiz` nem em `resposta_tentativa`.
+
 ## Armadilhas
 
 O integrante sempre vem da sessão. Não aceite identificador, nota, correção ou estado de progresso do cliente.

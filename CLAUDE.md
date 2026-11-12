@@ -156,10 +156,15 @@ desenvolvimento e do bootstrap por variável de ambiente em produção. Produç�
 sem conta `NATY` e sem as variáveis do bootstrap, e qualquer perfil fora de `dev` recusa
 subir se encontrar uma conta do seed.
 
-A sessão não renova. Quando o token expira, o app autentica de novo.
+A sessão não renova. Quando o token expira, o app autentica de novo. Sessão encerrada há mais
+que `app.sessao.retencao` é removida por limpeza periódica, e produção recusa subir sem esse
+prazo.
+
+O Actuator exige `NATY`, exceto `/actuator/health` sem detalhe. Toda resposta carrega
+`X-Request-Id`.
 
 Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, sem hierarquia entre eles. Só as rotas de
-`/api/v1/painel/**` exigem papel. `ADMIN` administra as contas `INTEGRANTE` da própria
+`/api/v1/painel/**` e do Actuator exigem papel. `ADMIN` administra as contas `INTEGRANTE` da própria
 empresa. `NATY` administra empresas e as contas `INTEGRANTE` e `ADMIN` de qualquer empresa.
 Conta `NATY` não é administrada pelo painel. Conteúdo de treinamento não tem rota de
 escrita, e quando tiver ela exige `NATY`, porque o conteúdo é global.

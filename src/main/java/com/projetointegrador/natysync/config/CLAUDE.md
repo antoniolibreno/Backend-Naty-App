@@ -12,6 +12,8 @@ papel, documentação OpenAPI, CORS e resolvedor de argumento de controller. Nã
   argumento de controller.
 - `SecurityConfig`: cadeia de segurança, codificador de senha e regras de papel.
 - `RecusaDeAcesso` e `NegacaoDeAcesso`: corpo do 401 e do 403.
+- `RequisicaoIdFiltro`: devolve `X-Request-Id` em toda resposta e põe `requisicaoId` no MDC.
+- `AgendamentoConfig`: habilita `@Scheduled`.
 
 ## Decisões
 
@@ -23,6 +25,15 @@ A regra de papel é por prefixo de rota, do mais específico para o mais geral:
 `/api/v1/painel/empresas/**` exige `NATY`, `/api/v1/painel/integrantes/**` exige `ADMIN`,
 e o resto de `/api/v1/painel/**` é negado. Não existe hierarquia de papel: `NATY` não herda
 `ADMIN`.
+
+`/actuator/**` exige `NATY`, com `/actuator/health` e `/actuator/health/**` públicos antes
+dele. O detalhe de saúde segue `management.endpoint.health.roles`, e a saúde pública sai só
+com o status.
+
+`RequisicaoIdFiltro` roda com ordem `HIGHEST_PRECEDENCE`, antes da cadeia de segurança, para
+401 e 403 também levarem o cabeçalho. O valor enviado pelo cliente só vale dentro de
+`^[A-Za-z0-9-]{8,64}$`, o que impede quebra de linha no log. O padrão de log em
+`logging.pattern.level` imprime `%X{requisicaoId}`.
 
 Rota de escrita de conteúdo exige `NATY`, nunca `ADMIN`. O conteúdo é global, e `ADMIN` é o
 administrador de um cliente. Toda rota nova que exige papel entra com o seu matcher antes

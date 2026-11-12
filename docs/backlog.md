@@ -483,12 +483,12 @@ Decisões que o épico carrega e que precisam sair antes do código:
   dias precisa, ou sai do projeto.
   Toca: `shared/util/DataUtil.java`
 
-- [ ] **10.7 Expor métricas da aplicação**
+- [x] **10.7 Expor métricas da aplicação**
   Publica métricas de requisição e de banco, para dar para responder "está lento onde" sem
   adivinhar.
   Toca: `application.yml`, `/actuator`
 
-- [ ] **10.8 Padronizar log sem vazar credencial**
+- [x] **10.8 Padronizar log sem vazar credencial**
   Define o que é logado em cada camada e garante que senha, hash de senha e token de
   sessão não apareçam em log nem em mensagem de erro.
   Toca: `painel`, `usuario`, `shared`
@@ -510,22 +510,22 @@ Decisões que o épico carrega e que precisam sair antes do código:
   para formatação e testes não dependerem de quem lembrou de rodar.
   Toca: configuração de CI
 
-- [ ] **10.12 Correlacionar log por requisição**
+- [x] **10.12 Correlacionar log por requisição**
   Injeta um identificador por chamada no log e devolve no cabeçalho, para conseguir seguir
   uma chamada do app até o erro.
   Toca: `config`, `shared`
 
-- [ ] **10.13 Fechar o detalhe do Actuator em produção**
+- [x] **10.13 Fechar o detalhe do Actuator em produção**
   Em produção o detalhe de saúde aparece para qualquer token autenticado, inclusive o de um
   integrante, e mostra o estado do banco. Falta restringir o detalhe por papel.
   Toca: `application.yml`, `application-prod.yml`
 
-- [ ] **10.14 Definir retenção de dado operacional**
+- [x] **10.14 Definir retenção de dado operacional**
   Decide o que fazer com tentativa de quiz velha e com sessão expirada, para tabela de
   histórico não crescer para sempre.
   Toca: `progresso`, `usuario`
 
-- [ ] **10.15 Expor a leitura de integrante em `UsuarioController`**
+- [x] **10.15 Expor a leitura de integrante em `UsuarioController`**
   O controller tem o caminho declarado e nenhum método mapeado, e `UsuarioResponse` e
   `UsuarioFiltro` são classes vazias. A tela de ranking e o acompanhamento precisam ler
   integrante, sempre filtrado por empresa. A escrita mora no painel.
