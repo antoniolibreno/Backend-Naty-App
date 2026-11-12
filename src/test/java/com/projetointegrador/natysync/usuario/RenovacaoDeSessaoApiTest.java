@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
@@ -117,7 +118,7 @@ class RenovacaoDeSessaoApiTest extends IntegracaoTest {
 
     @Test
     void renovacaoHerdaOInicioDoLogin() throws Exception {
-        OffsetDateTime iniciadaEm = OffsetDateTime.now().minusDays(10);
+        OffsetDateTime iniciadaEm = OffsetDateTime.now().minusDays(10).truncatedTo(ChronoUnit.MICROS);
         String token = sessaoComDatas(iniciadaEm, OffsetDateTime.now().plusHours(1));
 
         String novo = renovar(token).getBody().get("token").asText();
