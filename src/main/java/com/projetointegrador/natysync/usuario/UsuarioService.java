@@ -1,11 +1,14 @@
 package com.projetointegrador.natysync.usuario;
 
 import com.projetointegrador.natysync.shared.exception.CredencialInvalidaException;
-import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
+import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
 import com.projetointegrador.natysync.usuario.dto.UsuarioResponse;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -17,11 +20,14 @@ public class UsuarioService {
     private static final String RECUSA_UNICA = "E-mail ou senha invalidos.";
 
     private final UsuarioRepository usuarioRepository;
+    private final UsuarioMapper usuarioMapper;
     private final PasswordEncoder codificadorDeSenha;
     private final String hashFicticio;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder codificadorDeSenha) {
+    public UsuarioService(
+            UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper, PasswordEncoder codificadorDeSenha) {
         this.usuarioRepository = usuarioRepository;
+        this.usuarioMapper = usuarioMapper;
         this.codificadorDeSenha = codificadorDeSenha;
         this.hashFicticio = codificadorDeSenha.encode(UUID.randomUUID().toString());
     }
@@ -40,17 +46,9 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public UsuarioResponse buscarMeuPerfil(IntegranteDaRequisicao quem) {
-        Usuario usuario = usuarioRepository
-                .buscarNaEmpresa(quem.usuarioId(), quem.empresaId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado: " + quem.usuarioId()));
-        return new UsuarioResponse(
-                usuario.getId(),
-                usuario.getNome(),
-                usuario.getEmail(),
-                new UsuarioResponse.EmpresaResumo(
-                        usuario.getEmpresa().getId(), usuario.getEmpresa().getNome()),
-                usuario.getPerfil(),
-                usuario.getPapel());
+    public PaginaResponse<UsuarioResponse> listarAtivosDaEmpresa(UUID empresaId, Pageable pagina) {
+        PageRequest pedido = PageRequest.of(pagina.getPageNumber(), pagina.getPageSize(), Sort.by("nome", "id"));
+        return PaginaResponse.de(
+                usuarioRepository.findByEmpresaIdAndAtivoTrue(empresaId, pedido), usuarioMapper::paraResposta);
     }
 }

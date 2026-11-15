@@ -19,8 +19,13 @@ Depende de `usuario` e de `empresa`. Nenhum pacote depende dele.
 - `EmpresaService`: desativar empresa revoga as sessões dos integrantes dela.
 - `BootstrapNaty`: `ApplicationRunner` que cria a empresa interna e a conta `NATY` a partir
   de `app.bootstrap.naty.*` quando não existe nenhum `NATY`. Recusa subir quando o
-  bootstrap é obrigatório e faltam as variáveis, quando a senha está fora do limite e
-  quando o e-mail pertence a uma conta que não é `NATY`.
+  bootstrap é obrigatório e faltam as variáveis, quando a senha está fora do limite, quando
+  o CNPJ não passa em `Cnpj.valido` e quando o e-mail pertence a uma conta que não é `NATY`.
+  A empresa interna nasce com `app.bootstrap.naty.cnpj` normalizado e
+  `app.bootstrap.naty.razao-social`.
+- `Cnpj`: `normalizar` remove `.`, `/`, `-` e espaço e converte para maiúsculas, e `valido`
+  confere formato, caracteres não todos iguais e os dois dígitos verificadores, numérico ou
+  alfanumérico.
 - `TravaDaContaDeSeed`: `ApplicationRunner` que recusa subir fora do perfil `dev` quando
   encontra uma das contas do seed, cuja senha é pública.
 - `CodigoDeConflito`: códigos estáveis dos 409 deste pacote.
@@ -77,6 +82,16 @@ E-mail é normalizado no construtor do record de entrada, em minúsculas e sem e
 pontas. A validação do Bean Validation roda depois do construtor, então normalizar no
 serviço chegaria tarde.
 
+O CNPJ é normalizado no construtor de `EmpresaRequest` por `Cnpj.normalizar`, e o
+`@AssertTrue isCnpjValido` confere os dígitos verificadores. A unicidade é do índice
+`empresa_cnpj_idx`: `EmpresaService.salvar` força o `flush` e traduz a violação em 409
+`CNPJ_JA_CADASTRADO`, sem consulta prévia, e qualquer outra violação sobe como erro.
+
+O telefone do integrante é normalizado por `Telefone.normalizar`, só com dígitos, e vale de 10
+a 13. Ele é opcional no cadastro e na alteração de integrante, e na alteração o campo ausente
+mantém o valor atual, como `perfil`. O responsável pela empresa é a conta `ADMIN`, e não existe
+dado de contato do responsável em `empresa`.
+
 A senha tem de 8 caracteres a 72 bytes em UTF-8. 72 bytes é o limite do bcrypt, e o
 `BCryptPasswordEncoder` recusa acima disso com exceção, não com erro de validação.
 
@@ -89,6 +104,30 @@ existe.
 A unicidade de e-mail é global. O cadastro de uma empresa recebe 409 para e-mail que existe
 em outra, e isso revela que o e-mail existe em algum lugar. É o preço do login sem escolha
 de empresa.
+
+O `POST` de empresa recebe `EmpresaCriacaoRequest`, com o bloco `administrador` obrigatório
+(`AdministradorInicialRequest`: nome, e-mail, senha e telefone). `EmpresaService.criar` grava a
+empresa e chama `IntegranteService.criar` com papel `ADMIN` na mesma transação, então CNPJ
+repetido ou e-mail repetido desfaz a empresa e a conta. O `PUT` recebe `EmpresaRequest`, nunca
+cria conta, e o Jackson ignora o bloco `administrador` enviado nele. O telefone é obrigatório só
+nesse bloco. `AdministradorInicialRequest` mascara a senha no `toString`, como
+`IntegranteCriacaoRequest`.
+
+Toda empresa tem ao menos um `ADMIN` ativo. `IntegranteService` recusa com 409
+`ULTIMO_ADMINISTRADOR` desativar a conta ou rebaixar o papel do último `ADMIN` ativo da empresa,
+e a conta fica como estava. A checagem trava a linha da empresa por
+`EmpresaRepository.travarPorId`, depois da trava da linha do alvo, e conta os outros `ADMIN`
+ativos. A trava serializa duas desativações simultâneas dos dois últimos `ADMIN`: a segunda lê o
+resultado já gravado da primeira e recebe 409. Desativar a empresa inteira em `EmpresaService`
+não passa por essa regra. `ADMIN` não administra conta `ADMIN`, então a tentativa dele de
+desativar a própria conta responde 403 antes da checagem.
+
+`GET /api/v1/painel/empresas` aceita `busca` opcional, que procura por trecho do nome, da razão
+social e do CNPJ. O texto vai para `EmpresaRepository.buscar` em minúsculas, e o CNPJ parcial
+passa por `Cnpj.normalizar`, então a máscara não atrapalha. `%`, `_` e `\` da entrada são
+escapados em `EmpresaService.escaparCuringas`, e busca com `%` não devolve todas as empresas.
+Busca nula ou em branco devolve a listagem sem filtro, e a ordem por nome e identificador vale
+com e sem busca.
 
 A listagem ignora o parâmetro `sort` do cliente e ordena por nome e identificador. Ordenar
 por campo livre expõe coluna e quebra paginação estável.

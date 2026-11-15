@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +28,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 
 class VideoServiceTest {
 
@@ -34,6 +37,7 @@ class VideoServiceTest {
             new IntegranteDaRequisicao(UUID.randomUUID(), UUID.randomUUID(), Papel.INTEGRANTE);
     private final ProgressoAtividadeRepository progressos = mock(ProgressoAtividadeRepository.class);
     private final AtividadeRepository atividades = mock(AtividadeRepository.class);
+    private final ApplicationEventPublisher eventos = mock(ApplicationEventPublisher.class);
     private final ProgressoService service = new ProgressoService(
             mock(TrilhaRepository.class),
             atividades,
@@ -41,7 +45,8 @@ class VideoServiceTest {
             progressos,
             new TrilhaProgressoMontador(),
             mock(QuizRepository.class),
-            mock(EntityManager.class));
+            mock(EntityManager.class),
+            eventos);
     private Atividade atividade;
     private ProgressoAtividade progresso;
 
@@ -72,6 +77,7 @@ class VideoServiceTest {
                 .isInstanceOfSatisfying(ConflitoException.class, erro -> assertThat(erro.getCodigo())
                         .isEqualTo("VIDEO_NAO_INICIADO"));
         verify(progressos, never()).save(any());
+        verify(eventos, never()).publishEvent(any(Object.class));
         assertThat(progresso.getVideoAssistidoEm()).isNull();
     }
 
@@ -96,6 +102,12 @@ class VideoServiceTest {
         assertThat(primeira.videoAssistidoEm()).isNotNull();
         assertThat(primeira.concluidoEm()).isNotNull();
         assertThat(repetida).isEqualTo(primeira);
+        EstudoRegistrado estudo = estudoPublicadoUmaVez();
+        assertThat(estudo.atividadeConcluida()).isTrue();
+        assertThat(estudo.ocorridoEm()).isEqualTo(primeira.concluidoEm());
+        assertThat(estudo.usuarioId()).isEqualTo(integrante.usuarioId());
+        assertThat(estudo.empresaId()).isEqualTo(integrante.empresaId());
+        assertThat(estudo.atividadeId()).isEqualTo(atividade.getId());
     }
 
     @Test
@@ -108,6 +120,7 @@ class VideoServiceTest {
         assertThat(resposta.videoAssistidoEm()).isNotNull();
         assertThat(resposta.concluidoEm()).isNull();
         assertThat(resposta.estado()).isEqualTo(EstadoAtividade.DISPONIVEL);
+        assertThat(estudoPublicadoUmaVez().atividadeConcluida()).isFalse();
     }
 
     @Test
@@ -116,5 +129,12 @@ class VideoServiceTest {
         var repetida = service.registrarVideoIniciado(atividade.getId(), integrante);
         assertThat(primeira.videoIniciadoEm()).isNotNull();
         assertThat(repetida).isEqualTo(primeira);
+        verify(eventos, never()).publishEvent(any(Object.class));
+    }
+
+    private EstudoRegistrado estudoPublicadoUmaVez() {
+        ArgumentCaptor<Object> publicados = ArgumentCaptor.forClass(Object.class);
+        verify(eventos, times(1)).publishEvent(publicados.capture());
+        return (EstudoRegistrado) publicados.getValue();
     }
 }

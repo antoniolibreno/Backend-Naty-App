@@ -49,6 +49,7 @@ class VideoApiTest extends IntegracaoTest {
 
     @AfterEach
     void limparConteudo() {
+        jdbc.update("delete from ponto_concedido where atividade_id in (?, ?)", atividadeId, bloqueadaId);
         jdbc.update("delete from progresso_atividade where atividade_id in (?, ?)", atividadeId, bloqueadaId);
         jdbc.update("delete from quiz where atividade_id = ?", atividadeId);
         jdbc.update("delete from atividade where modulo_id = ?", moduloId);

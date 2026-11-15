@@ -1,11 +1,18 @@
 package com.projetointegrador.natysync.painel.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.nio.charset.StandardCharsets;
 
+@Schema(description = "Nova senha do integrante")
 public record SenhaRequest(
+        @Schema(
+                description = "De 8 caracteres a 72 bytes",
+                example = "senha-exemplo-123",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                minLength = 8)
         @NotBlank @Size(min = SenhaRequest.TAMANHO_MINIMO) String senha) {
 
     public static final int TAMANHO_MINIMO = 8;
@@ -15,6 +22,7 @@ public record SenhaRequest(
         return senha == null || senha.getBytes(StandardCharsets.UTF_8).length <= LIMITE_DO_BCRYPT_EM_BYTES;
     }
 
+    @Schema(hidden = true)
     @AssertTrue(message = "senha acima de 72 bytes") public boolean isSenhaDentroDoLimite() {
         return cabeNoBcrypt(senha);
     }
