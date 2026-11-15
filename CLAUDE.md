@@ -111,8 +111,8 @@ qualquer agente que trabalhe aqui e está imposta em `.claude/settings.json`, co
 `painel`: cadastro de empresa e de integrante sob `/api/v1/painel/**` e o bootstrap da
 primeira conta `NATY`. Único pacote que escreve em `usuario` e em `empresa`.
 
-`trilha`: conteúdo do treinamento e a leitura dele. Trilha, módulo, atividade, quiz,
-pergunta e alternativa. Conteúdo semeado por migration, sem CRUD.
+`trilha`: conteúdo global do treinamento, suas leituras e administração autenticada.
+Somente `NATY` escreve trilhas, módulos, atividades, quizzes, perguntas e alternativas.
 
 `progresso`: estado de cada integrante na trilha, com desbloqueio linear e conclusão de
 atividade.
@@ -155,11 +155,11 @@ subir se encontrar uma conta do seed.
 
 A sessão não renova. Quando o token expira, o app autentica de novo.
 
-Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, sem hierarquia entre eles. Só as rotas de
-`/api/v1/painel/**` exigem papel. `ADMIN` administra as contas `INTEGRANTE` da própria
+Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, sem hierarquia entre eles. As rotas de
+`/api/v1/painel/**` e as escritas de conteúdo exigem papel. `ADMIN` administra as contas `INTEGRANTE` da própria
 empresa. `NATY` administra empresas e as contas `INTEGRANTE` e `ADMIN` de qualquer empresa.
-Conta `NATY` não é administrada pelo painel. Conteúdo de treinamento não tem rota de
-escrita, e quando tiver ela exige `NATY`, porque o conteúdo é global.
+Conta `NATY` não é administrada pelo painel. Conteúdo de treinamento é global e sua
+escrita exige `NATY`.
 
 Integrante e empresa nunca somem por desativação. Integrante não tem rota de exclusão, e
 empresa só é excluída sem integrante.

@@ -47,6 +47,33 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(ROTAS_PUBLICAS)
                         .permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/trilhas",
+                                "/api/v1/modulos",
+                                "/api/v1/atividades",
+                                "/api/v1/quizzes",
+                                "/api/v1/perguntas",
+                                "/api/v1/perguntas/*/alternativas")
+                        .hasRole(Papel.NATY.name())
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/v1/trilhas/**",
+                                "/api/v1/modulos/**",
+                                "/api/v1/atividades/**",
+                                "/api/v1/quizzes/**",
+                                "/api/v1/perguntas/**",
+                                "/api/v1/alternativas/**")
+                        .hasRole(Papel.NATY.name())
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/trilhas/**",
+                                "/api/v1/modulos/**",
+                                "/api/v1/atividades/**",
+                                "/api/v1/quizzes/**",
+                                "/api/v1/perguntas/**",
+                                "/api/v1/alternativas/**")
+                        .hasRole(Papel.NATY.name())
                         .requestMatchers("/api/v1/painel/empresas/**")
                         .hasRole(Papel.NATY.name())
                         .requestMatchers("/api/v1/painel/integrantes/**")

@@ -342,54 +342,55 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   O conteúdo em banco é exemplo, com UUID fixo escrito à mão, e a descrição da trilha
   semeada diz ao app que ela é exemplo. A migration nova apaga essas linhas pelos UUIDs
   fixos e insere o conteúdo verdadeiro, sem tocar em `V3`.
+  Dependências: material aprovado do treinamento, com textos, ordem, imagens, vídeos e gabaritos; substituir os UUIDs fixos dos testes por identificadores descobertos pela API antes de apagar o seed.
   Toca: nova migration em `db/migration`
 
-- [ ] **9.2 Expor o CRUD de trilha**
+- [x] **9.2 Expor o CRUD de trilha**
   Permite criar e editar trilha pela API em vez de por migration. Depende da autenticação:
   sem login, um CRUD administrativo fica aberto na internet.
   Toca: `POST`, `PUT` e `DELETE` em `/api/v1/trilhas`
 
-- [ ] **9.3 Expor o CRUD de módulo e atividade**
+- [x] **9.3 Expor o CRUD de módulo e atividade**
   Mesma ideia, um nível abaixo, incluindo os campos de imagem, vídeo, duração e XP.
   Toca: `/api/v1/modulos`, `/api/v1/atividades`
 
-- [ ] **9.4 Expor o CRUD de quiz, pergunta e alternativa**
+- [x] **9.4 Expor o CRUD de quiz, pergunta e alternativa**
   É o único lugar onde o gabarito entra e sai da API, e só para quem administra. A leitura
   do quiz pelo integrante continua sem `correta`.
   Toca: `/api/v1/quizzes`, `/api/v1/perguntas`, `/api/v1/alternativas`
 
-- [ ] **9.5 Separar o DTO de escrita do DTO de leitura da alternativa**
+- [x] **9.5 Separar o DTO de escrita do DTO de leitura da alternativa**
   A escrita precisa do campo de alternativa correta e a leitura não pode nem ter o campo.
   Dois records distintos, nunca um só com o campo anulado, que é o jeito de vazar gabarito
   por esquecimento.
   Toca: `trilha/dto`
 
-- [ ] **9.6 Validar exatamente uma alternativa correta por pergunta**
+- [x] **9.6 Validar exatamente uma alternativa correta por pergunta**
   Pergunta com zero ou duas corretas quebra a correção do quiz. A regra vale na escrita,
   não só no conteúdo semeado.
   Toca: `trilha`
 
-- [ ] **9.7 Permitir reordenar módulo e atividade**
+- [x] **9.7 Permitir reordenar módulo e atividade**
   A ordem define a trilha e tem unicidade por pai no banco. Reordenar é operação própria,
   senão qualquer troca de posição colide com o índice único.
   Toca: `trilha`, índices `modulo(trilha_id, ordem)` e `atividade(modulo_id, ordem)`
 
-- [ ] **9.8 Ativar e desativar trilha sem apagar progresso**
+- [x] **9.8 Ativar e desativar trilha sem apagar progresso**
   Trilha inativa desaparece da listagem, e o progresso de quem já a fez continua contando
   para pontuação e acompanhamento.
   Toca: coluna `trilha.ativa`, `progresso`
 
-- [ ] **9.9 Impedir remoção de conteúdo com progresso registrado**
+- [x] **9.9 Impedir remoção de conteúdo com progresso registrado**
   Apagar atividade que tem progresso ou tentativa joga fora o histórico de quem estudou.
   Oferece desativação em vez de remoção.
   Toca: `trilha`, `progresso`
 
-- [ ] **9.10 Registrar quem alterou o conteúdo**
+- [x] **9.10 Registrar quem alterou o conteúdo**
   Guarda autor e momento de cada alteração, para dar para descobrir quem trocou o gabarito
   quando as notas caírem de repente.
   Toca: nova migration em `db/migration`, `trilha`
 
-- [ ] **9.11 Testar que o CRUD exige papel administrativo**
+- [x] **9.11 Testar que o CRUD exige papel administrativo**
   Prova que token de integrante comum recebe negação em toda escrita de conteúdo.
   Toca: `src/test/java/.../trilha`
 
