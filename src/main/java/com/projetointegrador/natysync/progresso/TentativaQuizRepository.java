@@ -7,4 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TentativaQuizRepository extends JpaRepository<TentativaQuiz, UUID> {
 
     List<TentativaQuiz> findByUsuarioIdAndQuizIdOrderByCriadaEmDesc(UUID usuarioId, UUID quizId);
+
+    List<TentativaQuiz> findByUsuarioId(UUID usuarioId);
+
+    long countByUsuarioIdAndAprovadoTrue(UUID usuarioId);
+
+    long countDistinctQuizIdByUsuarioIdAndAprovadoTrue(UUID usuarioId);
 }

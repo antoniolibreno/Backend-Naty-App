@@ -104,4 +104,22 @@ class SessaoApiTest extends IntegracaoTest {
         assertThat(resposta.getBody()).doesNotContain(SENHA_DE_TESTE);
         assertThat(resposta.getBody()).doesNotContain("senha");
     }
+
+    @Test
+    void buscaMeuPerfilComEmpresaECargoSemAceitarIdentificadorDoCliente() {
+        ResponseEntity<JsonNode> resposta = cliente(autenticar("integrante@teste.com.br", SENHA_DE_TESTE))
+                .get()
+                .uri("/api/v1/usuarios/me")
+                .retrieve()
+                .toEntity(JsonNode.class);
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resposta.getBody().get("id").asText()).isEqualTo(usuarioId.toString());
+        assertThat(resposta.getBody().get("nome").asText()).isEqualTo("Integrante de Teste");
+        assertThat(resposta.getBody().get("email").asText()).isEqualTo("integrante@teste.com.br");
+        assertThat(resposta.getBody().get("empresa").get("id").asText()).isEqualTo(empresaId.toString());
+        assertThat(resposta.getBody().get("empresa").get("nome").asText()).isEqualTo("Empresa de Teste");
+        assertThat(resposta.getBody().get("cargo").asText()).isEqualTo("user");
+        assertThat(resposta.getBody().get("papel").asText()).isEqualTo("INTEGRANTE");
+    }
 }

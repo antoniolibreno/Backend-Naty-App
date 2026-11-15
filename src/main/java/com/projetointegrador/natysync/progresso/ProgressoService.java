@@ -1,5 +1,6 @@
 package com.projetointegrador.natysync.progresso;
 
+import com.projetointegrador.natysync.gamificacao.GamificacaoService;
 import com.projetointegrador.natysync.progresso.dto.TentativaQuizRequest;
 import com.projetointegrador.natysync.progresso.dto.TentativaQuizResponse;
 import com.projetointegrador.natysync.progresso.dto.TrilhaProgressoResponse;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,27 @@ public class ProgressoService {
     private final TrilhaProgressoMontador montador;
     private final QuizRepository quizRepository;
     private final EntityManager entityManager;
+    private final GamificacaoService gamificacaoService;
+
+    @Autowired
+    public ProgressoService(
+            TrilhaRepository trilhaRepository,
+            AtividadeRepository atividadeRepository,
+            UsuarioRepository usuarioRepository,
+            ProgressoAtividadeRepository progressoAtividadeRepository,
+            TrilhaProgressoMontador montador,
+            QuizRepository quizRepository,
+            EntityManager entityManager,
+            GamificacaoService gamificacaoService) {
+        this.trilhaRepository = trilhaRepository;
+        this.atividadeRepository = atividadeRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.progressoAtividadeRepository = progressoAtividadeRepository;
+        this.montador = montador;
+        this.quizRepository = quizRepository;
+        this.entityManager = entityManager;
+        this.gamificacaoService = gamificacaoService;
+    }
 
     public ProgressoService(
             TrilhaRepository trilhaRepository,
@@ -54,13 +77,15 @@ public class ProgressoService {
             TrilhaProgressoMontador montador,
             QuizRepository quizRepository,
             EntityManager entityManager) {
-        this.trilhaRepository = trilhaRepository;
-        this.atividadeRepository = atividadeRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.progressoAtividadeRepository = progressoAtividadeRepository;
-        this.montador = montador;
-        this.quizRepository = quizRepository;
-        this.entityManager = entityManager;
+        this(
+                trilhaRepository,
+                atividadeRepository,
+                usuarioRepository,
+                progressoAtividadeRepository,
+                montador,
+                quizRepository,
+                entityManager,
+                null);
     }
 
     public TrilhaProgressoResponse buscarTrilhaComProgresso(UUID trilhaId, IntegranteDaRequisicao integrante) {
@@ -94,9 +119,14 @@ public class ProgressoService {
             progresso.setVideoAssistidoEm(agora());
             progresso = progressoAtividadeRepository.save(progresso);
         }
-        if (atividade.getQuiz() == null && progresso.getConcluidoEm() == null) {
+        boolean concluiuAgora = atividade.getQuiz() == null && progresso.getConcluidoEm() == null;
+        if (concluiuAgora) {
             progresso.setConcluidoEm(agora());
             progresso = progressoAtividadeRepository.save(progresso);
+            if (gamificacaoService != null) {
+                gamificacaoService.processarConclusao(
+                        usuarioRepository.getReferenceById(integrante.usuarioId()), atividade);
+            }
         }
         if (progresso.getConcluidoEm() != null) {
             progressos.put(atividadeId, progresso);
@@ -227,10 +257,19 @@ public class ProgressoService {
         if (progresso.getMelhorNota() == null || nota > progresso.getMelhorNota()) {
             progresso.setMelhorNota(nota);
         }
-        if (aprovado && progresso.getConcluidoEm() == null) {
+        boolean concluiuAgora = aprovado && progresso.getConcluidoEm() == null;
+        if (concluiuAgora) {
             progresso.setConcluidoEm(agora());
         }
         progresso = progressoAtividadeRepository.save(progresso);
+        if (gamificacaoService != null) {
+            gamificacaoService.processarTentativa(
+                    usuarioRepository.getReferenceById(integrante.usuarioId()), tentativa);
+            if (concluiuAgora) {
+                gamificacaoService.processarConclusao(
+                        usuarioRepository.getReferenceById(integrante.usuarioId()), atividade);
+            }
+        }
         if (progresso.getConcluidoEm() != null) {
             progressos.put(atividadeId, progresso);
         }

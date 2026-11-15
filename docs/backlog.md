@@ -288,50 +288,50 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
 
 ### Gamificação
 
-- [ ] **6.1 Escrever a migration de pontuação, sequência e conquista**
+- [x] **6.1 Escrever a migration de pontuação, sequência e conquista**
   Cria as tabelas de pontos do integrante, sequência de dias e conquistas obtidas, sempre
   ligadas à empresa.
   Toca: nova migration em `db/migration`
 
-- [ ] **6.2 Criar o pacote `gamificacao` com entidades e repositórios**
+- [x] **6.2 Criar o pacote `gamificacao` com entidades e repositórios**
   Nasce com o seu próprio `CLAUDE.md`.
   Toca: `gamificacao`
 
-- [ ] **6.3 Conceder o XP da atividade na conclusão**
+- [x] **6.3 Conceder o XP da atividade na conclusão**
   Usa a coluna `atividade.xp` para somar pontos quando a atividade conclui. Não inventa
   outra fonte de pontuação.
   Toca: `gamificacao`, coluna `atividade.xp`
 
-- [ ] **6.4 Calcular a sequência de dias no fuso da empresa**
+- [x] **6.4 Calcular a sequência de dias no fuso da empresa**
   Os carimbos são gravados em UTC, e a virada do dia acontece no fuso do cliente. Depende
   da coluna de fuso criada em 11.2.
   Toca: `gamificacao`
 
-- [ ] **6.5 Semear o catálogo de conquistas por migration**
+- [x] **6.5 Semear o catálogo de conquistas por migration**
   As conquistas são conteúdo global, iguais para todas as empresas, e entram por migration
   como o resto do conteúdo.
   Toca: nova migration em `db/migration`
 
-- [ ] **6.6 Implementar a concessão de conquista**
+- [x] **6.6 Implementar a concessão de conquista**
   Avalia as regras quando algo muda no progresso e concede a conquista uma única vez por
   integrante.
   Toca: `gamificacao`
 
-- [ ] **6.7 Expor `GET /api/v1/ranking`**
+- [x] **6.7 Expor `GET /api/v1/ranking`**
   Devolve a classificação dos integrantes dentro da empresa de quem chamou, com desempate
   por quem chegou primeiro à pontuação e paginação obrigatória.
   Toca: `GET /api/v1/ranking`
 
-- [ ] **6.8 Expor `GET /api/v1/integrantes/{integranteId}/gamificacao`**
+- [x] **6.8 Expor `GET /api/v1/integrantes/{integranteId}/gamificacao`**
   Devolve pontos, sequência atual e conquistas do integrante, para o app montar o perfil.
   Toca: `GET /api/v1/integrantes/{integranteId}/gamificacao`
 
-- [ ] **6.9 Testar que ponto não é concedido duas vezes pela mesma atividade**
+- [x] **6.9 Testar que ponto não é concedido duas vezes pela mesma atividade**
   Concluir de novo, ou refazer o quiz já aprovado, não soma XP de novo, senão o ranking
   vira farsa.
   Toca: `src/test/java/.../gamificacao`
 
-- [ ] **6.10 Escrever `gamificacao/CLAUDE.md`**
+- [x] **6.10 Escrever `gamificacao/CLAUDE.md`**
   Registra onde mora a sequência, em que fuso, como o ranking é calculado e por que ponto
   é idempotente.
   Toca: `gamificacao/CLAUDE.md`
@@ -459,7 +459,7 @@ Decisões que o épico carrega e que precisam sair antes do código:
   exige montar o id.
   Toca: `empresa/Empresa.java`
 
-- [ ] **10.3 Trocar o assert frágil de `QuizApiTest`**
+- [x] **10.3 Trocar o assert frágil de `QuizApiTest`**
   O teste garante que o gabarito não vaza procurando o texto `true` no corpo da resposta.
   Qualquer campo booleano verdadeiro futuro quebra o teste sem nenhum vazamento real.
   Verificar a estrutura da resposta no lugar.

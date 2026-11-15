@@ -1,6 +1,8 @@
 package com.projetointegrador.natysync.usuario;
 
 import com.projetointegrador.natysync.shared.exception.CredencialInvalidaException;
+import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
+import com.projetointegrador.natysync.usuario.dto.UsuarioResponse;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,5 +37,20 @@ public class UsuarioService {
         return comCredencial
                 .filter(usuario -> senhaConfere && usuario.podeEntrar())
                 .orElseThrow(() -> new CredencialInvalidaException(RECUSA_UNICA));
+    }
+
+    @Transactional(readOnly = true)
+    public UsuarioResponse buscarMeuPerfil(IntegranteDaRequisicao quem) {
+        Usuario usuario = usuarioRepository
+                .buscarNaEmpresa(quem.usuarioId(), quem.empresaId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado: " + quem.usuarioId()));
+        return new UsuarioResponse(
+                usuario.getId(),
+                usuario.getNome(),
+                usuario.getEmail(),
+                new UsuarioResponse.EmpresaResumo(
+                        usuario.getEmpresa().getId(), usuario.getEmpresa().getNome()),
+                usuario.getPerfil(),
+                usuario.getPapel());
     }
 }

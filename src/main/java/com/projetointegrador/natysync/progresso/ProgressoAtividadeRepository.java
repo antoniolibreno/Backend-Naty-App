@@ -10,4 +10,6 @@ public interface ProgressoAtividadeRepository extends JpaRepository<ProgressoAti
     List<ProgressoAtividade> findByUsuarioId(UUID usuarioId);
 
     Optional<ProgressoAtividade> findByUsuarioIdAndAtividadeId(UUID usuarioId, UUID atividadeId);
+
+    long countByUsuarioIdAndConcluidoEmIsNotNull(UUID usuarioId);
 }

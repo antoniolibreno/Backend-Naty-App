@@ -193,15 +193,20 @@ class TentativaQuizApiTest extends IntegracaoTest {
     @Test
     void tentativaELeituraDoQuizNaoRevelamGabarito() {
         var resposta = enviar(respostas(false));
-        String serializado = resposta.getBody().toString();
-        assertThat(serializado).doesNotContain("correta").doesNotContain("alternativaCorreta");
-        assertThat(serializado).contains("perguntasErradas");
+        JsonNode resultado = resposta.getBody();
+        assertThat(resultado.has("perguntasErradas")).isTrue();
+        assertThat(resultado.has("correta")).isFalse();
+        assertThat(resultado.has("alternativaCorreta")).isFalse();
 
-        String leitura = quiz().toString();
-        assertThat(leitura).doesNotContain("correta").doesNotContain("alternativaCorreta");
-        for (JsonNode pergunta : quiz().get("perguntas")) {
+        JsonNode leitura = quiz();
+        assertThat(leitura.has("correta")).isFalse();
+        assertThat(leitura.has("alternativaCorreta")).isFalse();
+        for (JsonNode pergunta : leitura.get("perguntas")) {
+            assertThat(pergunta.has("correta")).isFalse();
+            assertThat(pergunta.has("alternativaCorreta")).isFalse();
             for (JsonNode alternativa : pergunta.get("alternativas")) {
                 assertThat(alternativa.has("correta")).isFalse();
+                assertThat(alternativa.has("alternativaCorreta")).isFalse();
             }
         }
     }
