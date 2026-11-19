@@ -53,6 +53,9 @@ public class Usuario {
     @Column(nullable = false, length = 20)
     private Papel papel = Papel.INTEGRANTE;
 
+    @Column(length = 13)
+    private String telefone;
+
     @Column(nullable = false)
     private boolean ativo = true;
 

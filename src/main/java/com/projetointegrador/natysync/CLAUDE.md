@@ -8,7 +8,7 @@ Ponto de entrada da aplicação e base dos testes de integração. Não contém 
 
 - `NatySyncApplication`: `@SpringBootApplication` com `@ConfigurationPropertiesScan`.
 - `src/test/java/com/projetointegrador/natysync/PostgresTestcontainerConfiguration`: sobe `postgres:15-alpine` pelo Testcontainers e liga no datasource por `@ServiceConnection`.
-- `src/test/java/com/projetointegrador/natysync/IntegracaoTest`: base abstrata dos testes HTTP e limpeza das empresas criadas durante o teste.
+- `src/test/java/com/projetointegrador/natysync/IntegracaoTest`: base abstrata dos testes HTTP e limpeza das empresas criadas durante o teste. Ativa os perfis `dev` e `test`: `TravaDaContaDeSeed` recusa subir com conta de seed fora de `dev`, e `application-test.yml` ajusta log e desliga a limpeza de sessão.
 - A conclusão da atividade com quiz acontece somente por tentativa aprovada; atividade sem quiz conclui ao registrar vídeo assistido.
 
 ## Decisões

@@ -17,11 +17,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(PostgresTestcontainerConfiguration.class)
+@ActiveProfiles({"dev", "test"})
 public abstract class IntegracaoTest {
 
     protected static final String SENHA_DE_TESTE = "senha-de-teste";
@@ -80,11 +82,15 @@ public abstract class IntegracaoTest {
     protected String tokenPadrao() {
         if (tokenPadrao == null) {
             Empresa empresa = criarEmpresa("Empresa Padrao de Teste");
-            String email = "padrao-" + UUID.randomUUID() + "@teste.com.br";
+            String email = emailUnico("padrao");
             criarIntegrante(empresa, "Integrante Padrao", email);
             tokenPadrao = autenticar(email, SENHA_DE_TESTE);
         }
         return tokenPadrao;
+    }
+
+    protected static String emailUnico(String prefixo) {
+        return prefixo + "-" + UUID.randomUUID() + "@teste.com.br";
     }
 
     protected Empresa criarEmpresa(String nome) {

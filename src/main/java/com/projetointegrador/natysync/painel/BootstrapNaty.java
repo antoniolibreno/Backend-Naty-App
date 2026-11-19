@@ -32,6 +32,8 @@ public class BootstrapNaty implements ApplicationRunner {
     private final String email;
     private final String senha;
     private final String nomeDaEmpresa;
+    private final String cnpj;
+    private final String razaoSocial;
 
     public BootstrapNaty(
             UsuarioRepository usuarioRepository,
@@ -42,7 +44,9 @@ public class BootstrapNaty implements ApplicationRunner {
             @Value("${app.bootstrap.naty.nome}") String nome,
             @Value("${app.bootstrap.naty.email}") String email,
             @Value("${app.bootstrap.naty.senha}") String senha,
-            @Value("${app.bootstrap.naty.empresa}") String nomeDaEmpresa) {
+            @Value("${app.bootstrap.naty.empresa}") String nomeDaEmpresa,
+            @Value("${app.bootstrap.naty.cnpj}") String cnpj,
+            @Value("${app.bootstrap.naty.razao-social}") String razaoSocial) {
         this.usuarioRepository = usuarioRepository;
         this.empresaRepository = empresaRepository;
         this.codificadorDeSenha = codificadorDeSenha;
@@ -52,6 +56,8 @@ public class BootstrapNaty implements ApplicationRunner {
         this.email = email;
         this.senha = senha;
         this.nomeDaEmpresa = nomeDaEmpresa;
+        this.cnpj = cnpj;
+        this.razaoSocial = razaoSocial;
     }
 
     @Override
@@ -73,11 +79,15 @@ public class BootstrapNaty implements ApplicationRunner {
         if (senha.length() < SenhaRequest.TAMANHO_MINIMO || !new SenhaRequest(senha).isSenhaDentroDoLimite()) {
             throw new IllegalStateException("A senha do bootstrap precisa ter de 8 caracteres a 72 bytes.");
         }
+        if (!Cnpj.valido(Cnpj.normalizar(cnpj))) {
+            throw new IllegalStateException("O CNPJ do bootstrap e invalido.");
+        }
         criarContaNaty();
     }
 
     private boolean variaveisPreenchidas() {
-        return Stream.of(nome, email, senha, nomeDaEmpresa).allMatch(valor -> valor != null && !valor.isBlank());
+        return Stream.of(nome, email, senha, nomeDaEmpresa, cnpj, razaoSocial)
+                .allMatch(valor -> valor != null && !valor.isBlank());
     }
 
     private void criarContaNaty() {
@@ -87,6 +97,8 @@ public class BootstrapNaty implements ApplicationRunner {
         }
         Empresa empresa = new Empresa();
         empresa.setNome(nomeDaEmpresa.trim());
+        empresa.setCnpj(Cnpj.normalizar(cnpj));
+        empresa.setRazaoSocial(razaoSocial.trim());
         empresaRepository.save(empresa);
 
         Usuario usuario = new Usuario();

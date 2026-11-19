@@ -1,0 +1,842 @@
+_type: export
+__export_format: 4
+__export_date: '2026-11-06T00:00:00.000Z'
+__export_source: naty-sync-backend
+resources:
+  - _id: wrk_naty_sync
+    parentId: null
+    modified: 1793923200000
+    created: 1793923200000
+    name: Naty Sync API
+    description: Colecao de endpoints do backend Naty Sync.
+    scope: collection
+    _type: workspace
+
+  - _id: env_naty_sync_base
+    parentId: wrk_naty_sync
+    modified: 1793923200000
+    created: 1793923200000
+    name: Base Environment
+    data:
+      base_url: http://localhost:8080
+      token: COLE_SEU_TOKEN_AQUI
+      empresa_id: 00000000-0000-0000-0000-000000000000
+      integrante_id: 00000000-0000-0000-0000-000000000000
+      trilha_id: 00000000-0000-0000-0000-000000000000
+      atividade_id: 00000000-0000-0000-0000-000000000000
+      pergunta_id: 00000000-0000-0000-0000-000000000000
+      alternativa_id: 00000000-0000-0000-0000-000000000000
+    dataPropertyOrder: null
+    color: null
+    isPrivate: false
+    metaSortKey: 0
+    _type: environment
+
+  - _id: fld_auth
+    parentId: wrk_naty_sync
+    modified: 1793923200000
+    created: 1793923200000
+    name: Autenticacao
+    description: Login e revogacao de sessoes.
+    environment: {}
+    environmentPropertyOrder: null
+    metaSortKey: -600
+    _type: request_group
+
+  - _id: fld_content
+    parentId: wrk_naty_sync
+    modified: 1793923200000
+    created: 1793923200000
+    name: Conteudo
+    description: Trilhas, atividades e quizzes.
+    environment: {}
+    environmentPropertyOrder: null
+    metaSortKey: -500
+    _type: request_group
+
+  - _id: fld_progress
+    parentId: wrk_naty_sync
+    modified: 1793923200000
+    created: 1793923200000
+    name: Progresso
+    description: Acompanhamento do progresso do integrante autenticado.
+    environment: {}
+    environmentPropertyOrder: null
+    metaSortKey: -400
+    _type: request_group
+
+  - _id: fld_panel_company
+    parentId: wrk_naty_sync
+    modified: 1793923200000
+    created: 1793923200000
+    name: Painel - Empresas (NATY)
+    description: Endpoints que exigem papel NATY.
+    environment: {}
+    environmentPropertyOrder: null
+    metaSortKey: -300
+    _type: request_group
+
+  - _id: fld_panel_members
+    parentId: wrk_naty_sync
+    modified: 1793923200000
+    created: 1793923200000
+    name: Painel - Integrantes
+    description: Endpoints que exigem papel ADMIN ou NATY conforme o caminho.
+    environment: {}
+    environmentPropertyOrder: null
+    metaSortKey: -200
+    _type: request_group
+
+  - _id: req_login
+    parentId: fld_auth
+    modified: 1793923200000
+    created: 1793923200000
+    name: Autenticar integrante
+    url: '{{ _.base_url }}/api/v1/sessoes'
+    description: Retorna o token opaco da sessao. Copie o campo token para _.token.
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "email": "integrante@empresa.com",
+          "senha": "senha-segura"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication: {}
+    metaSortKey: -100
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_logout
+    parentId: fld_auth
+    modified: 1793923200000
+    created: 1793923200000
+    name: Revogar sessao atual
+    url: '{{ _.base_url }}/api/v1/sessoes/atual'
+    description: Invalida o token usado na requisicao.
+    method: DELETE
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -90
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_list_trilhas
+    parentId: fld_content
+    modified: 1793923200000
+    created: 1793923200000
+    name: Listar trilhas ativas
+    url: '{{ _.base_url }}/api/v1/trilhas'
+    description: Lista as trilhas ativas em ordem crescente.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -100
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_get_trilha
+    parentId: fld_content
+    modified: 1793923200000
+    created: 1793923200000
+    name: Detalhar trilha
+    url: '{{ _.base_url }}/api/v1/trilhas/{{ _.trilha_id }}'
+    description: Retorna modulos e atividades da trilha.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -90
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_get_atividade
+    parentId: fld_content
+    modified: 1793923200000
+    created: 1793923200000
+    name: Detalhar atividade
+    url: '{{ _.base_url }}/api/v1/atividades/{{ _.atividade_id }}'
+    description: Detalha uma atividade.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -80
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_get_quiz
+    parentId: fld_content
+    modified: 1793923200000
+    created: 1793923200000
+    name: Buscar quiz da atividade
+    url: '{{ _.base_url }}/api/v1/atividades/{{ _.atividade_id }}/quiz'
+    description: Retorna o quiz sem indicar a alternativa correta.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -70
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_progress_trilha
+    parentId: fld_progress
+    modified: 1793923200000
+    created: 1793923200000
+    name: Consultar progresso da trilha
+    url: '{{ _.base_url }}/api/v1/trilhas/{{ _.trilha_id }}/progresso'
+    description: Retorna o estado de cada atividade para o integrante autenticado.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -100
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_video_start
+    parentId: fld_progress
+    modified: 1793923200000
+    created: 1793923200000
+    name: Registrar inicio do video
+    url: '{{ _.base_url }}/api/v1/atividades/{{ _.atividade_id }}/video-iniciado'
+    description: Registra o primeiro inicio do video. Nao possui corpo.
+    method: POST
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -90
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_video_watched
+    parentId: fld_progress
+    modified: 1793923200000
+    created: 1793923200000
+    name: Registrar video assistido
+    url: '{{ _.base_url }}/api/v1/atividades/{{ _.atividade_id }}/video-assistido'
+    description: Registra a assistencia do video. Nao possui corpo.
+    method: POST
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -80
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_quiz_attempt
+    parentId: fld_progress
+    modified: 1793923200000
+    created: 1793923200000
+    name: Registrar tentativa de quiz
+    url: '{{ _.base_url }}/api/v1/atividades/{{ _.atividade_id }}/quiz/tentativas'
+    description: Corrige e registra uma tentativa do quiz.
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "respostas": [
+            {
+              "perguntaId": "{{ _.pergunta_id }}",
+              "alternativaId": "{{ _.alternativa_id }}"
+            }
+          ]
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -70
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_company_list
+    parentId: fld_panel_company
+    modified: 1793923200000
+    created: 1793923200000
+    name: Listar empresas
+    url: '{{ _.base_url }}/api/v1/painel/empresas?pagina=0&tamanho=20'
+    description: Lista empresas paginadas. Suporta busca pela pagina e tamanho.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -100
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_company_get
+    parentId: fld_panel_company
+    modified: 1793923200000
+    created: 1793923200000
+    name: Buscar empresa
+    url: '{{ _.base_url }}/api/v1/painel/empresas/{{ _.empresa_id }}'
+    description: Busca uma empresa pelo identificador.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -90
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_company_create
+    parentId: fld_panel_company
+    modified: 1793923200000
+    created: 1793923200000
+    name: Criar empresa
+    url: '{{ _.base_url }}/api/v1/painel/empresas'
+    description: Cria uma empresa. O fuso horario deve ser um ZoneId, por exemplo America/Sao_Paulo.
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "nome": "Empresa Exemplo",
+          "ativa": true,
+          "fusoHorario": "America/Sao_Paulo"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -80
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_company_update
+    parentId: fld_panel_company
+    modified: 1793923200000
+    created: 1793923200000
+    name: Atualizar empresa
+    url: '{{ _.base_url }}/api/v1/painel/empresas/{{ _.empresa_id }}'
+    description: Atualiza nome, status e fuso horario da empresa.
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "nome": "Empresa Exemplo Atualizada",
+          "ativa": true,
+          "fusoHorario": "America/Sao_Paulo"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -70
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_company_delete
+    parentId: fld_panel_company
+    modified: 1793923200000
+    created: 1793923200000
+    name: Excluir empresa
+    url: '{{ _.base_url }}/api/v1/painel/empresas/{{ _.empresa_id }}'
+    description: Exclui uma empresa sem integrantes. Retorna 204 em caso de sucesso.
+    method: DELETE
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -60
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_company_list
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Listar integrantes da empresa
+    url: '{{ _.base_url }}/api/v1/painel/empresas/{{ _.empresa_id }}/integrantes?pagina=0&tamanho=20&busca=&ativo=true'
+    description: Lista integrantes da empresa. Remova busca ou ativo quando nao quiser filtrar.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -100
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_company_get
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Buscar integrante da empresa
+    url: '{{ _.base_url }}/api/v1/painel/empresas/{{ _.empresa_id }}/integrantes/{{ _.integrante_id }}'
+    description: Busca um integrante dentro da empresa informada.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -90
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_company_create
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Cadastrar integrante na empresa
+    url: '{{ _.base_url }}/api/v1/painel/empresas/{{ _.empresa_id }}/integrantes'
+    description: 'Papel aceito: INTEGRANTE ou ADMIN. Perfil aceito: admin, supervisor ou user.'
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "nome": "Novo Integrante",
+          "email": "novo.integrante@empresa.com",
+          "senha": "senha-segura",
+          "papel": "INTEGRANTE",
+          "perfil": "user"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -80
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_company_update
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Alterar integrante da empresa
+    url: '{{ _.base_url }}/api/v1/painel/empresas/{{ _.empresa_id }}/integrantes/{{ _.integrante_id }}'
+    description: Altera nome, email, papel e perfil. Nao aceita papel NATY.
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "nome": "Integrante Atualizado",
+          "email": "integrante.atualizado@empresa.com",
+          "papel": "INTEGRANTE",
+          "perfil": "user"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -70
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_company_password
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Definir senha do integrante (empresa)
+    url: '{{ _.base_url }}/api/v1/painel/empresas/{{ _.empresa_id }}/integrantes/{{ _.integrante_id }}/senha'
+    description: Define a senha e revoga todas as sessoes do integrante. Retorna 204.
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "senha": "nova-senha-segura"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -60
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_company_active
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Ativar ou desativar integrante (empresa)
+    url: '{{ _.base_url }}/api/v1/painel/empresas/{{ _.empresa_id }}/integrantes/{{ _.integrante_id }}/ativo'
+    description: Altera o status do integrante. Retorna 204.
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "ativo": true
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -50
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_list
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Listar meus integrantes
+    url: '{{ _.base_url }}/api/v1/painel/integrantes?pagina=0&tamanho=20&busca=&ativo=true'
+    description: Lista integrantes da empresa do usuario autenticado.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -40
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_get
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Buscar meu integrante
+    url: '{{ _.base_url }}/api/v1/painel/integrantes/{{ _.integrante_id }}'
+    description: Busca um integrante na empresa do usuario autenticado.
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -30
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_create
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Cadastrar meu integrante
+    url: '{{ _.base_url }}/api/v1/painel/integrantes'
+    description: Cadastra um integrante na empresa do usuario ADMIN autenticado.
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "nome": "Novo Integrante",
+          "email": "novo.integrante@empresa.com",
+          "senha": "senha-segura",
+          "papel": "INTEGRANTE",
+          "perfil": "user"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -20
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_update
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Alterar meu integrante
+    url: '{{ _.base_url }}/api/v1/painel/integrantes/{{ _.integrante_id }}'
+    description: Altera nome, email, papel e perfil.
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "nome": "Integrante Atualizado",
+          "email": "integrante.atualizado@empresa.com",
+          "papel": "INTEGRANTE",
+          "perfil": "user"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: -10
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_password
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Definir minha senha de integrante
+    url: '{{ _.base_url }}/api/v1/painel/integrantes/{{ _.integrante_id }}/senha'
+    description: Define a senha e revoga sessoes. Retorna 204.
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "senha": "nova-senha-segura"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: 0
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_members_active
+    parentId: fld_panel_members
+    modified: 1793923200000
+    created: 1793923200000
+    name: Ativar ou desativar meu integrante
+    url: '{{ _.base_url }}/api/v1/painel/integrantes/{{ _.integrante_id }}/ativo'
+    description: Altera o status do integrante. Retorna 204.
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "ativo": true
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      token: '{{ _.token }}'
+    metaSortKey: 10
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request

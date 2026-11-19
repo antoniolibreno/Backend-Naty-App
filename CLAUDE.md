@@ -106,7 +106,7 @@ qualquer agente que trabalhe aqui e está imposta em `.claude/settings.json`, co
 `usuario`: integrantes das empresas, papel e a resolução de identidade em
 `POST /api/v1/sessoes`. Só lê o cadastro; a escrita pertence ao `painel`.
 
-`empresa`: cliente da Naty, com fuso horário, e raiz do isolamento de dados.
+`empresa`: cliente da Naty, com fuso horário, CNPJ e razão social, e raiz do isolamento de dados.
 
 `painel`: cadastro de empresa e de integrante sob `/api/v1/painel/**` e o bootstrap da
 primeira conta `NATY`. Único pacote que escreve em `usuario` e em `empresa`.
@@ -115,7 +115,10 @@ primeira conta `NATY`. Único pacote que escreve em `usuario` e em `empresa`.
 Somente `NATY` escreve trilhas, módulos, atividades, quizzes, perguntas e alternativas.
 
 `progresso`: estado de cada integrante na trilha, com desbloqueio linear e conclusão de
-atividade.
+atividade. Publica o fato de estudo que a gamificação escuta.
+
+`gamificacao`: pontos, sequência de dias, conquistas e ranking por empresa, calculados a
+partir dos fatos de estudo do `progresso`.
 
 `shared`: tratamento global de erro, corpo de página e utilitário transversal. Mantenha
 pequeno.
@@ -153,7 +156,15 @@ desenvolvimento e do bootstrap por variável de ambiente em produção. Produç�
 sem conta `NATY` e sem as variáveis do bootstrap, e qualquer perfil fora de `dev` recusa
 subir se encontrar uma conta do seed.
 
-A sessão não renova. Quando o token expira, o app autentica de novo.
+A sessão renova em `POST /api/v1/sessoes/atual/renovacao`: com token válido, o sistema emite
+token novo, revoga o apresentado e limita a expiração à duração máxima, contada do login e
+configurada em `app.sessao.duracao-maxima`. Esgotada a duração máxima, ou com o token
+expirado, o app autentica de novo. Sessão encerrada há mais
+que `app.sessao.retencao` é removida por limpeza periódica, e produção recusa subir sem esse
+prazo, e também sem a duração máxima.
+
+O Actuator exige `NATY`, exceto `/actuator/health` sem detalhe. Toda resposta carrega
+`X-Request-Id`.
 
 Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, sem hierarquia entre eles. As rotas de
 `/api/v1/painel/**` e as escritas de conteúdo exigem papel. `ADMIN` administra as contas `INTEGRANTE` da própria
@@ -173,5 +184,10 @@ URLs de vídeo configuradas exigem HTTPS do YouTube e duração positiva. O iní
 `POST /api/v1/atividades/{atividadeId}/video-iniciado` é idempotente por integrante e
 atividade. O tempo decorrido não comprova reprodução efetiva no player.
 
-Não existe pontuação, sequência de dias, conquista nem ranking. `atividade.xp` é
-devolvido na leitura porque a tela mostra o valor, e nada o soma.
+A primeira conclusão de cada atividade concede `atividade.xp` uma única vez, com o valor
+congelado na concessão. Tentativa de quiz, primeiro vídeo assistido e primeira conclusão
+marcam o dia de estudo no fuso da empresa. As conquistas são catálogo global semeado por
+migration, sem rota de escrita, e saem uma única vez por integrante. O ranking classifica
+as contas ativas da empresa de quem chama, de qualquer papel, e não existe ranking entre
+empresas. O perfil de gamificação é lido para a própria conta e para colega ativo da mesma
+empresa. Erro na gamificação desfaz a escrita de progresso da mesma chamada.
