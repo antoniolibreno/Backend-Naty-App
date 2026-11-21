@@ -111,15 +111,8 @@ qualquer agente que trabalhe aqui e está imposta em `.claude/settings.json`, co
 `painel`: cadastro de empresa e de integrante sob `/api/v1/painel/**` e o bootstrap da
 primeira conta `NATY`. Único pacote que escreve em `usuario` e em `empresa`.
 
-`trilha`: conteúdo do treinamento e a leitura dele. Trilha, módulo, atividade, quiz,
-pergunta e alternativa. Conteúdo semeado por migration e escrito pelo `conteudo`.
-
-`conteudo`: escrita de trilha, módulo e atividade sob rotas exclusivas da conta `NATY`, com
-ordem, ativação de trilha, proteção do histórico e registro de quem alterou o conteúdo. Único
-pacote que escreve nas entidades de `trilha`.
-
-`acompanhamento`: leitura do progresso de qualquer empresa para a conta `NATY`, com situação de
-cada integrante, métricas, CSV e funil por atividade. Só lê, e nada depende dele.
+`trilha`: conteúdo global do treinamento, suas leituras e administração autenticada.
+Somente `NATY` escreve trilhas, módulos, atividades, quizzes, perguntas e alternativas.
 
 `progresso`: estado de cada integrante na trilha, com desbloqueio linear e conclusão de
 atividade. Publica o fato de estudo que a gamificação escuta.
@@ -173,12 +166,11 @@ prazo, e também sem a duração máxima.
 O Actuator exige `NATY`, exceto `/actuator/health` sem detalhe. Toda resposta carrega
 `X-Request-Id`.
 
-Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, sem hierarquia entre eles. Só as rotas de
-`/api/v1/painel/**` e do Actuator exigem papel. `ADMIN` administra as contas `INTEGRANTE` da própria
+Os papéis são `INTEGRANTE`, `ADMIN` e `NATY`, sem hierarquia entre eles. As rotas de
+`/api/v1/painel/**` e as escritas de conteúdo exigem papel. `ADMIN` administra as contas `INTEGRANTE` da própria
 empresa. `NATY` administra empresas e as contas `INTEGRANTE` e `ADMIN` de qualquer empresa.
-Conta `NATY` não é administrada pelo painel. Conteúdo de treinamento só é escrito
-pelo pacote `conteudo`, e toda rota de escrita exige `NATY`, porque o conteúdo é global.
-Conteúdo com progresso, tentativa ou ponto registrado não é removido: a trilha é desativada.
+Conta `NATY` não é administrada pelo painel. Conteúdo de treinamento é global e sua
+escrita exige `NATY`.
 
 Integrante e empresa nunca somem por desativação. Integrante não tem rota de exclusão, e
 empresa só é excluída sem integrante.
