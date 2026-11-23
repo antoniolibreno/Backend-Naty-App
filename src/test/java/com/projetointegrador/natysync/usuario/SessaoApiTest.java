@@ -124,7 +124,7 @@ class SessaoApiTest extends IntegracaoTest {
 
     @Test
     void buscaMeuPerfilComEmpresaECargoSemAceitarIdentificadorDoCliente() {
-        ResponseEntity<JsonNode> resposta = cliente(autenticar("integrante@teste.com.br", SENHA_DE_TESTE))
+        ResponseEntity<JsonNode> resposta = cliente(autenticar(emailIntegrante, SENHA_DE_TESTE))
                 .get()
                 .uri("/api/v1/usuarios/me")
                 .retrieve()
@@ -133,7 +133,7 @@ class SessaoApiTest extends IntegracaoTest {
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody().get("id").asText()).isEqualTo(usuarioId.toString());
         assertThat(resposta.getBody().get("nome").asText()).isEqualTo("Integrante de Teste");
-        assertThat(resposta.getBody().get("email").asText()).isEqualTo("integrante@teste.com.br");
+        assertThat(resposta.getBody().get("email").asText()).isEqualTo(emailIntegrante);
         assertThat(resposta.getBody().get("empresa").get("id").asText()).isEqualTo(empresaId.toString());
         assertThat(resposta.getBody().get("empresa").get("nome").asText()).isEqualTo("Empresa de Teste");
         assertThat(resposta.getBody().get("cargo").asText()).isEqualTo("user");

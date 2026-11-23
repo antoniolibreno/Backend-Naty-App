@@ -12,4 +12,4 @@ spring:
   jpa:
     show-sql: false
   flyway:
-    locations: classpath:db/migration,classpath:db/seed-dev
+    locations: classpath:db/migration

@@ -2,7 +2,13 @@ package com.projetointegrador.natysync.usuario;
 
 import com.projetointegrador.natysync.shared.exception.ErroResposta;
 import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
+import com.projetointegrador.natysync.usuario.dto.MeuPerfilResponse;
 import com.projetointegrador.natysync.usuario.dto.UsuarioResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,5 +46,22 @@ public class UsuarioController {
     })
     public PaginaResponse<UsuarioResponse> listar(@ParameterObject Pageable pagina, IntegranteDaRequisicao quem) {
         return usuarioService.listarAtivosDaEmpresa(quem.empresaId(), pagina);
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Consultar meu perfil", description = "Devolve os dados da conta autenticada e da empresa.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Perfil da conta autenticada"),
+        @ApiResponse(
+                responseCode = "401",
+                description = "Credencial inválida",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class))),
+        @ApiResponse(
+                responseCode = "404",
+                description = "Conta não encontrada",
+                content = @Content(schema = @Schema(implementation = ErroResposta.class)))
+    })
+    public MeuPerfilResponse meuPerfil(IntegranteDaRequisicao quem) {
+        return usuarioService.buscarMeuPerfil(quem);
     }
 }

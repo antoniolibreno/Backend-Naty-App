@@ -47,6 +47,11 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(ROTAS_PUBLICAS)
                         .permitAll()
+                        .requestMatchers("/actuator/**")
+                        .hasRole(Papel.NATY.name())
+                        .requestMatchers(
+                                "/api/v1/acompanhamento/**", "/api/v1/alteracoes-de-conteudo/**", "/api/v1/quizzes/**")
+                        .hasRole(Papel.NATY.name())
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/v1/trilhas",
@@ -54,7 +59,8 @@ public class SecurityConfig {
                                 "/api/v1/atividades",
                                 "/api/v1/quizzes",
                                 "/api/v1/perguntas",
-                                "/api/v1/perguntas/*/alternativas")
+                                "/api/v1/perguntas/*/alternativas",
+                                "/api/v1/alternativas/**")
                         .hasRole(Papel.NATY.name())
                         .requestMatchers(
                                 HttpMethod.PUT,
@@ -65,6 +71,10 @@ public class SecurityConfig {
                                 "/api/v1/perguntas/**",
                                 "/api/v1/alternativas/**")
                         .hasRole(Papel.NATY.name())
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/trilhas")
+                        .authenticated()
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/api/v1/trilhas/**",
