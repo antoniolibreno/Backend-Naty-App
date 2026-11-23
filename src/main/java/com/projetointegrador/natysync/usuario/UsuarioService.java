@@ -1,7 +1,9 @@
 package com.projetointegrador.natysync.usuario;
 
 import com.projetointegrador.natysync.shared.exception.CredencialInvalidaException;
+import com.projetointegrador.natysync.shared.exception.RecursoNaoEncontradoException;
 import com.projetointegrador.natysync.shared.pagina.PaginaResponse;
+import com.projetointegrador.natysync.usuario.dto.MeuPerfilResponse;
 import com.projetointegrador.natysync.usuario.dto.UsuarioResponse;
 import java.util.Locale;
 import java.util.Optional;
@@ -50,5 +52,20 @@ public class UsuarioService {
         PageRequest pedido = PageRequest.of(pagina.getPageNumber(), pagina.getPageSize(), Sort.by("nome", "id"));
         return PaginaResponse.de(
                 usuarioRepository.findByEmpresaIdAndAtivoTrue(empresaId, pedido), usuarioMapper::paraResposta);
+    }
+
+    @Transactional(readOnly = true)
+    public MeuPerfilResponse buscarMeuPerfil(IntegranteDaRequisicao quem) {
+        Usuario usuario = usuarioRepository
+                .buscarNaEmpresa(quem.usuarioId(), quem.empresaId())
+                .filter(Usuario::isAtivo)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Integrante nao encontrado"));
+        return new MeuPerfilResponse(
+                usuario.getId(),
+                usuario.getNome(),
+                usuario.getEmail(),
+                new MeuPerfilResponse.Empresa(usuario.getEmpresa().getId(), usuario.getEmpresa().getNome()),
+                usuario.getPerfil(),
+                usuario.getPapel());
     }
 }

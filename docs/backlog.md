@@ -345,6 +345,7 @@ A ordem interna é progresso, quiz, vídeo, gamificação e conteúdo.
   O conteúdo em banco é exemplo, com UUID fixo escrito à mão, e a descrição da trilha
   semeada diz ao app que ela é exemplo. A migration nova apaga essas linhas pelos UUIDs
   fixos e insere o conteúdo verdadeiro, sem tocar em `V3`.
+  Dependências: material aprovado do treinamento, com textos, ordem, imagens, vídeos e gabaritos; substituir os UUIDs fixos dos testes por identificadores descobertos pela API antes de apagar o seed.
   Toca: nova migration em `db/migration`
 
 - [x] **9.2 Expor o CRUD de trilha**

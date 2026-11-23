@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AtividadeRepository extends JpaRepository<Atividade, UUID> {
+    List<Atividade> findByModuloIdOrderByOrdemAsc(UUID moduloId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from Atividade a where a.id = :id")
@@ -31,11 +32,17 @@ public interface AtividadeRepository extends JpaRepository<Atividade, UUID> {
     @Query("update Atividade a set a.ordem = :ordem where a.id = :id")
     int definirOrdem(@Param("id") UUID id, @Param("ordem") int ordem);
 
-    @Query(value = """
-            select exists (select 1 from progresso_atividade p where p.atividade_id in (:ids))
-                or exists (select 1 from ponto_concedido c where c.atividade_id in (:ids))
-                or exists (select 1 from tentativa_quiz t join quiz q on q.id = t.quiz_id
-                           where q.atividade_id in (:ids))
-            """, nativeQuery = true)
+    @Query(
+            value = """
+                    select exists (select 1 from progresso_atividade p where p.atividade_id in (:ids))
+                        or exists (select 1 from ponto_concedido c where c.atividade_id in (:ids))
+                        or exists (select 1 from tentativa_quiz t join quiz q on q.id = t.quiz_id
+                                   where q.atividade_id in (:ids))
+                    """,
+            nativeQuery = true)
     boolean temHistoricoDeEstudo(@Param("ids") Collection<UUID> ids);
+
+    boolean existsByModuloIdAndOrdem(UUID moduloId, Integer ordem);
+
+    boolean existsByModuloIdAndOrdemAndIdNot(UUID moduloId, Integer ordem, UUID id);
 }

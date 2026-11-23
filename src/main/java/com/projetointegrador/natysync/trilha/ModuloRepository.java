@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ModuloRepository extends JpaRepository<Modulo, UUID> {
+    List<Modulo> findByTrilhaIdOrderByOrdemAsc(UUID trilhaId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select m from Modulo m where m.id = :id")
@@ -29,4 +30,8 @@ public interface ModuloRepository extends JpaRepository<Modulo, UUID> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Modulo m set m.ordem = :ordem where m.id = :id")
     int definirOrdem(@Param("id") UUID id, @Param("ordem") int ordem);
+
+    boolean existsByTrilhaIdAndOrdem(UUID trilhaId, Integer ordem);
+
+    boolean existsByTrilhaIdAndOrdemAndIdNot(UUID trilhaId, Integer ordem, UUID id);
 }

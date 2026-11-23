@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PerguntaRepository extends JpaRepository<Pergunta, UUID> {
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Pergunta p where p.id = :id")
     Optional<Pergunta> travarPorId(@Param("id") UUID id);
@@ -24,6 +23,12 @@ public interface PerguntaRepository extends JpaRepository<Pergunta, UUID> {
     @Query("select count(p) from Pergunta p where p.quiz.id = :quizId")
     long contarDoQuiz(@Param("quizId") UUID quizId);
 
-    @Query(value = "select exists (select 1 from resposta_tentativa r where r.pergunta_id = :id)", nativeQuery = true)
+    @Query(
+            value = "select exists (select 1 from resposta_tentativa r where r.pergunta_id = :id)",
+            nativeQuery = true)
     boolean temResposta(@Param("id") UUID id);
+
+    boolean existsByQuizIdAndOrdem(UUID quizId, Integer ordem);
+
+    boolean existsByQuizIdAndOrdemAndIdNot(UUID quizId, Integer ordem, UUID id);
 }

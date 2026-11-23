@@ -1,18 +1,18 @@
 package com.projetointegrador.natysync.gamificacao;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.projetointegrador.natysync.empresa.Empresa;
-import com.projetointegrador.natysync.progresso.ProgressoAtividadeRepository;
-import com.projetointegrador.natysync.progresso.TentativaQuizRepository;
-import com.projetointegrador.natysync.trilha.Atividade;
-import com.projetointegrador.natysync.trilha.TrilhaRepository;
+import com.projetointegrador.natysync.gamificacao.dto.ConquistaResponse;
+import com.projetointegrador.natysync.gamificacao.dto.GamificacaoResponse;
+import com.projetointegrador.natysync.gamificacao.dto.PosicaoRankingResponse;
 import com.projetointegrador.natysync.usuario.Usuario;
 import com.projetointegrador.natysync.usuario.UsuarioRepository;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -20,43 +20,57 @@ import org.junit.jupiter.api.Test;
 class GamificacaoServiceTest {
 
     @Test
-    void naoConcedeXpDuasVezesParaAMesmaAtividade() {
+    void buscaPerfilComRankingSequenciaEConquistas() {
         UUID usuarioId = UUID.randomUUID();
         UUID empresaId = UUID.randomUUID();
-        UUID atividadeId = UUID.randomUUID();
-        Usuario usuario = new Usuario();
-        usuario.setId(usuarioId);
+        LocalDate hoje = LocalDate.now(Empresa.FUSO_PADRAO);
+        OffsetDateTime obtidaEm = OffsetDateTime.now();
+
         Empresa empresa = new Empresa();
         empresa.setId(empresaId);
+        Usuario usuario = new Usuario();
+        usuario.setId(usuarioId);
+        usuario.setNome("Ana Souza");
         usuario.setEmpresa(empresa);
-        Atividade atividade = new Atividade();
-        atividade.setId(atividadeId);
-        atividade.setXp(25);
+        usuario.setAtivo(true);
 
-        PontuacaoIntegranteRepository pontuacao = mock(PontuacaoIntegranteRepository.class);
-        XpAtividadeRepository xp = mock(XpAtividadeRepository.class);
-        SequenciaIntegranteRepository sequencia = mock(SequenciaIntegranteRepository.class);
-        ConquistaRepository conquistas = mock(ConquistaRepository.class);
-        ConquistaUsuarioRepository obtidas = mock(ConquistaUsuarioRepository.class);
-        ProgressoAtividadeRepository progresso = mock(ProgressoAtividadeRepository.class);
-        TentativaQuizRepository tentativas = mock(TentativaQuizRepository.class);
-        TrilhaRepository trilhas = mock(TrilhaRepository.class);
+        Conquista conquista = mock(Conquista.class);
+        UUID conquistaId = UUID.randomUUID();
+        when(conquista.getId()).thenReturn(conquistaId);
+        when(conquista.getCodigo()).thenReturn("SEQUENCIA_3_DIAS");
+        when(conquista.getNome()).thenReturn("Três dias seguidos");
+        when(conquista.getDescricao()).thenReturn("Estudou três dias seguidos");
+
+        ConquistaObtida conquistaObtida = mock(ConquistaObtida.class);
+        when(conquistaObtida.getConquistaId()).thenReturn(conquistaId);
+        when(conquistaObtida.getObtidaEm()).thenReturn(obtidaEm);
+
         UsuarioRepository usuarios = mock(UsuarioRepository.class);
-        when(xp.existsByUsuarioIdAndAtividadeId(usuarioId, atividadeId)).thenReturn(false, true);
-        when(pontuacao.findById(usuarioId)).thenReturn(Optional.empty());
-        when(sequencia.findById(usuarioId)).thenReturn(Optional.empty());
-        when(progresso.findByUsuarioId(usuarioId)).thenReturn(java.util.List.of());
-        when(tentativas.countDistinctQuizIdByUsuarioIdAndAprovadoTrue(usuarioId))
-                .thenReturn(0L);
-        when(trilhas.findAll()).thenReturn(java.util.List.of());
-        when(conquistas.findByCodigoAndAtivaTrue(any())).thenReturn(Optional.empty());
-        GamificacaoService service = new GamificacaoService(
-                pontuacao, xp, sequencia, conquistas, obtidas, progresso, tentativas, trilhas, usuarios);
+        RankingRepository ranking = mock(RankingRepository.class);
+        DiaDeEstudoRepository diasDeEstudo = mock(DiaDeEstudoRepository.class);
+        ConquistaRepository conquistas = mock(ConquistaRepository.class);
+        ConquistaObtidaRepository conquistasObtidas = mock(ConquistaObtidaRepository.class);
+        when(usuarios.buscarNaEmpresa(usuarioId, empresaId)).thenReturn(Optional.of(usuario));
+        when(ranking.posicaoDe(empresaId, usuarioId))
+                .thenReturn(Optional.of(new PosicaoRankingResponse(2, usuarioId, "Ana Souza", 175)));
+        when(diasDeEstudo.diasDoIntegrante(usuarioId))
+                .thenReturn(List.of(hoje.minusDays(2), hoje.minusDays(1), hoje));
+        when(conquistas.findAllByOrderByOrdemAsc()).thenReturn(List.of(conquista));
+        when(conquistasObtidas.findByUsuarioId(usuarioId)).thenReturn(List.of(conquistaObtida));
 
-        service.processarConclusao(usuario, atividade);
-        service.processarConclusao(usuario, atividade);
+        GamificacaoService service = new GamificacaoService(usuarios, ranking, diasDeEstudo, conquistas, conquistasObtidas);
 
-        verify(xp, times(1)).save(any(XpAtividade.class));
-        verify(pontuacao, times(1)).save(any(PontuacaoIntegrante.class));
+        GamificacaoResponse resposta = service.buscar(usuarioId, empresaId);
+
+        assertThat(resposta.integranteId()).isEqualTo(usuarioId);
+        assertThat(resposta.nome()).isEqualTo("Ana Souza");
+        assertThat(resposta.pontos()).isEqualTo(175);
+        assertThat(resposta.posicaoNoRanking()).isEqualTo(2);
+        assertThat(resposta.sequencia().atual()).isEqualTo(3);
+        assertThat(resposta.sequencia().maior()).isEqualTo(3);
+        assertThat(resposta.sequencia().diaCorrenteEstudado()).isTrue();
+        assertThat(resposta.conquistas())
+                .containsExactly(new ConquistaResponse(
+                        "SEQUENCIA_3_DIAS", "Três dias seguidos", "Estudou três dias seguidos", obtidaEm));
     }
 }

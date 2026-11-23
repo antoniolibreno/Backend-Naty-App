@@ -2,67 +2,28 @@
 
 ## Responsabilidade
 
-Conteúdo do treinamento e a leitura dele. Trilha, módulo, atividade, quiz, pergunta e
-alternativa. Este pacote não sabe nada sobre quem está estudando: progresso, desbloqueio e
-pontuação são de outros pacotes.
+Conteúdo global do treinamento, suas leituras e sua administração autenticada. Progresso e identidade pertencem a outros pacotes.
 
 ## Contratos
 
-- Entidades `Trilha`, `Modulo`, `Atividade`, `Quiz`, `Pergunta` e `Alternativa`,
-  encadeadas por ordem crescente em cada nível.
-- `TrilhaRepository`, `AtividadeRepository` e `QuizRepository`.
-- `TrilhaService`: leitura de trilha, atividade e quiz. Lança
-  `RecursoNaoEncontradoException` quando não acha.
-- `TrilhaController`: `GET /api/v1/trilhas` e `GET /api/v1/trilhas/{trilhaId}`.
-- `AtividadeController`: `GET /api/v1/atividades/{atividadeId}` e
-  `GET /api/v1/atividades/{atividadeId}/quiz`.
-- `TrilhaMapper` e `QuizMapper`: MapStruct de entidade para DTO.
-- `UrlVideo`: valida URL HTTPS com identificador de vídeo nos domínios exatos
-  `youtube.com`, `www.youtube.com`, `m.youtube.com` e `youtu.be`. Aceita `watch?v=`,
-  `embed`, `shorts` e link curto, sem credencial ou porta na URL.
+O pacote expõe a leitura de trilha, atividade e quiz para integrantes autenticados. `TrilhaMapper` e `QuizMapper` convertem entidade para DTOs públicos. `AlternativaResponse` não possui o campo `correta`.
+
+As entidades são `Trilha`, `Modulo`, `Atividade`, `Quiz`, `Pergunta` e `Alternativa`, encadeadas em ordem crescente. As coleções ordenadas usam `@OrderBy` e `@BatchSize` para evitar N mais 1 sem múltiplos fetches de listas.
+
+`TrilhaController` lê `/api/v1/trilhas`; `AtividadeController` lê `/api/v1/atividades`. `AdministracaoConteudoController` escreve nesses recursos e nos recursos `/api/v1/modulos`, `/api/v1/quizzes`, `/api/v1/perguntas` e `/api/v1/alternativas`. As rotas de escrita exigem o papel `NATY`.
 
 ## Decisões
 
-Conteúdo é global. Nenhuma tabela deste pacote tem `empresa_id`, porque todas as empresas
-fazem o mesmo treinamento sobre o mesmo produto.
+Somente NATY escreve conteúdo. Leitura de quiz não devolve o gabarito; DTOs de escrita e leitura de alternativa são tipos distintos. Alterações administrativas registram autor e instante em `auditoria_conteudo`.
 
-O DTO de alternativa simplesmente não tem o campo `correta`. Não existe anotação de
-ocultação, não existe filtro de serialização. Um campo que não existe no record não tem
-como vazar, enquanto uma anotação esquecida em campo novo vazaria em silêncio.
+Conteúdo com progresso ou tentativa associada não pode ser removido. Trilha inativa não aparece na listagem pública. Reordenação deve preservar a unicidade da ordem por pai.
 
-As coleções usam `@OrderBy("ordem asc")` mais `@BatchSize`. `@BatchSize` resolve o N mais 1
-sem cair em `MultipleBagFetchException`, que é o que aconteceria com dois níveis de
-`join fetch` sobre `List`.
-
-Ordem é coluna explícita, com índice único no par pai mais ordem. Ordem implícita por data
-de criação ou por identificador quebra no primeiro conteúdo reordenado.
+O catálogo semeado em `V3__seed_conteudo_exemplo.sql` usa UUIDs explícitos. Migration já aplicada não é editada: troca do catálogo depende de uma migration posterior.
 
 ## Armadilhas
 
-Nunca exponha a entidade `Alternativa` diretamente em uma resposta, nem adicione `correta`
-a `AlternativaResponse`. O gabarito vazado inutiliza a correção de quiz inteira. Existe
-teste que lê o corpo da resposta como texto e falha se a palavra aparecer.
+Nunca exponha a entidade `Alternativa` em uma resposta. `nota_minima` pertence ao quiz. A regra de conclusão e o estado por integrante pertencem ao pacote `progresso`, que não deve virar dependência de `trilha`.
 
-`nota_minima` fica no quiz, não numa constante em Java. Ela é informada ao cliente e é a
-base da correção no servidor. Duplicar esse valor em código cria duas verdades.
+## Validações
 
-O conteúdo em banco é exemplo, semeado por `V3__seed_conteudo_exemplo.sql`, com UUID fixo
-escrito à mão: uma trilha, dois módulos, três atividades por módulo, quatro perguntas por
-quiz e quatro alternativas por pergunta. A descrição semeada da trilha anuncia ao app que
-ela é exemplo. A troca pelo conteúdo verdadeiro entra em migration nova que apaga essas
-linhas pelos UUIDs fixos. Não edite `V3`: o Flyway valida o checksum do que já rodou.
-
-## Ausências deliberadas
-
-Este pacote não escreve conteúdo. A escrita de trilha, módulo, atividade e quiz pertence ao pacote `conteudo`, que exige o papel
-`NATY` porque o conteúdo é global, e nenhuma classe fora dele chama setter de entidade nem
-escreve nos repositórios daqui. `ModuloRepository`, as consultas de ordem e a consulta de
-histórico de `AtividadeRepository` existem para o `conteudo`.
-
-A leitura de conteúdo exige token. O conteúdo continua global e idêntico para todas as
-empresas: o que a sessão decide é se o servidor responde, não o que ele responde.
-
-`Atividade.videoUrl` é nulo em todo o conteúdo semeado, e a atividade mostra só a imagem.
-
-Vídeo configurado exige duração positiva. A entidade valida URL na atribuição,
-leitura e persistência. O banco restringe domínio e duração por constraint.
+Atividade com vídeo exige URL HTTPS aceita por `UrlVideo` e duração positiva. `UrlVideo` aceita `youtube.com`, `www.youtube.com`, `m.youtube.com` e `youtu.be`, sem credencial ou porta na URL. Cada pergunta possui exatamente uma alternativa correta.
